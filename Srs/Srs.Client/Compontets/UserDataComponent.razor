@@ -1,0 +1,126 @@
+﻿@inject HttpClient Http
+@using Shared.Dtos
+
+<div class="card shadow-sm" style="max-width: 800px; width: 100%;" dir="rtl">
+    <div class="card-body">
+        @if (isLoading)
+        {
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">جاري التحميل...</span>
+                </div>
+                <p class="mt-3">جاري تحميل البيانات</p>
+            </div>
+        }
+        else if (errorMessage != null)
+        {
+            <div class="alert alert-danger" role="alert">
+                <strong>خطأ:</strong> @errorMessage
+            </div>
+            <button class="btn btn-primary" @onclick="LoadUserData">إعادة المحاولة</button>
+        }
+        else
+        {
+            <EditForm Model="@userData">
+                <DataAnnotationsValidator />
+                <h3 style="color:cornflowerblue">البيانات الشخصية</h3>
+                <hr style="color:cornflowerblue"/>
+                <div class="row g-3">
+                    <!-- Name Field -->
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">الاسم</label>
+                            <InputText id="name" class="form-control" @bind-Value="userData.Name" readonly />
+                            <ValidationMessage For="@(() => userData.Name)" />
+                        </div>
+                    </div>
+
+                    <!-- Employee Number Field -->
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="employeeNumber" class="form-label">الرقم الوظيفي</label>
+                            <InputText id="employeeNumber" class="form-control" @bind-Value="userData.EmployeeNumber" readonly/>
+                            <ValidationMessage For="@(() => userData.EmployeeNumber)" />
+                        </div>
+                    </div>
+
+                    <!-- Qualification Field -->
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="qualification" class="form-label">المؤهل</label>
+                            <InputText id="qualification" class="form-control" @bind-Value="userData.Qualification" readonly />
+                            <ValidationMessage For="@(() => userData.Qualification)" />
+                        </div>
+                    </div>
+
+                    <!-- Department Field -->
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="department" class="form-label">القسم</label>
+                            <InputText id="department" class="form-control" @bind-Value="userData.Department"readonly />
+                            <ValidationMessage For="@(() => userData.Department)" />
+                        </div>
+                    </div>
+                    <!-- College Field -->
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="department" class="form-label">الكلية/الفرع </label>
+                            <InputText id="department" class="form-control" @bind-Value="userData.College" readonly/>
+                            <ValidationMessage For="@(() => userData.College)" />
+                        </div>
+                    </div>
+                </div>
+
+            </EditForm>
+        }
+    </div>
+</div>
+
+@code {
+    private UserDataDto userData = new UserDataDto();
+    [Parameter] public EventCallback<UserDataDto> OnUserDataLoaded { get; set; }
+    private bool isLoading = true;
+    private string? errorMessage = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUserData();
+    }
+
+    private async Task LoadUserData()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            // Replace with your actual API endpoint
+            userData = new Shared.Dtos.UserDataDto
+            {
+                Name = "علياء احمد",
+                EmployeeNumber = "EMP12345",
+                Qualification = "ماجستير في علوم الحاسب",
+                Department = "قسم علوم الحاسب",
+                College="AASTMT"
+            };
+
+            /* comment when use the real api 
+            var response = await Http.GetFromJsonAsync<Shared.Dtos.UserData>($"api/userdata/{UserId}");
+            if (response != null)
+            {
+                userData = response;
+                }
+            */
+           await OnUserDataLoaded.InvokeAsync(userData);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"فشل تحميل البيانات: {ex.Message}";
+            Console.WriteLine($"Error loading user data: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

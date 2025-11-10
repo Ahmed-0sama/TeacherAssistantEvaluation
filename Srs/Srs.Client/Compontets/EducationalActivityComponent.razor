@@ -1,0 +1,107 @@
+﻿@using Shared.Dtos
+@inject HttpClient Http
+
+<div class="card shadow-sm w-100" dir="rtl">
+    <div class="card-body">
+        @if (isLoading)
+        {
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="mt-3">جاري تحميل البيانات</p>
+            </div>
+        }
+        else if (errorMessage != null)
+        {
+            <div class="alert alert-danger">@errorMessage</div>
+            <button class="btn btn-primary" @onclick="LoadActivityData">إعادة المحاولة</button>
+        }
+        else
+        {
+            <h3 style="color:cornflowerblue">النشاط التعليمي</h3>
+            <hr style="color:cornflowerblue" />
+
+            <div class="row g-3 mt-3">
+                <div class="col-md-4">
+                    <label class="form-label">الساعات التدريسية الفعلية</label>
+                    <InputNumber class="form-control" @bind-Value="educationalActivity.TeachingData.ActualTeachingLoad"ساعة readonly />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">الساعات التدريسية المتوقعة</label>
+                    <InputNumber class="form-control" @bind-Value="educationalActivity.TeachingData.ExpectedTeachingLoad" readonly />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">عدد الحصص</label>
+                    <InputNumber class="form-control" @bind-Value="educationalActivity.TeachingData.ClassCount" readonly />
+                </div>
+            </div>
+
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>رمز المقرر</th>
+                        <th>اسم المقرر</th>
+                        <th>الساعات</th>
+                        <th>عدد الحصص</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var course in educationalActivity.Courses)
+                    {
+                        <tr>
+                            <td>@course.CourseCode</td>
+                            <td>@course.CourseName</td>
+                            <td>@course.CreditHours</td>
+                            <td>@course.Sections</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+        }
+    </div>
+</div>
+
+@code {
+    private bool isLoading = false;
+    private string? errorMessage;
+    private EducationalActivityDto educationalActivity = new EducationalActivityDto();
+    [Parameter] public EventCallback<EducationalActivityDto> OnActivityLoaded { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadActivityData();
+    }
+
+    private async Task LoadActivityData()
+    {
+        try
+        {
+            isLoading = true;
+            errorMessage = null;
+            educationalActivity = new EducationalActivityDto
+            {
+                TeachingData = new TeachingDataDto
+                {
+                    ActualTeachingLoad = 12,
+                    ExpectedTeachingLoad = 10,
+                    ClassCount = 3
+                },
+                Courses = new List<CourseDto>
+            {
+                new CourseDto { CourseCode = "CS101", CourseName = "مقدمة في الحاسب", CreditHours = 6, Sections = 2 },
+                new CourseDto { CourseCode = "CS205", CourseName = "هياكل البيانات", CreditHours = 6, Sections = 1 },
+            }
+            };
+            //use when calling the actual api
+            // educationalActivity = await Http.GetFromJsonAsync<EducationalActivityDto>("api/educational-activity") ?? new EducationalActivityDto();
+            await OnActivityLoaded.InvokeAsync(educationalActivity);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

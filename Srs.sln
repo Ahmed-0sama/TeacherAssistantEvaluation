@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36623.8 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Srs", "Srs\Srs\Srs.csproj", "{6237860B-4518-4497-A524-871343031049}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Srs.Client", "Srs\Srs.Client\Srs.Client.csproj", "{74467252-0A8C-4831-B8CD-00C51FFDF1DF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shared", "Shared\Shared.csproj", "{9F3E0197-86A5-4D0A-8094-65E02E5F2EC4}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6237860B-4518-4497-A524-871343031049}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6237860B-4518-4497-A524-871343031049}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6237860B-4518-4497-A524-871343031049}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6237860B-4518-4497-A524-871343031049}.Release|Any CPU.Build.0 = Release|Any CPU
+		{74467252-0A8C-4831-B8CD-00C51FFDF1DF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{74467252-0A8C-4831-B8CD-00C51FFDF1DF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{74467252-0A8C-4831-B8CD-00C51FFDF1DF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{74467252-0A8C-4831-B8CD-00C51FFDF1DF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9F3E0197-86A5-4D0A-8094-65E02E5F2EC4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9F3E0197-86A5-4D0A-8094-65E02E5F2EC4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9F3E0197-86A5-4D0A-8094-65E02E5F2EC4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9F3E0197-86A5-4D0A-8094-65E02E5F2EC4}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {07919802-6CE3-44ED-829C-7F57D2CD100E}
+	EndGlobalSection
+EndGlobal

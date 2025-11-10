@@ -1,0 +1,31 @@
+﻿@page "/index"
+@using Shared.Dtos
+
+<div class="d-flex flex-column justify-content-center align-items-center vh-80">
+    <h3 class="text-center mb-4">تقييم مساعد التدريس</h3>
+     <div class="w-50 mb-4 shadow-sm">
+        <Srs.Client.Compontets.UserDataComponent OnUserDataLoaded="HandleUserData" />
+    </div>
+     <div class="w-50 mb-4 shadow-sm">
+        <Srs.Client.Compontets.EducationalActivityComponent OnActivityLoaded="HandleActivityData" />
+    </div>
+</div>
+
+
+@code{
+    private UserDataDto? userData;
+    private EducationalActivityDto? activityData;
+
+    private void HandleUserData(UserDataDto data)
+    {
+        userData = data;
+        Console.WriteLine("User data received from child ");
+    }
+
+    private void HandleActivityData(EducationalActivityDto data)
+    {
+        activityData = data;
+        Console.WriteLine("Activity data received from child");
+    }
+
+}
