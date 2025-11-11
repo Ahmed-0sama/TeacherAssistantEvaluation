@@ -1,34 +1,35 @@
 ﻿@page "/index"
+@rendermode InteractiveWebAssembly
 @using Shared.Dtos
 
 <div class="d-flex flex-column justify-content-center align-items-center vh-80">
     <h3 class="text-center mb-4">تقييم مساعد التدريس</h3>
-    
+
     <div class="w-75 mb-4 shadow-sm">
         <Srs.Client.Compontets.UserDataComponent />
     </div>
-    
+
     <div class="w-75 mb-4 shadow-sm">
-        <Srs.Client.Compontets.EducationalActivityComponent/>
+        <Srs.Client.Compontets.EducationalActivityComponent OnActivityLoaded="HandleEducationalData" />
     </div>
-    
+
     <div class="w-75 mb-4 shadow-sm">
         <Srs.Client.Compontets.SentificِActivityComponent OnResearchPapersLoaded="HandleResearchPapers"
                                                           OnOtherActivitiesLoaded="HandleOtherActivities" />
     </div>
-    
+
     <div class="w-75 mb-4 shadow-sm">
         <Srs.Client.Compontets.AdministrativeِِActivityComponent OnActivityLoaded="HandleAdministrativeData" />
     </div>
-    
+
     <div class="w-75 mb-4 shadow-sm">
         <Srs.Client.Compontets.StudentActivityComponent OnActivityLoaded="HandleStudentActivityData" />
     </div>
-    
+
     <div class="w-75 mb-4 shadow-sm">
         <Srs.Client.Compontets._ِAcademicAdvisingComponent />
     </div>
-    
+
     <div class="w-75 mb-4">
         <button class="btn btn-primary btn-lg w-100" @onclick="SubmitAllData">
             حفظ جميع البيانات
@@ -37,37 +38,44 @@
 </div>
 
 @code {
+    private int pageTestCounter = 0;
     private List<ResearchPaperDto> researchPapers = new List<ResearchPaperDto>();
     private OtherActivitiesDto otherActivities = new OtherActivitiesDto();
     private AdminstrativeActivityDto? administrativeData;
     private StudentActivityDto? studentActivityData;
     private EducationalActivityDto? educationalData;
-    //private AcademicAdvisingDto? academicAdvisingData;
-        
-   
+
+    private void TestPageClick()
+    {
+        pageTestCounter++;
+        Console.WriteLine($"Page test clicked! Counter: {pageTestCounter}");
+        StateHasChanged();
+    }
+
+    private void HandleEducationalData(EducationalActivityDto data)
+    {
+        educationalData = data;
+        Console.WriteLine("Educational data received");
+    }
+
     private void HandleAdministrativeData(AdminstrativeActivityDto data)
     {
         administrativeData = data;
         Console.WriteLine($"Administrative data received: IsAcademicGuidanceCommittee = {data.IsAcademicGuidanceCommittee}");
     }
-    
+
     private void HandleStudentActivityData(StudentActivityDto data)
     {
         studentActivityData = data;
         Console.WriteLine("Student activity data received");
     }
-    
-    // private void HandleAcademicAdvisingData(AcademicAdvisingDto data)
-    // {
-    //     academicAdvisingData = data;
-    //     Console.WriteLine("Academic advising data received");
-    // }
-    
+
     private async Task SubmitAllData()
     {
         Console.WriteLine($"Educational: {educationalData}");
         Console.WriteLine($"Administrative: {administrativeData?.IsAcademicGuidanceCommittee}");
     }
+
     private void HandleResearchPapers(List<ResearchPaperDto> papers)
     {
         researchPapers = papers;

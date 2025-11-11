@@ -1,8 +1,6 @@
 ﻿@using Shared.Dtos
 @inject HttpClient Http
-<HeadContent>
-    <link href="./Custom-Rtl.css" rel="stylesheet" />
-</HeadContent>
+@inject IJSRuntime JSRuntime
 
 <div class="card shadow-sm w-100" dir="rtl">
     <div class="card-body">
@@ -22,9 +20,9 @@
         {
             <h3 style="color:cornflowerblue">ثانيا النشاط العلمي</h3>
             <hr style="color:cornflowerblue" />
-        <div class="card shadow-sm mb-4">
-            <div class="card-body">
-                <h5 class="card-title mb-4">2-1: مدى التقدم في دراسة الماجستير</h5>
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">2-1: مدى التقدم في دراسة الماجستير</h5>
 
                     <!-- Program Info -->
                     <div class="row g-3 mb-4">
@@ -100,11 +98,14 @@
                             </span>
                         </div>
                     </div>
-             </div>
-        </div>
+                </div>
+            </div>
+
+            <!-- Research Papers Section -->
             <div class="card shadow-sm mb-4">
                 <div class="card-body">
                     <h5>2-2:سجل اوراقك البحثية و انشطة علمية خلال الفصل الدراسي</h5>
+
                     @if (researchPapers == null || !researchPapers.Any())
                     {
                         <div class="alert alert-info text-center">
@@ -172,56 +173,133 @@
                             </table>
                         </div>
                     }
-
                     <div class="text-end mt-3">
-                        <button class="btn btn-success btn-ls" @onclick="AddNewPaper">
+                        <button class="btn btn-success btn-lg" @onclick="AddNewPaper">
                             <i class="bi bi-plus-circle me-2"></i>إضافة بحث جديد
                         </button>
                     </div>
                 </div>
-
             </div>
 
-        }
-        <div class="card shadow-sm mb-4" dir="rtl">
-            <div class="card-body">
-                <h5 class="card-title mb-4">انشطة علمية اخري</h5>
-                <div class="row g-3">
-                    <div class="col-md-4">
-                        <div class="form-check form-check-rtl">
-                            <input class="form-check-input" type="checkbox" id="attendSeminars" @bind="otherActivities.HasTechnicalReportsOrArticles">
-                            <label class="form-check-label" for="attendSeminars">
-                                تقارير فنية او مقالات منشور(دون ان تكون ورقة بحثية)
-                            </label>
+            <div class="card shadow-sm mb-4" dir="rtl">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">انشطة علمية اخري</h5>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="form-check form-check-rtl">
+                                <input class="form-check-input" type="checkbox" id="attendSeminars" @bind="otherActivities.HasTechnicalReportsOrArticles">
+                                <label class="form-check-label" for="attendSeminars">
+                                    تقارير فنية او مقالات منشور(دون ان تكون ورقة بحثية)
+                                </label>
+                            </div>
                         </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="form-check form-check-rtl">
-                            <input class="form-check-input" type="checkbox" id="publishArticle" @bind="otherActivities.HasGivenLecturesOrSeminars">
-                            <label class="form-check-label" for="publishArticle">
-                                القاء محاضرات في ندوات او لقاءات
-                            </label>
+                        <div class="col-md-4">
+                            <div class="form-check form-check-rtl">
+                                <input class="form-check-input" type="checkbox" id="publishArticle" @bind="otherActivities.HasGivenLecturesOrSeminars">
+                                <label class="form-check-label" for="publishArticle">
+                                    القاء محاضرات في ندوات او لقاءات
+                                </label>
+                            </div>
                         </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="form-check form-check-rtl">
-                            <input class="form-check-input" type="checkbox" id="superviseStudents" @bind="otherActivities.HasAttendedScientificSeminars">
-                            <label class="form-check-label" for="superviseStudents">
-                                حضور ندوات علمية ودورات تدريبية علمية
-                            </label>
+                        <div class="col-md-4">
+                            <div class="form-check form-check-rtl">
+                                <input class="form-check-input" type="checkbox" id="superviseStudents" @bind="otherActivities.HasAttendedScientificSeminars">
+                                <label class="form-check-label" for="superviseStudents">
+                                    حضور ندوات علمية ودورات تدريبية علمية
+                                </label>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-     </div>
+        }
+    </div>
 </div>
-@code{
+<!-- Simple Modal -->
+@if (showModal)
+{
+    <div class="modal-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 9999; display: flex; justify-content: center; align-items: center;">
+        <div class="modal-container" style="background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 90%; max-width: 800px; max-height: 90%; overflow-y: auto;" dir="rtl">
+            <div class="modal-header bg-primary text-white p-3">
+                <h5 class="modal-title m-0">
+                    <i class="bi bi-file-earmark-plus me-2"></i>
+                    @(isEditMode ? "تعديل البحث" : "إضافة بحث جديد")
+                </h5>
+                <button type="button" class="btn btn-sm btn-outline-light ms-auto" @onclick="CloseModal">✖</button>
+            </div>
+            <EditForm Model="currentPaper" OnValidSubmit="SavePaper">
+                <DataAnnotationsValidator />
+                <div class="modal-body p-3">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label fw-bold">عنوان البحث أو الورقة <span class="text-danger">*</span></label>
+                            <InputText class="form-control" @bind-Value="currentPaper.Title" placeholder="أدخل عنوان البحث" />
+                            <ValidationMessage For="@(() => currentPaper.Title)" class="text-danger" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">اسم المؤتمر/الدورية <span class="text-danger">*</span></label>
+                            <InputText class="form-control" @bind-Value="currentPaper.ConferenceOrJournal" placeholder="أدخل اسم المؤتمر أو الدورية" />
+                            <ValidationMessage For="@(() => currentPaper.ConferenceOrJournal)" class="text-danger" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">المكان <span class="text-danger">*</span></label>
+                            <InputText class="form-control" @bind-Value="currentPaper.Location" placeholder="مثال: الرياض، السعودية" />
+                            <ValidationMessage For="@(() => currentPaper.Location)" class="text-danger" />
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">عدد الصفحات <span class="text-danger">*</span></label>
+                            <InputNumber class="form-control" @bind-Value="currentPaper.PageCount" placeholder="0" />
+                            <ValidationMessage For="@(() => currentPaper.PageCount)" class="text-danger" />
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">التاريخ <span class="text-danger">*</span></label>
+                            <InputDate class="form-control" @bind-Value="currentPaper.Date" />
+                            <ValidationMessage For="@(() => currentPaper.Date)" class="text-danger" />
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">الحالة <span class="text-danger">*</span></label>
+                            <InputSelect class="form-select" @bind-Value="currentPaper.Status">
+                                <option value="">-- اختر الحالة --</option>
+                                <option value="منشور">منشور</option>
+                                <option value="قيد المراجعة">قيد المراجعة</option>
+                                <option value="مقبول">مقبول</option>
+                                <option value="مرفوض">مرفوض</option>
+                            </InputSelect>
+                            <ValidationMessage For="@(() => currentPaper.Status)" class="text-danger" />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer p-3 border-top">
+                    <button type="button" class="btn btn-secondary" @onclick="CloseModal">
+                        <i class="bi bi-x-circle me-1"></i>إلغاء
+                    </button>
+                    <button type="submit" class="btn btn-primary ms-2">
+                        <i class="bi bi-check-circle me-1"></i>@(isEditMode ? "حفظ التعديلات" : "إضافة")
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@code {
     MastersDto mastersData = new MastersDto();
     private bool isLoading = true;
     private List<ResearchPaperDto> researchPapers = new List<ResearchPaperDto>();
     private OtherActivitiesDto otherActivities = new OtherActivitiesDto();
     private string? errorMessage;
+
+    // Modal state
+    private bool showModal = false;
+    private bool isEditMode = false;
+    private ResearchPaperDto currentPaper = new ResearchPaperDto();
+    private int nextId = 3;
+    private int testCounter = 0;
 
     protected override async Task OnInitializedAsync()
     {
@@ -234,23 +312,20 @@
         errorMessage = null;
         try
         {
-
-            // should use make api call to get real data
-
-            isLoading = false;
             mastersData = new MastersDto
-                {
-                    Major = "علوم الحاسب --تعلم الالة",
-                    HoursGained = 24,
-                    Grade = 3.75,
-                    EstimatedGraduationDate = new DateOnly(2026, 6, 15),
-                    ResearchPointsCompleted = true,
-                    SearchInResources = true,
-                    SearchPlanning = false,
-                    CollectDataAndAnalyze = true,
-                    ResearchReportWriting = false,
-                    ScientificResearchReport = false
-                };
+            {
+                Major = "علوم الحاسب --تعلم الالة",
+                HoursGained = 24,
+                Grade = 3.75,
+                EstimatedGraduationDate = new DateOnly(2026, 6, 15),
+                ResearchPointsCompleted = true,
+                SearchInResources = true,
+                SearchPlanning = false,
+                CollectDataAndAnalyze = true,
+                ResearchReportWriting = false,
+                ScientificResearchReport = false
+            };
+
             researchPapers = new List<ResearchPaperDto>
             {
                 new ResearchPaperDto
@@ -274,6 +349,8 @@
                     Status = "قيد المراجعة"
                 }
             };
+
+            await SendDataToParent();
         }
         catch (Exception ex)
         {
@@ -282,29 +359,88 @@
         finally
         {
             isLoading = false;
+            StateHasChanged();
         }
     }
     private void AddNewPaper()
     {
-        //complete the logic to add new paper
-        Console.WriteLine("Add new paper clicked");
+        Console.WriteLine("AddNewPaper method called!");
+        isEditMode = false;
+        currentPaper = new ResearchPaperDto
+        {
+            Date = DateOnly.FromDateTime(DateTime.Now),
+            Title = "",
+            ConferenceOrJournal = "",
+            Location = "",
+            Status = ""
+        };
+        showModal = true;
+        Console.WriteLine($"showModal set to: {showModal}");
+        StateHasChanged();
     }
 
     private void EditPaper(int id)
     {
-        //complete the logic to edit paper
-        Console.WriteLine($"Edit paper {id} clicked");
+        isEditMode = true;
+        var paper = researchPapers.FirstOrDefault(p => p.Id == id);
+        if (paper != null)
+        {
+            currentPaper = new ResearchPaperDto
+            {
+                Id = paper.Id,
+                Title = paper.Title,
+                ConferenceOrJournal = paper.ConferenceOrJournal,
+                Location = paper.Location,
+                PageCount = paper.PageCount,
+                Date = paper.Date,
+                Status = paper.Status
+            };
+            showModal = true;
+            StateHasChanged();
+        }
     }
 
     private async Task DeletePaper(int id)
     {
-        //  Show confirmation dialog and call API
-        // if (await JSRuntime.InvokeAsync<bool>("confirm", "هل أنت متأكد من حذف هذا البحث؟"))
-        // {
-        //     await Http.DeleteAsync($"api/research-papers/{id}");
-        //     await LoadActivityData();
-        // }
-        Console.WriteLine($"Delete paper {id} clicked");
+        var paper = researchPapers.FirstOrDefault(p => p.Id == id);
+        if (paper != null)
+        {
+            researchPapers.Remove(paper);
+            await SendDataToParent();
+            StateHasChanged();
+        }
+    }
+
+    private async Task SavePaper()
+    {
+        if (isEditMode)
+        {
+            var existingPaper = researchPapers.FirstOrDefault(p => p.Id == currentPaper.Id);
+            if (existingPaper != null)
+            {
+                existingPaper.Title = currentPaper.Title;
+                existingPaper.ConferenceOrJournal = currentPaper.ConferenceOrJournal;
+                existingPaper.Location = currentPaper.Location;
+                existingPaper.PageCount = currentPaper.PageCount;
+                existingPaper.Date = currentPaper.Date;
+                existingPaper.Status = currentPaper.Status;
+            }
+        }
+        else
+        {
+            currentPaper.Id = nextId++;
+            researchPapers.Add(currentPaper);
+        }
+
+        await SendDataToParent();
+        CloseModal();
+    }
+
+    private void CloseModal()
+    {
+        showModal = false;
+        currentPaper = new ResearchPaperDto();
+        StateHasChanged();
     }
 
     private string GetStatusBadgeClass(string status)
@@ -318,6 +454,7 @@
             _ => "bg-secondary"
         };
     }
+
     [Parameter]
     public EventCallback<List<ResearchPaperDto>> OnResearchPapersLoaded { get; set; }
 

@@ -58,3 +58,66 @@ h1:focus {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+
+/* Ensure buttons are clickable */
+button {
+    cursor: pointer !important;
+    pointer-events: auto !important;
+}
+
+.btn {
+    cursor: pointer !important;
+    pointer-events: auto !important;
+}
+
+.card.shadow-sm {
+    border: solid 1px #e2e2e2;
+    border-radius: 0.5rem;
+    background-color: #fff;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+h3 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1.75rem;
+    font-weight: 500;
+}
+
+hr {
+    border: 0;
+    height: 1px;
+    background: #007bff;
+}
+
+.row.g-3.mt-3 {
+    margin-top: 1rem;
+}
+
+.form-check-label {
+    margin-bottom: 0;
+    font-weight: 400;
+    color: #333;
+}
+
+.form-check-input {
+    position: relative;
+    margin-top: 0.3rem;
+    margin-right: 0.5rem;
+    cursor: pointer;
+}
+
+.form-check-input:focus {
+    box-shadow: none;
+}
+
+input[type="checkbox"].form-check-input {
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: 0.2rem;
+    accent-color: #007bff;
+}
