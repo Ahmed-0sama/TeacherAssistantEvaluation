@@ -1,4 +1,4 @@
-using Srs.Client.Pages;
+using Srs.Client;
 using Srs.Components;
 
 var builder = WebApplication.CreateBuilder(args);

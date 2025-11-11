@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
@@ -7,10 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="..\Srs.Client\Pages\Component.razor" Link="Component.razor" />
+    <None Include="..\TeachingAssistantEvaluation.Client\Pages\Component.razor" Link="Component.razor" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Shared\Shared.csproj" />
     <ProjectReference Include="..\Srs.Client\Srs.Client.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="9.0.10" />
   </ItemGroup>
