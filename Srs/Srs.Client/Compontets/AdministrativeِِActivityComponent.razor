@@ -1,0 +1,94 @@
+﻿@using Shared.Dtos
+@inject HttpClient Http
+
+<HeadContent>
+    <link href="./Custom-Rtl.css" rel="stylesheet" />
+</HeadContent>
+
+<div class="card shadow-sm w-100" dir="rtl">
+    <div class="card-body">
+        <h3 style="color:cornflowerblue">ثالثا: النشاط الاداري</h3>
+        <hr style="color:cornflowerblue" />
+        <div class="row g-3 mt-3" dir="rtl">
+            <div class="col-md-6">
+                <div class="form-check form-check-rtl">
+                    <InputCheckbox class="form-check-input"
+                                   id="IsAcademicGuidanceCommittee"
+                                   @bind-Value="AdminstrativeActivityDto.IsAcademicGuidanceCommittee"
+                                   @bind-Value:after="OnDataChanged" />
+                    <label class="form-check-label" for="IsAcademicGuidanceCommittee">
+                        لجنة الارشاد الاكاديمي
+                    </label>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-check form-check-rtl">
+                    <InputCheckbox class="form-check-input"
+                                   id="ISchedulingCommittee"
+                                   @bind-Value="AdminstrativeActivityDto.ISchedulingCommittee"
+                                   @bind-Value:after="OnDataChanged" />
+                    <label class="form-check-label" for="ISchedulingCommittee">
+                        لجنة الجدولة
+                    </label>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-check form-check-rtl">
+                    <InputCheckbox class="form-check-input"
+                                   id="IsQualityWorksCommittee"
+                                   @bind-Value="AdminstrativeActivityDto.IsQualityWorksCommittee"
+                                   @bind-Value:after="OnDataChanged" />
+                    <label class="form-check-label" for="IsQualityWorksCommittee">
+                        لجنة اعمال الجودة
+                    </label>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-check form-check-rtl">
+                    <InputCheckbox class="form-check-input"
+                                   id="IsLaboratoryEquipmentCommittee"
+                                   @bind-Value="AdminstrativeActivityDto.IsLaboratoryEquipmentCommittee"
+                                   @bind-Value:after="OnDataChanged" />
+                    <label class="form-check-label" for="IsLaboratoryEquipmentCommittee">
+                        لجنة التجهيزات المعملية
+                    </label>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-check form-check-rtl">
+                    <InputCheckbox class="form-check-input"
+                                   id="IsExaminationsOrganizingCommittee"
+                                   @bind-Value="AdminstrativeActivityDto.IsExaminationsOrganizingCommittee"
+                                   @bind-Value:after="OnDataChanged" />
+                    <label class="form-check-label" for="IsExaminationsOrganizingCommittee">
+                        لجنة تنظيم الامتحانات
+                    </label>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-check form-check-rtl">
+                    <InputCheckbox class="form-check-input"
+                                   id="IsSocialOrSportsActivityCommittees"
+                                   @bind-Value="AdminstrativeActivityDto.IsSocialOrSportsActivityCommittees"
+                                   @bind-Value:after="OnDataChanged" />
+                    <label class="form-check-label" for="IsSocialOrSportsActivityCommittees">
+                        لجان النشاط الاجتماعي او الرياضي
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private AdminstrativeActivityDto AdminstrativeActivityDto = new AdminstrativeActivityDto();
+
+    [Parameter]
+    public EventCallback<AdminstrativeActivityDto> OnActivityLoaded { get; set; }
+
+    private async Task OnDataChanged()
+    {
+        // send to the index page
+        await OnActivityLoaded.InvokeAsync(AdminstrativeActivityDto);
+    }
+}

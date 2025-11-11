@@ -3,32 +3,80 @@
 
 <div class="d-flex flex-column justify-content-center align-items-center vh-80">
     <h3 class="text-center mb-4">تقييم مساعد التدريس</h3>
-     <div class="w-75 mb-4 shadow-sm">
-        <Srs.Client.Compontets.UserDataComponent OnUserDataLoaded="HandleUserData" />
-    </div>
-     <div class="w-75 mb-4 shadow-sm">
-        <Srs.Client.Compontets.EducationalActivityComponent OnActivityLoaded="HandleActivityData" />
-    </div>
+    
     <div class="w-75 mb-4 shadow-sm">
-        <Srs.Client.Compontets.SentificِActivityComponent/>
+        <Srs.Client.Compontets.UserDataComponent />
+    </div>
+    
+    <div class="w-75 mb-4 shadow-sm">
+        <Srs.Client.Compontets.EducationalActivityComponent/>
+    </div>
+    
+    <div class="w-75 mb-4 shadow-sm">
+        <Srs.Client.Compontets.SentificِActivityComponent OnResearchPapersLoaded="HandleResearchPapers"
+                                                          OnOtherActivitiesLoaded="HandleOtherActivities" />
+    </div>
+    
+    <div class="w-75 mb-4 shadow-sm">
+        <Srs.Client.Compontets.AdministrativeِِActivityComponent OnActivityLoaded="HandleAdministrativeData" />
+    </div>
+    
+    <div class="w-75 mb-4 shadow-sm">
+        <Srs.Client.Compontets.StudentActivityComponent OnActivityLoaded="HandleStudentActivityData" />
+    </div>
+    
+    <div class="w-75 mb-4 shadow-sm">
+        <Srs.Client.Compontets._ِAcademicAdvisingComponent />
+    </div>
+    
+    <div class="w-75 mb-4">
+        <button class="btn btn-primary btn-lg w-100" @onclick="SubmitAllData">
+            حفظ جميع البيانات
+        </button>
     </div>
 </div>
 
-
-@code{
-    private UserDataDto? userData;
-    private EducationalActivityDto? activityData;
-
-    private void HandleUserData(UserDataDto data)
+@code {
+    private List<ResearchPaperDto> researchPapers = new List<ResearchPaperDto>();
+    private OtherActivitiesDto otherActivities = new OtherActivitiesDto();
+    private AdminstrativeActivityDto? administrativeData;
+    private StudentActivityDto? studentActivityData;
+    private EducationalActivityDto? educationalData;
+    //private AcademicAdvisingDto? academicAdvisingData;
+        
+   
+    private void HandleAdministrativeData(AdminstrativeActivityDto data)
     {
-        userData = data;
-        Console.WriteLine("User data received from child ");
+        administrativeData = data;
+        Console.WriteLine($"Administrative data received: IsAcademicGuidanceCommittee = {data.IsAcademicGuidanceCommittee}");
+    }
+    
+    private void HandleStudentActivityData(StudentActivityDto data)
+    {
+        studentActivityData = data;
+        Console.WriteLine("Student activity data received");
+    }
+    
+    // private void HandleAcademicAdvisingData(AcademicAdvisingDto data)
+    // {
+    //     academicAdvisingData = data;
+    //     Console.WriteLine("Academic advising data received");
+    // }
+    
+    private async Task SubmitAllData()
+    {
+        Console.WriteLine($"Educational: {educationalData}");
+        Console.WriteLine($"Administrative: {administrativeData?.IsAcademicGuidanceCommittee}");
+    }
+    private void HandleResearchPapers(List<ResearchPaperDto> papers)
+    {
+        researchPapers = papers;
+        Console.WriteLine("Research papers received from child");
     }
 
-    private void HandleActivityData(EducationalActivityDto data)
+    private void HandleOtherActivities(OtherActivitiesDto activities)
     {
-        activityData = data;
-        Console.WriteLine("Activity data received from child");
+        otherActivities = activities;
+        Console.WriteLine("Other activities received from child");
     }
-
 }

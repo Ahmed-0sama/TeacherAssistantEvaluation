@@ -1,5 +1,8 @@
 ﻿@using Shared.Dtos
 @inject HttpClient Http
+<HeadContent>
+    <link href="./Custom-Rtl.css" rel="stylesheet" />
+</HeadContent>
 
 <div class="card shadow-sm w-100" dir="rtl">
     <div class="card-body">
@@ -180,40 +183,36 @@
             </div>
 
         }
-        <div class="card shadow-sm mb-4">
-          <div class="card-body">
-              <h5 class="card-title mb-4">انشطة علمية اخري</h5>
+        <div class="card shadow-sm mb-4" dir="rtl">
+            <div class="card-body">
+                <h5 class="card-title mb-4">انشطة علمية اخري</h5>
                 <div class="row g-3">
                     <div class="col-md-4">
-                        <div class="form-check">
+                        <div class="form-check form-check-rtl">
                             <input class="form-check-input" type="checkbox" id="attendSeminars" @bind="otherActivities.HasTechnicalReportsOrArticles">
                             <label class="form-check-label" for="attendSeminars">
                                 تقارير فنية او مقالات منشور(دون ان تكون ورقة بحثية)
                             </label>
                         </div>
                     </div>
-
                     <div class="col-md-4">
-                        <div class="form-check">
+                        <div class="form-check form-check-rtl">
                             <input class="form-check-input" type="checkbox" id="publishArticle" @bind="otherActivities.HasGivenLecturesOrSeminars">
                             <label class="form-check-label" for="publishArticle">
-                               القاء محاضرات في ندوات او لقاءات
+                                القاء محاضرات في ندوات او لقاءات
                             </label>
                         </div>
                     </div>
-
                     <div class="col-md-4">
-                        <div class="form-check">
+                        <div class="form-check form-check-rtl">
                             <input class="form-check-input" type="checkbox" id="superviseStudents" @bind="otherActivities.HasAttendedScientificSeminars">
                             <label class="form-check-label" for="superviseStudents">
                                 حضور ندوات علمية ودورات تدريبية علمية
                             </label>
                         </div>
                     </div>
-
                 </div>
-
-         </div>
+            </div>
         </div>
      </div>
 </div>
@@ -228,6 +227,7 @@
     {
         await LoadActivityData();
     }
+
     private async Task LoadActivityData()
     {
         isLoading = true;
@@ -284,7 +284,7 @@
             isLoading = false;
         }
     }
-         private void AddNewPaper()
+    private void AddNewPaper()
     {
         //complete the logic to add new paper
         Console.WriteLine("Add new paper clicked");
@@ -317,5 +317,23 @@
             "مرفوض" => "bg-danger",
             _ => "bg-secondary"
         };
+    }
+    [Parameter]
+    public EventCallback<List<ResearchPaperDto>> OnResearchPapersLoaded { get; set; }
+
+    [Parameter]
+    public EventCallback<OtherActivitiesDto> OnOtherActivitiesLoaded { get; set; }
+
+    private async Task SendDataToParent()
+    {
+        if (OnResearchPapersLoaded.HasDelegate)
+        {
+            await OnResearchPapersLoaded.InvokeAsync(researchPapers);
+        }
+
+        if (OnOtherActivitiesLoaded.HasDelegate)
+        {
+            await OnOtherActivitiesLoaded.InvokeAsync(otherActivities);
+        }
     }
 }

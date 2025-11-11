@@ -1,0 +1,58 @@
+﻿@using Shared.Dtos
+@inject HttpClient Http
+
+<HeadContent>
+    <link href="./Custom-Rtl.css" rel="stylesheet" />
+</HeadContent>
+<div class="card shadow-sm w-100" dir="rtl">
+    <div class="card-body">
+        <h3 style="color:cornflowerblue">رابعا : الأنشطة الطلابية</h3>
+        <hr style="color:cornflowerblue" />
+        <div class="row g-3 mt-3" dir="rtl">
+            <div class="col-md-4">
+                <div class="form-check form-check-rtl">
+                    <InputCheckbox class="form-check-input"
+                                   id="sportActivity"
+                                   @bind-Value="studentActivity.IsCompletedStudentActivity" />
+                    <label class="form-check-label" for="sportActivity">
+                        نشاط رياضي
+                    </label>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-check form-check-rtl">
+                    <InputCheckbox class="form-check-input"
+                                   id="socialActivity"
+                                   @bind-Value="studentActivity.IsCompletedSocialActivity" />
+                    <label class="form-check-label" for="socialActivity">
+                        نشاط اجتماعي
+                    </label>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-check form-check-rtl">
+                    <InputCheckbox class="form-check-input"
+                                   id="culturalActivity"
+                                   @bind-Value="studentActivity.IsCompletedCulturalActivity" />
+                    <label class="form-check-label" for="culturalActivity">
+                        نشاط ثقافي
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+        
+                    
+@code{
+    private StudentActivityDto studentActivity = new StudentActivityDto();
+    [Parameter]
+    public EventCallback<StudentActivityDto> OnActivityLoaded { get; set; }
+    private async Task SendDataToParent()
+    {
+        if (OnActivityLoaded.HasDelegate)
+        {
+            await OnActivityLoaded.InvokeAsync(studentActivity);
+        }
+    }
+}
