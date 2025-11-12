@@ -61,12 +61,18 @@
 @code {
     private bool isLoading = true;
     private string? errorMessage;
+    private List<MastersDto> taList = new();
+
     protected override async Task OnInitializedAsync()
     {
         try
         {
-
-            // Load necessary data here
+            // var response = await Http.GetFromJsonAsync<Shared.Dtos.MastersDto>($"api/userdata/{userid}");
+            taList = new List<MastersDto> {
+                new MastersDto { name = "علياء نبيل", Major = "علوم الحاسب", Status = "Approved" },
+                new MastersDto { name = "سارة حسن", Major = "علوم الحاسب", Status = "Pending" },
+                new MastersDto { name = "أحمد محمود", Major = "علوم الحاسب", Status = "Pending" }
+            };
         }
         catch (Exception ex)
         {
@@ -77,10 +83,4 @@
             isLoading = false;
         }
     }
-    private List<MastersDto> taList = new List<MastersDto>
-    {
-        new MastersDto { name = "محمد علي", Major = "برمجة 101", Status = "Approved" },
-        new MastersDto { name = "سارة حسن", Major = "خوارزميات",  Status = "Pending" },
-        new MastersDto { name = "أحمد محمود", Major = "هياكل البيانات", Status = "Pending" }
-    };
 }
