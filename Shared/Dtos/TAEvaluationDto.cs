@@ -13,17 +13,15 @@ namespace Shared.Dtos
             public string WorkId { get; set; } = "";
             public string SubjectName { get; set; } = "";
             public int NumberOfClasses { get; set; }  
-            
+            public int grade1 { get; set; }
+            public int grade2 { get; set; }
+            public int grade3 { get; set; }
 
             public int? Total { get; set; }
 
             public string Status
             {
-                get
-                {
-                    if (Total.HasValue) return $"{Total}";
-                    else return"تقييم";
-                }
+            get; set;        
             }
-        }
+     }
 }

@@ -40,11 +40,11 @@
                                 <td>
                                     @if (ta.Total.HasValue)
                                     {
-                                        if (ta.Total.Value >= 75)
+                                        if (ta.Total.Value >= 25)
                                         {
                                             <span class="badge bg-success">مكتمل (@ta.Total)</span>
                                         }
-                                        else if (ta.Total.Value >= 50)
+                                        else if (ta.Total.Value >= 15)
                                         {
                                             <span class="badge bg-info">جيد (@ta.Total)</span>
                                         }
@@ -58,8 +58,12 @@
                                         <span class="badge bg-danger">غير مقيّم</span>
                                     }
                                 </td>
-                                <td>
-                                    <button type="button" class="btn btn-sm btn-primary" @onclick="() => OpenModal(ta)">عرض</button>
+                               <td>
+                                    <button type="button"
+                                            class="btn btn-sm @(ta.Status == "Approved" ? "btn-success" : "btn-primary")"
+                                            @onclick="() => OpenModal(ta)">
+                                        @GetButtonText(ta)
+                                    </button>
                                 </td>
                             </tr>
                         }
@@ -69,6 +73,7 @@
         }
     </div>
 </div>
+
 <!-- Modal Component -->
 @if (isModalVisible && selectedTA != null)
 {
@@ -104,20 +109,52 @@
                         <div class="col-md-4">
                             <label class="form-label fw-semibold">الدرجة 1</label>
                             <small class="text-muted d-block mb-1">(من 0 إلى 10)</small>
-                            <input type="number" class="form-control" @bind="grade1" @bind:event="oninput" min="0" max="10" />
+                            <input type="number"
+                                   class="form-control @(validationErrors.ContainsKey("grade1") ? "is-invalid" : "")"
+                                   @bind="selectedTA.grade1"
+                                   @bind:event="oninput"
+                                   @onblur="ValidateGrade1"
+                                   min="0"
+                                   max="10"
+                                   readonly="@isReadOnly" />
+                            @if (validationErrors.ContainsKey("grade1"))
+                            {
+                                <div class="invalid-feedback">@validationErrors["grade1"]</div>
+                            }
                         </div>
 
                         <div class="col-md-4">
                             <label class="form-label fw-semibold">الدرجة 2</label>
                             <small class="text-muted d-block mb-1">(من 0 إلى 5)</small>
-
-                            <input type="number" class="form-control" @bind="grade2" @bind:event="oninput" min="0" max="5" />
+                            <input type="number"
+                                   class="form-control @(validationErrors.ContainsKey("grade2") ? "is-invalid" : "")"
+                                   @bind="selectedTA.grade2"
+                                   @bind:event="oninput"
+                                   @onblur="ValidateGrade2"
+                                   min="0"
+                                   max="5"
+                                   readonly="@isReadOnly" />
+                            @if (validationErrors.ContainsKey("grade2"))
+                            {
+                                <div class="invalid-feedback">@validationErrors["grade2"]</div>
+                            }
                         </div>
 
                         <div class="col-md-4">
                             <label class="form-label fw-semibold">الدرجة 3</label>
                             <small class="text-muted d-block mb-1">(من 0 إلى 15)</small>
-                            <input type="number" class="form-control" @bind="grade3" @bind:event="oninput" min="0" max="15" />
+                            <input type="number"
+                                   class="form-control @(validationErrors.ContainsKey("grade3") ? "is-invalid" : "")"
+                                   @bind="selectedTA.grade3"
+                                   @bind:event="oninput"
+                                   @onblur="ValidateGrade3"
+                                   min="0"
+                                   max="15"
+                                   readonly="@isReadOnly" />
+                            @if (validationErrors.ContainsKey("grade3"))
+                            {
+                                <div class="invalid-feedback">@validationErrors["grade3"]</div>
+                            }
                         </div>
                     </div>
 
@@ -128,6 +165,14 @@
                             <span class="fs-5 text-muted">/ 30</span>
                         </div>
                     </div>
+
+                    @if (validationErrors.Any())
+                    {
+                        <div class="alert alert-warning mt-3">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            يرجى تصحيح الأخطاء قبل الحفظ
+                        </div>
+                    }
                 </div>
             </div>
 
@@ -135,51 +180,113 @@
                 <button type="button" class="btn btn-secondary px-4" @onclick="HideModal">
                     <i class="bi bi-x-circle me-2"></i>إلغاء
                 </button>
-                <button type="button" class="btn btn-success px-4" @onclick="SaveGrade">
-                    <i class="bi bi-check-circle me-2"></i>حفظ التقييم
-                </button>
+                @if (!isReadOnly)
+                {
+                    <button type="button"
+                            class="btn btn-success px-4"
+                            @onclick="SaveGrade"
+                            disabled="@(validationErrors.Any())">
+                        <i class="bi bi-check-circle me-2"></i>حفظ التقييم
+                    </button>
+                }
             </div>
         </div>
     </div>
 }
+
 @code {
     private List<TAEvaluationDto> taList = new();
     private TAEvaluationDto? selectedTA;
     private bool isLoading = true;
     private string? errorMessage;
+    private Dictionary<string, string> validationErrors = new();
+    private bool isReadOnly = false;
 
-    private int _grade1;
-    private int grade1
+    private int Total => (selectedTA?.grade1 ?? 0) + (selectedTA?.grade2 ?? 0) + (selectedTA?.grade3 ?? 0);
+
+    private bool isModalVisible = false;
+
+    private void ValidateGrade1()
     {
-        get => _grade1;
-        set => _grade1 = Math.Clamp(value, 0, 10);
+        if (selectedTA == null) return;
+
+        validationErrors.Remove("grade1");
+
+        if (selectedTA.grade1 < 0)
+        {
+            selectedTA.grade1 = 0;
+            validationErrors["grade1"] = "الدرجة لا يمكن أن تكون سالبة";
+        }
+        else if (selectedTA.grade1 > 10)
+        {
+            selectedTA.grade1 = 10;
+            validationErrors["grade1"] = "الحد الأقصى للدرجة الأولى هو 10";
+        }
+
+        StateHasChanged();
     }
 
-    private int _grade2;
-    private int grade2
+    private void ValidateGrade2()
     {
-        get => _grade2;
-        set => _grade2 = Math.Clamp(value, 0, 5);
+        if (selectedTA == null) return;
+
+        validationErrors.Remove("grade2");
+
+        if (selectedTA.grade2 < 0)
+        {
+            selectedTA.grade2 = 0;
+            validationErrors["grade2"] = "الدرجة لا يمكن أن تكون سالبة";
+        }
+        else if (selectedTA.grade2 > 5)
+        {
+            selectedTA.grade2 = 5;
+            validationErrors["grade2"] = "الحد الأقصى للدرجة الثانية هو 5";
+        }
+
+        StateHasChanged();
     }
 
-    private int _grade3;
-    private int grade3
+    private void ValidateGrade3()
     {
-        get => _grade3;
-        set => _grade3 = Math.Clamp(value, 0, 15);
+        if (selectedTA == null) return;
+
+        validationErrors.Remove("grade3");
+
+        if (selectedTA.grade3 < 0)
+        {
+            selectedTA.grade3 = 0;
+            validationErrors["grade3"] = "الدرجة لا يمكن أن تكون سالبة";
+        }
+        else if (selectedTA.grade3 > 15)
+        {
+            selectedTA.grade3 = 15;
+            validationErrors["grade3"] = "الحد الأقصى للدرجة الثالثة هو 15";
+        }
+
+        StateHasChanged();
     }
 
-    private int Total => grade1 + grade2 + grade3;
-
-    private bool isModalVisible = false; 
+    private void ValidateAllGrades()
+    {
+        ValidateGrade1();
+        ValidateGrade2();
+        ValidateGrade3();
+    }
 
     private void OpenModal(TAEvaluationDto ta)
     {
         selectedTA = ta;
-        
-        // Initialize grades
-        grade1 = grade2 = grade3 = 0;
-        
+        validationErrors.Clear();
+        // Determine if the modal should be read-only
+        isReadOnly = ta.Status == "Approved";
+        // Initialize grades if they haven't been set
+        if (selectedTA.grade1 == 0 && selectedTA.grade2 == 0 && selectedTA.grade3 == 0 && !selectedTA.Total.HasValue)
+        {
+            selectedTA.grade1 = 0;
+            selectedTA.grade2 = 0;
+            selectedTA.grade3 = 0;
+        }
+
         isModalVisible = true;
         StateHasChanged();
     }
@@ -188,24 +295,37 @@
     {
         isModalVisible = false;
         selectedTA = null;
+        validationErrors.Clear();
         StateHasChanged();
     }
 
     private async Task SaveGrade()
     {
-        if (selectedTA == null)
-            return;
+        if (selectedTA == null) return;
+
+        // Validate all grades before saving
+        ValidateAllGrades();
+
+        if (validationErrors.Any()) 
+        {
+            return; // Don't save if there are validation errors
+        }
 
         selectedTA.Total = Total;
 
         try
         {
-            // Post only total
             await Http.PostAsJsonAsync("api/taevaluations/grade", selectedTA);
 
-            // Update list
+            // Update the item in the list
             var item = taList.FirstOrDefault(x => x.Id == selectedTA.Id);
-            if (item != null) item.Total = Total;
+            if (item != null)
+            {
+                item.grade1 = selectedTA.grade1;
+                item.grade2 = selectedTA.grade2;
+                item.grade3 = selectedTA.grade3;
+                item.Total = selectedTA.Total;
+            }
 
             HideModal();
         }
@@ -214,49 +334,68 @@
             errorMessage = $"فشل حفظ التقييم: {ex.Message}";
         }
     }
+
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            Console.WriteLine("OnInitializedAsync started");
-            await Task.Delay(500);
-
-            // Demo data
+            // Demo data with proper grade calculations
             taList = new List<TAEvaluationDto>
             {
-                new TAEvaluationDto { Id=1, TAName="أحمد محمد", WorkId="EMP001", SubjectName="البرمجة الموجهة", NumberOfClasses=12, Total=85 },
-                new TAEvaluationDto { Id=2, TAName="فاطمة علي", WorkId="EMP002", SubjectName="قواعد البيانات", NumberOfClasses=10 },
-                new TAEvaluationDto { Id=3, TAName="محمود حسن", WorkId="EMP003", SubjectName="هندسة البرمجيات", NumberOfClasses=14, Total=92 }
+                new TAEvaluationDto 
+                { 
+                    Id=1, 
+                    TAName="أحمد محمد", 
+                    WorkId="EMP001", 
+                    SubjectName="البرمجة الموجهة", 
+                    NumberOfClasses=12,
+                    grade1=8,
+                    grade2=4,
+                    grade3=12,
+                    Total=24,
+                    Status="Approved"
+                },
+                new TAEvaluationDto 
+                { 
+                    Id=2, 
+                    TAName="فاطمة علي", 
+                    WorkId="EMP002", 
+                    SubjectName="قواعد البيانات", 
+                    NumberOfClasses=10,
+                    grade1=0,
+                    grade2=0,
+                    grade3=0,
+                    Status="Pending"
+                },
+                new TAEvaluationDto 
+                { 
+                    Id=3, 
+                    TAName="محمود حسن", 
+                    WorkId="EMP003", 
+                    SubjectName="هندسة البرمجيات", 
+                    NumberOfClasses=14,
+                    grade1=10,
+                    grade2=5,
+                    grade3=15,
+                    Total=30,
+                    Status="Pending"
+                }
             };
-            
-            Console.WriteLine($"Loaded {taList.Count} TAs");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error in OnInitializedAsync: {ex.Message}");
             errorMessage = "فشل تحميل بيانات المساعدين.";
         }
         finally
         {
             isLoading = false;
-            Console.WriteLine("OnInitializedAsync completed");
         }
     }
-    private void ClampGrade1(ChangeEventArgs e)
+    private string GetButtonText(TAEvaluationDto ta)
     {
-        if (grade1 > 10) grade1 = 10;
-        if (grade1 < 0) grade1 = 0;
-    }
+        if (ta.Status == "Approved") return "عرض";
+        else if (ta.grade1==0&&ta.grade2==0&&ta.grade3==0) return "تقييم"; // For 0 / not graded
+        else  return "تعديل";
 
-    private void ClampGrade2(ChangeEventArgs e)
-    {
-        if (grade2 > 5) grade2 = 5;
-        if (grade2 < 0) grade2 = 0;
-    }
-
-    private void ClampGrade3(ChangeEventArgs e)
-    {
-        if (grade3 > 15) grade3 = 15;
-        if (grade3 < 0) grade3 = 0;
     }
 }
