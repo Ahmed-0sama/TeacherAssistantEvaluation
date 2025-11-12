@@ -1,0 +1,262 @@
+﻿@page "/professor"
+@using Shared.Dtos
+@inject HttpClient Http
+@inject IJSRuntime JS
+@rendermode InteractiveWebAssembly
+<HeadContent>
+    <link href="./Custom-Rtl.css" rel="stylesheet" />
+</HeadContent>
+
+<h3 class="text-center mb-4">تقييم مساعد التدريس</h3>
+
+<div class="d-flex flex-column justify-content-center align-items-center vh-80">
+    <div class="w-75 mb-4 shadow-sm">
+        @if (isLoading)
+        {
+            <p>جارٍ تحميل البيانات...</p>
+        }
+        else if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger">@errorMessage</div>
+        }
+        else
+        {
+             <div class="table-responsive">
+                <table class="table table-hover table-striped" dir="rtl">
+                    <thead class="table-primary">
+                        <tr>
+                            <th>اسم مساعد المدرس</th>
+                            <th>المقرر</th>
+                            <th>الحالة</th>
+                            <th>إجراء</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var ta in taList)
+                        {
+                            <tr>
+                                <td>@ta.TAName</td>
+                                <td>@ta.SubjectName</td>
+                                <td>
+                                    @if (ta.Total.HasValue)
+                                    {
+                                        if (ta.Total.Value >= 75)
+                                        {
+                                            <span class="badge bg-success">مكتمل (@ta.Total)</span>
+                                        }
+                                        else if (ta.Total.Value >= 50)
+                                        {
+                                            <span class="badge bg-info">جيد (@ta.Total)</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning text-dark">ضعيف (@ta.Total)</span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">غير مقيّم</span>
+                                    }
+                                </td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-primary" @onclick="() => OpenModal(ta)">عرض</button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+<!-- Modal Component -->
+@if (isModalVisible && selectedTA != null)
+{
+    <div class="modal-overlay" @onclick="HideModal">
+        <div class="modal-container" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h5 class="m-0">تقييم المساعد</h5>
+                <button type="button" class="btn-close btn-close-white" @onclick="HideModal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="info-section mb-4">
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <p class="mb-2"><strong>الاسم:</strong> @selectedTA.TAName</p>
+                        </div>
+                        <div class="col-6">
+                            <p class="mb-2"><strong>الرقم الوظيفي:</strong> @selectedTA.WorkId</p>
+                        </div>
+                        <div class="col-6">
+                            <p class="mb-2"><strong>المقرر:</strong> @selectedTA.SubjectName</p>
+                        </div>
+                        <div class="col-6">
+                            <p class="mb-2"><strong>عدد الحصص:</strong> @selectedTA.NumberOfClasses</p>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="my-3" />
+
+                <div class="grades-section">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">الدرجة 1</label>
+                            <small class="text-muted d-block mb-1">(من 0 إلى 10)</small>
+                            <input type="number" class="form-control" @bind="grade1" @bind:event="oninput" min="0" max="10" />
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">الدرجة 2</label>
+                            <small class="text-muted d-block mb-1">(من 0 إلى 5)</small>
+
+                            <input type="number" class="form-control" @bind="grade2" @bind:event="oninput" min="0" max="5" />
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">الدرجة 3</label>
+                            <small class="text-muted d-block mb-1">(من 0 إلى 15)</small>
+                            <input type="number" class="form-control" @bind="grade3" @bind:event="oninput" min="0" max="15" />
+                        </div>
+                    </div>
+
+                    <div class="alert alert-primary text-center mt-4 py-3">
+                        <div class="d-flex justify-content-center align-items-center gap-3">
+                            <span class="fs-5 fw-bold">المجموع الكلي:</span>
+                            <span class="fs-2 fw-bold text-primary">@Total</span>
+                            <span class="fs-5 text-muted">/ 30</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary px-4" @onclick="HideModal">
+                    <i class="bi bi-x-circle me-2"></i>إلغاء
+                </button>
+                <button type="button" class="btn btn-success px-4" @onclick="SaveGrade">
+                    <i class="bi bi-check-circle me-2"></i>حفظ التقييم
+                </button>
+            </div>
+        </div>
+    </div>
+}
+@code {
+    private List<TAEvaluationDto> taList = new();
+    private TAEvaluationDto? selectedTA;
+    private bool isLoading = true;
+    private string? errorMessage;
+
+    private int _grade1;
+    private int grade1
+    {
+        get => _grade1;
+        set => _grade1 = Math.Clamp(value, 0, 10);
+    }
+
+    private int _grade2;
+    private int grade2
+    {
+        get => _grade2;
+        set => _grade2 = Math.Clamp(value, 0, 5);
+    }
+
+    private int _grade3;
+    private int grade3
+    {
+        get => _grade3;
+        set => _grade3 = Math.Clamp(value, 0, 15);
+    }
+
+    private int Total => grade1 + grade2 + grade3;
+
+    private bool isModalVisible = false; 
+
+    private void OpenModal(TAEvaluationDto ta)
+    {
+        selectedTA = ta;
+        
+        // Initialize grades
+        grade1 = grade2 = grade3 = 0;
+        
+        isModalVisible = true;
+        StateHasChanged();
+    }
+
+    private void HideModal()
+    {
+        isModalVisible = false;
+        selectedTA = null;
+        StateHasChanged();
+    }
+
+    private async Task SaveGrade()
+    {
+        if (selectedTA == null)
+            return;
+
+        selectedTA.Total = Total;
+
+        try
+        {
+            // Post only total
+            await Http.PostAsJsonAsync("api/taevaluations/grade", selectedTA);
+
+            // Update list
+            var item = taList.FirstOrDefault(x => x.Id == selectedTA.Id);
+            if (item != null) item.Total = Total;
+
+            HideModal();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"فشل حفظ التقييم: {ex.Message}";
+        }
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Console.WriteLine("OnInitializedAsync started");
+            await Task.Delay(500);
+
+            // Demo data
+            taList = new List<TAEvaluationDto>
+            {
+                new TAEvaluationDto { Id=1, TAName="أحمد محمد", WorkId="EMP001", SubjectName="البرمجة الموجهة", NumberOfClasses=12, Total=85 },
+                new TAEvaluationDto { Id=2, TAName="فاطمة علي", WorkId="EMP002", SubjectName="قواعد البيانات", NumberOfClasses=10 },
+                new TAEvaluationDto { Id=3, TAName="محمود حسن", WorkId="EMP003", SubjectName="هندسة البرمجيات", NumberOfClasses=14, Total=92 }
+            };
+            
+            Console.WriteLine($"Loaded {taList.Count} TAs");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error in OnInitializedAsync: {ex.Message}");
+            errorMessage = "فشل تحميل بيانات المساعدين.";
+        }
+        finally
+        {
+            isLoading = false;
+            Console.WriteLine("OnInitializedAsync completed");
+        }
+    }
+    private void ClampGrade1(ChangeEventArgs e)
+    {
+        if (grade1 > 10) grade1 = 10;
+        if (grade1 < 0) grade1 = 0;
+    }
+
+    private void ClampGrade2(ChangeEventArgs e)
+    {
+        if (grade2 > 5) grade2 = 5;
+        if (grade2 < 0) grade2 = 0;
+    }
+
+    private void ClampGrade3(ChangeEventArgs e)
+    {
+        if (grade3 > 15) grade3 = 15;
+        if (grade3 < 0) grade3 = 0;
+    }
+}
