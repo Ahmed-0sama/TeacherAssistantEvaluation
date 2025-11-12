@@ -1,0 +1,86 @@
+﻿@page "/vicedean"
+@using Shared.Dtos
+@inject HttpClient Http
+@inject IJSRuntime JS
+@rendermode InteractiveWebAssembly
+<HeadContent>
+    <link href="./Custom-Rtl.css" rel="stylesheet" />
+</HeadContent>
+
+<h3 class="text-center mb-4">متابعة التقدم للدراسات العليا</h3>
+
+<div class="card shadow-sm" dir="rtl">
+    <div class="card-body">
+        <h3 class="text-center" style="color:cornflowerblue;">قائمة مساعدي التدريس</h3>
+        <hr style="color:cornflowerblue;" />
+
+        <div class="d-flex justify-content-center">
+            <div class="w-75 mb-4 shadow-sm">
+                @if (isLoading)
+                {
+                    <p class="text-center">جارٍ تحميل البيانات...</p>
+                }
+                else if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="alert alert-danger text-center">@errorMessage</div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped text-center align-middle" dir="rtl">
+                            <thead class="table-primary">
+                                <tr>
+                                    <th>اسم مساعد التدريس</th>
+                                    <th>القسم</th>
+                                    <th>الحالة</th>
+                                    <th>إجراء</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var ta in taList)
+                                {
+                                    <tr>
+                                        <td>@ta.name</td>
+                                        <td>@ta.Major</td>
+                                        <td>@ta.Status</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary">إجراء</button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@code {
+    private bool isLoading = true;
+    private string? errorMessage;
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+
+            // Load necessary data here
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"حدث خطأ أثناء تحميل البيانات: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+    private List<MastersDto> taList = new List<MastersDto>
+    {
+        new MastersDto { name = "محمد علي", Major = "برمجة 101", Status = "Approved" },
+        new MastersDto { name = "سارة حسن", Major = "خوارزميات",  Status = "Pending" },
+        new MastersDto { name = "أحمد محمود", Major = "هياكل البيانات", Status = "Pending" }
+    };
+}

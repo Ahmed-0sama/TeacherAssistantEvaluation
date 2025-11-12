@@ -1,7 +1,6 @@
 ﻿@using Shared.Dtos
 @inject HttpClient Http
 @inject IJSRuntime JSRuntime
-@rendermode InteractiveWebAssembly
 <HeadContent>
     <link href="./Custom-Rtl.css" rel="stylesheet" />
 </HeadContent>
@@ -222,9 +221,9 @@
 <!--Modal -->
 @if (showModal)
 {
-    <div class="modal-overlay">
-        <div class="modal-container">
-            <div class="modal-header">
+<div class="modal-overlay">
+    <div class="modal-container">
+        <div class="modal-header">
                 <h5 class="modal-title m-0">
                     <i class="bi bi-file-earmark-plus me-2"></i>
                     @(isEditMode ? "تعديل البحث" : "إضافة بحث جديد")

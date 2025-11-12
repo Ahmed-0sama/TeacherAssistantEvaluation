@@ -7,7 +7,7 @@
     <link href="./Custom-Rtl.css" rel="stylesheet" />
 </HeadContent>
 
-<h3 class="text-center mb-4">تقييم مساعد التدريس</h3>
+<h3 class="text-center mb-4">تقييم استاذ المقرر</h3>
 
 <div class="d-flex flex-column justify-content-center align-items-center vh-80">
     <div class="w-75 mb-4 shadow-sm">
@@ -80,7 +80,7 @@
     <div class="modal-overlay" @onclick="HideModal">
         <div class="modal-container" @onclick:stopPropagation="true">
             <div class="modal-header">
-                <h5 class="m-0">تقييم المساعد</h5>
+                <h5 class="m-0">تقييم استاذ المقرر</h5>
                 <button type="button" class="btn-close btn-close-white" @onclick="HideModal" aria-label="Close"></button>
             </div>
 
@@ -105,10 +105,11 @@
                 <hr class="my-3" />
 
                 <div class="grades-section">
-                    <div class="row g-3">
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold">الدرجة 1</label>
-                            <small class="text-muted d-block mb-1">(من 0 إلى 10)</small>
+                    <!-- Grade 1 -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="fw-bold mb-2">الالتزام بالساعات المكتبية</h6>
+                            <small class="text-muted d-block mb-2">(من 0 إلى 10)</small>
                             <input type="number"
                                    class="form-control @(validationErrors.ContainsKey("grade1") ? "is-invalid" : "")"
                                    @bind="selectedTA.grade1"
@@ -122,10 +123,13 @@
                                 <div class="invalid-feedback">@validationErrors["grade1"]</div>
                             }
                         </div>
+                    </div>
 
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold">الدرجة 2</label>
-                            <small class="text-muted d-block mb-1">(من 0 إلى 5)</small>
+                    <!-- Grade 2 -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="fw-bold mb-2">تدوين ورصد الغياب</h6>
+                            <small class="text-muted d-block mb-2">(من 0 إلى 5)</small>
                             <input type="number"
                                    class="form-control @(validationErrors.ContainsKey("grade2") ? "is-invalid" : "")"
                                    @bind="selectedTA.grade2"
@@ -139,10 +143,13 @@
                                 <div class="invalid-feedback">@validationErrors["grade2"]</div>
                             }
                         </div>
+                    </div>
 
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold">الدرجة 3</label>
-                            <small class="text-muted d-block mb-1">(من 0 إلى 15)</small>
+                    <!-- Grade 3 -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="fw-bold mb-2">الأداء التدريبي في المقرر</h6>
+                            <small class="text-muted d-block mb-2">(من 0 إلى 15)</small>
                             <input type="number"
                                    class="form-control @(validationErrors.ContainsKey("grade3") ? "is-invalid" : "")"
                                    @bind="selectedTA.grade3"
@@ -158,6 +165,7 @@
                         </div>
                     </div>
 
+                    <!-- Total -->
                     <div class="alert alert-primary text-center mt-4 py-3">
                         <div class="d-flex justify-content-center align-items-center gap-3">
                             <span class="fs-5 fw-bold">المجموع الكلي:</span>
@@ -174,8 +182,6 @@
                         </div>
                     }
                 </div>
-            </div>
-
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary px-4" @onclick="HideModal">
                     <i class="bi bi-x-circle me-2"></i>إلغاء
@@ -192,6 +198,7 @@
             </div>
         </div>
     </div>
+</div>
 }
 
 @code {
