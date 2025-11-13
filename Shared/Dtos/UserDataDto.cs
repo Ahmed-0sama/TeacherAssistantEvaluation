@@ -13,7 +13,7 @@ namespace Shared.Dtos
             public string Name { get; set; } = string.Empty;
 
             [Required(ErrorMessage = "Requird")]
-            public string EmployeeNumber { get; set; } = string.Empty;
+            public int EmployeeNumber { get; set; }
 
             [Required(ErrorMessage = "Requird")]
             public string Qualification { get; set; } = string.Empty;
@@ -22,5 +22,6 @@ namespace Shared.Dtos
             public string Department { get; set; } = string.Empty;
             [Required(ErrorMessage = "Requird")]
             public string College { get; set; } = string.Empty;
+            public string status { get; set; } = string.Empty;
     }
 }

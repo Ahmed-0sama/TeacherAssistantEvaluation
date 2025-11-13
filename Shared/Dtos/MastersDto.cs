@@ -8,8 +8,6 @@ namespace Shared.Dtos
 {
     public class MastersDto
     {
-        public string name { get; set; }
-        public int GtaId { get; set; }
         public string Major { get; set; }
         public int HoursGained { get; set; }
         public double Grade { get; set; }

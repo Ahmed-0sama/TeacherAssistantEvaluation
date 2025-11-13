@@ -39,7 +39,7 @@
                     <div class="col-md-4">
                         <div class="mb-3">
                             <label for="employeeNumber" class="form-label">الرقم الوظيفي</label>
-                            <InputText id="employeeNumber" class="form-control" @bind-Value="userData.EmployeeNumber" readonly/>
+                            <InputNumber id="employeeNumber" class="form-control" @bind-Value="userData.EmployeeNumber" readonly/>
                             <ValidationMessage For="@(() => userData.EmployeeNumber)" />
                         </div>
                     </div>
@@ -98,7 +98,7 @@
             userData = new Shared.Dtos.UserDataDto
             {
                 Name = "علياء احمد",
-                EmployeeNumber = "EMP12345",
+                EmployeeNumber = 12323,
                 Qualification = "ماجستير في علوم الحاسب",
                 Department = "قسم علوم الحاسب",
                 College="AASTMT"
