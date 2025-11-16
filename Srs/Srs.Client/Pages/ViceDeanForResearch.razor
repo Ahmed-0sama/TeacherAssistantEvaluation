@@ -1,0 +1,342 @@
+﻿@page "/vicedeanforresearch"
+@using Shared.Dtos
+@inject HttpClient Http
+@inject IJSRuntime JS
+@rendermode InteractiveWebAssembly
+<HeadContent>
+    <link href="./Custom-Rtl.css" rel="stylesheet" />
+</HeadContent>
+
+<h3 class="text-center mb-4">تققيم النشاط العلمي لمساعدي التدريس</h3>
+
+<div class="card shadow-sm" dir="rtl">
+    <div class="card-body">
+        <h3 class="text-center" style="color:cornflowerblue;">قائمة مساعدي التدريس</h3>
+        <hr style="color:cornflowerblue;" />
+
+        <div class="d-flex justify-content-center">
+            <div class="w-75 mb-4 shadow-sm">
+                @if (isLoading)
+                {
+                    <p class="text-center">جارٍ تحميل البيانات...</p>
+                }
+                else if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="alert alert-danger text-center">@errorMessage</div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped text-center align-middle" dir="rtl">
+                            <thead class="table-primary">
+                                <tr>
+                                    <th>اسم مساعد التدريس</th>
+                                    <th>القسم</th>
+                                    <th>الحالة</th>
+                                    <th>إجراء</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var ta in taList)
+                                {
+                                    <tr>
+                                        <td>@ta.Name</td>
+                                        <td>@ta.Department</td>
+                                        <td>
+                                            @if (ta.status == "Confirmed")
+                                            {
+                                                <span class="result-pill">@ta.status</span>
+                                            }
+                                            else if (ta.status == "Waiting For Review")
+                                            {
+                                                <span class="result-pill" style="background-color: antiquewhite; color: black;">@ta.status</span>
+                                            }
+
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary" @onclick="() => OpenModal(ta)">
+                                                @(ta.status == "Confirmed" ? "عرض" : ta.status == "Waiting For Review" ? "تقييم" : "إجراء")
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Modal -->
+@if (ModalVisable)
+{
+    <div class="modal d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5);">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content" dir="rtl">
+                <div class="modal-header" dir="rtl">
+                    <button type="button" class="btn-close ms-0 me-auto" @onclick="() => ModalVisable = false"></button>
+                    <h5 class="modal-title">تفاصيل مساعد التدريس</h5>
+                </div>
+                <div class="modal-body">
+                    <!-- Basic Information -->
+                    <div class="border rounded p-3 bg-light mb-3">
+                        <h5 class="mb-3 text-primary">البيانات الأساسية</h5>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">اسم مساعد التدريس</label>
+                                <input type="text" class="form-control" disabled value="@selectedTA?.Name" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">الرقم الوظيفي:</label>
+                                <input type="text" class="form-control" disabled value="@selectedTA?.EmployeeNumber" />
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">القسم</label>
+                                <input type="text" class="form-control" disabled value="@selectedTA?.Department" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Research Papers Section -->
+                    <div class="border rounded p-3 bg-light mb-3">
+                        <h5 class="mb-3 text-primary">الأبحاث المنشورة</h5>
+                        @if (researchPapers.Any())
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-hover">
+                                    <thead class="table-secondary">
+                                        <tr>
+                                            <th>عنوان البحث</th>
+                                            <th>المؤتمر / المجلة</th>
+                                            <th>الموقع</th>
+                                            <th>عدد الصفحات</th>
+                                            <th>التاريخ</th>
+                                            <th>الحالة</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var paper in researchPapers)
+                                        {
+                                            <tr>
+                                                <td>@paper.Title</td>
+                                                <td>@paper.ConferenceOrJournal</td>
+                                                <td>@paper.Location</td>
+                                                <td>@paper.PageCount</td>
+                                                <td>@paper.Date.ToString("yyyy-MM-dd")</td>
+                                                <td>
+                                                    <span class="badge bg-@(paper.Status == "Published" ? "success" : paper.Status == "Under Review" ? "warning" : "info")">
+                                                        @paper.Status
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-muted text-center">لا توجد أبحاث منشورة</p>
+                        }
+                    </div>
+
+                    <!-- Other Activities Section -->
+                    <div class="border rounded p-3 bg-light mb-3">
+                        <h5 class="mb-3 text-primary">الأنشطة الأخرى</h5>
+                        <div class="col-md-4 d-flex align-items-center mb-2">
+                            <img src="icons/@(otherActivities.HasTechnicalReportsOrArticles ? "check-circle-fill.svg" : "check-circle.svg")"
+                                 width="20" height="20" style="margin-inline-end: 12px;" />
+                            <span class="@(otherActivities.HasTechnicalReportsOrArticles ? "text-dark" : "text-muted")">
+                                تقارير فنية او مقالات منشورة (دون مستوي البحث العلمي)
+                            </span>
+                        </div>
+                        <div class="col-md-4 d-flex align-items-center mb-2">
+                            <img src="icons/@(otherActivities.HasGivenLecturesOrSeminars ? "check-circle-fill.svg" : "check-circle.svg")"
+                                 width="20" height="20" style="margin-inline-end: 12px;" />
+                            <span class="@(otherActivities.HasGivenLecturesOrSeminars ? "text-dark" : "text-muted")">
+                                القاء محاضرات في ندوات او لقاءات
+                            </span>
+                        </div>
+                        <div class="col-md-4 d-flex align-items-center mb-2">
+                            <img src="icons/@(otherActivities.HasAttendedScientificSeminars ? "check-circle-fill.svg" : "check-circle.svg")"
+                                 width="20" height="20" style="margin-inline-end: 12px;" />
+                            <span class="@(otherActivities.HasAttendedScientificSeminars ? "text-dark" : "text-muted")">
+                                حضور ندوات علمية ودورات تدريبية ومحاضرات علمية
+                            </span>
+
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-bold">درجة تقييم التقدم (من 5)</label>
+                        <input type="number" class="form-control" value="@otherActivities.GradeForTechnicalReportsOrArticles"
+                               min="0" max="5"
+                               oninput="this.value = Math.min(5, Math.max(0, this.value))" />
+                    </div>
+
+                    <!-- Action Buttons (if status is Waiting For Review) -->
+                    @if (selectedTA?.status == "Waiting For Review")
+                    {
+                        <div class="d-flex justify-content-center gap-2 mt-4">
+                            <button class="btn btn-success px-4" @onclick="ConfirmTA">اعتماد الدرجة</button>
+                            <button class="btn btn-danger px-4" @onclick="() => ModalVisable = false">الغاء</button>
+                        </div>
+                    }
+                </div>
+            </div>
+            </div>
+        </div>
+    </div>
+}
+@code {
+    private bool isLoading = true;
+    private string errorMessage;
+    private List<UserDataDto> taList = new();
+    private List<ResearchPaperDto> researchPapers = new List<ResearchPaperDto>();
+    private OtherActivitiesDto otherActivities = new OtherActivitiesDto();
+    private bool ModalVisable = false;
+    private UserDataDto? selectedTA;
+
+    // Mock data dictionary for each TA
+    private Dictionary<int, (List<ResearchPaperDto> papers, OtherActivitiesDto activities)> mockData = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            taList = new List<UserDataDto> {
+                new UserDataDto { Name = "علياء نبيل", Department = "علوم الحاسب", EmployeeNumber = 679789, status = "Confirmed" },
+                new UserDataDto { Name = "سارة حسن", Department = "علوم الحاسب", EmployeeNumber = 679790, status = "Waiting For Review" },
+                new UserDataDto { Name = "أحمد محمود", Department = "علوم الحاسب", EmployeeNumber = 679791, status = "Waiting For Review" }
+            };
+
+            InitializeMockData();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "حدث خطأ أثناء تحميل البيانات. الرجاء المحاولة مرة أخرى لاحقًا.";
+            Console.Error.WriteLine(ex.Message);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void InitializeMockData()
+    {
+        // Mock data for علياء نبيل (679789)
+        mockData[679789] = (
+            new List<ResearchPaperDto> {
+                new ResearchPaperDto {
+                    Id = 1,
+                    Title = "تطبيقات الذكاء الاصطناعي في التعليم",
+                    ConferenceOrJournal = "مؤتمر الذكاء الاصطناعي الدولي",
+                    Location = "القاهرة، مصر",
+                    PageCount = 12,
+                    Date = new DateOnly(2024, 3, 15),
+                    Status = "Published"
+                },
+                new ResearchPaperDto {
+                    Id = 2,
+                    Title = "تحليل البيانات الضخمة باستخدام التعلم العميق",
+                    ConferenceOrJournal = "مجلة علوم الحاسب العربية",
+                    Location = "دبي، الإمارات",
+                    PageCount = 18,
+                    Date = new DateOnly(2024, 6, 20),
+                    Status = "Published"
+                }
+            },
+            new OtherActivitiesDto
+            {
+                HasTechnicalReportsOrArticles = true,
+                HasGivenLecturesOrSeminars = true,
+                HasAttendedScientificSeminars = true
+            }
+        );
+
+        // Mock data for سارة حسن (679790)
+        mockData[679790] = (
+            new List<ResearchPaperDto> {
+                new ResearchPaperDto {
+                    Id = 3,
+                    Title = "أمن الشبكات في العصر الرقمي",
+                    ConferenceOrJournal = "مؤتمر الأمن السيبراني",
+                    Location = "الرياض، السعودية",
+                    PageCount = 15,
+                    Date = new DateOnly(2024, 5, 10),
+                    Status = "Under Review"
+                },
+                new ResearchPaperDto {
+                    Id = 4,
+                    Title = "تطوير أنظمة الحوسبة السحابية",
+                    ConferenceOrJournal = "المجلة الدولية للحوسبة",
+                    Location = "عمان، الأردن",
+                    PageCount = 10,
+                    Date = new DateOnly(2024, 8, 5),
+                    Status = "Published"
+                }
+            },
+            new OtherActivitiesDto
+            {
+                HasTechnicalReportsOrArticles = true,
+                HasGivenLecturesOrSeminars = false,
+                HasAttendedScientificSeminars = true
+            }
+        );
+
+        // Mock data for أحمد محمود (679791)
+        mockData[679791] = (
+            new List<ResearchPaperDto> {
+                new ResearchPaperDto {
+                    Id = 5,
+                    Title = "خوارزميات التعلم الآلي للتنبؤ",
+                    ConferenceOrJournal = "مؤتمر البيانات الدولي",
+                    Location = "بيروت، لبنان",
+                    PageCount = 20,
+                    Date = new DateOnly(2024, 4, 25),
+                    Status = "Published"
+                }
+            },
+            new OtherActivitiesDto
+            {
+                HasTechnicalReportsOrArticles = false,
+                HasGivenLecturesOrSeminars = true,
+                HasAttendedScientificSeminars = false
+            }
+        );
+    }
+
+    private void OpenModal(UserDataDto ta)
+    {
+        ModalVisable = true;
+        selectedTA = ta;
+
+        // Load research papers and activities for selected TA
+        if (mockData.ContainsKey(ta.EmployeeNumber))
+        {
+            researchPapers = mockData[ta.EmployeeNumber].papers;
+            otherActivities = mockData[ta.EmployeeNumber].activities;
+        }
+        else
+        {
+            researchPapers = new List<ResearchPaperDto>();
+            otherActivities = new OtherActivitiesDto();
+        }
+
+        Console.WriteLine($"Open modal for TA: {ta.Name}");
+    }
+
+    private void ConfirmTA()
+    {
+        if (selectedTA != null)
+        {
+            selectedTA.status = "Confirmed";
+            ModalVisable = false;
+            Console.WriteLine($"TA {selectedTA.Name} confirmed");
+        }
+    }
+}

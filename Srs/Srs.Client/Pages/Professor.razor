@@ -40,22 +40,18 @@
                                 <td>
                                     @if (ta.Total.HasValue)
                                     {
-                                        if (ta.Total.Value >= 25)
+                                        @if (ta.Total.Value >= 25)
                                         {
-                                            <span class="badge bg-success">مكتمل (@ta.Total)</span>
+                                            <span class="result-pill">النتيجة: @ta.Total/30</span>
                                         }
                                         else if (ta.Total.Value >= 15)
                                         {
-                                            <span class="badge bg-info">جيد (@ta.Total)</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="badge bg-warning text-dark">ضعيف (@ta.Total)</span>
+                                            <span class="result-pill">النتيجة:  @ta.Total/30</span>
                                         }
                                     }
                                     else
                                     {
-                                        <span class="badge bg-danger">غير مقيّم</span>
+                                        <span class="result-pill" style="background-color:#ffe6e6; color:#b30000;">غير مقيّم</span>
                                     }
                                 </td>
                                <td>

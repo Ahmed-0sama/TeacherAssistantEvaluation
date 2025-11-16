@@ -1,0 +1,313 @@
+﻿using System;
+using System.Collections.Generic;
+using DataAccess.Entities;
+using Microsoft.EntityFrameworkCore;
+
+namespace DataAccess.Context;
+
+public partial class SrsDbContext : DbContext
+{
+    public SrsDbContext()
+    {
+    }
+
+    public SrsDbContext(DbContextOptions<SrsDbContext> options)
+        : base(options)
+    {
+    }
+
+    public virtual DbSet<Evaluation> Evaluations { get; set; }
+
+    public virtual DbSet<EvaluationPeriod> EvaluationPeriods { get; set; }
+
+    public virtual DbSet<EvaluationStatus> EvaluationStatuses { get; set; }
+
+    public virtual DbSet<GsdeanEvaluation> GsdeanEvaluations { get; set; }
+
+    public virtual DbSet<Hodevaluation> Hodevaluations { get; set; }
+
+    public virtual DbSet<HodevaluationCriterion> HodevaluationCriteria { get; set; }
+
+    public virtual DbSet<Notification> Notifications { get; set; }
+
+    public virtual DbSet<ProfessorCourseEvaluation> ProfessorCourseEvaluations { get; set; }
+
+    public virtual DbSet<Rating> Ratings { get; set; }
+
+    public virtual DbSet<ReminderLog> ReminderLogs { get; set; }
+
+    public virtual DbSet<ResearchActivity> ResearchActivities { get; set; }
+
+    public virtual DbSet<ResearchStatus> ResearchStatuses { get; set; }
+
+    public virtual DbSet<Tasubmission> Tasubmissions { get; set; }
+
+    public virtual DbSet<VpgsEvaluation> VpgsEvaluations { get; set; }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseSqlServer("Server=172.20.44.144;Database=evaluation;User ID=AhOsama;Password=AhOsama@IDC;TrustServerCertificate=True;");
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Evaluation>(entity =>
+        {
+            entity.HasKey(e => e.EvaluationId).HasName("PK__Evaluati__36AE68D3DC67C19C");
+
+            entity.ToTable("Evaluations", "taEvaluation");
+
+            entity.Property(e => e.EvaluationId).HasColumnName("EvaluationID");
+            entity.Property(e => e.DeanReturnComment).HasColumnName("Dean_ReturnComment");
+            entity.Property(e => e.FinalGrade).HasMaxLength(50);
+            entity.Property(e => e.HodReturnComment).HasColumnName("HOD_ReturnComment");
+            entity.Property(e => e.HodStrengths).HasColumnName("HOD_Strengths");
+            entity.Property(e => e.HodWeaknesses).HasColumnName("HOD_Weaknesses");
+            entity.Property(e => e.PeriodId).HasColumnName("PeriodID");
+            entity.Property(e => e.StatusId).HasColumnName("StatusID");
+            entity.Property(e => e.StudentSurveyScore).HasColumnType("decimal(4, 2)");
+            entity.Property(e => e.TaEmployeeId).HasColumnName("TA_EmployeeID");
+
+            entity.HasOne(d => d.Period).WithMany(p => p.Evaluations)
+                .HasForeignKey(d => d.PeriodId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Evaluations_PeriodID");
+
+            entity.HasOne(d => d.Status).WithMany(p => p.Evaluations)
+                .HasForeignKey(d => d.StatusId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Evaluations_StatusID");
+        });
+
+        modelBuilder.Entity<EvaluationPeriod>(entity =>
+        {
+            entity.HasKey(e => e.PeriodId).HasName("PK__Evaluati__E521BB36E10D5CDC");
+
+            entity.ToTable("EvaluationPeriods", "taEvaluation");
+
+            entity.HasIndex(e => e.PeriodName, "UQ__Evaluati__D748F8F21DD95950").IsUnique();
+
+            entity.Property(e => e.PeriodId).HasColumnName("PeriodID");
+            entity.Property(e => e.PeriodName).HasMaxLength(100);
+        });
+
+        modelBuilder.Entity<EvaluationStatus>(entity =>
+        {
+            entity.HasKey(e => e.StatusId).HasName("PK__Evaluati__C8EE20437A4A7778");
+
+            entity.ToTable("EvaluationStatuses", "taEvaluation");
+
+            entity.HasIndex(e => e.StatusName, "UQ__Evaluati__05E7698A9628677D").IsUnique();
+
+            entity.Property(e => e.StatusId).HasColumnName("StatusID");
+            entity.Property(e => e.StatusDescription).HasMaxLength(255);
+            entity.Property(e => e.StatusName).HasMaxLength(100);
+        });
+
+        modelBuilder.Entity<GsdeanEvaluation>(entity =>
+        {
+            entity.HasKey(e => e.GsevalId).HasName("PK__GSDean_E__C8B1293995D5C787");
+
+            entity.ToTable("GSDean_Evaluations", "taEvaluation");
+
+            entity.HasIndex(e => e.EvaluationId, "UQ__GSDean_E__36AE68D2CAE39685").IsUnique();
+
+            entity.Property(e => e.GsevalId).HasColumnName("GSEvalID");
+            entity.Property(e => e.EvaluationId).HasColumnName("EvaluationID");
+            entity.Property(e => e.Gpa)
+                .HasColumnType("decimal(3, 2)")
+                .HasColumnName("GPA");
+            entity.Property(e => e.ProgramName).HasMaxLength(255);
+            entity.Property(e => e.ProgressScore).HasColumnType("decimal(3, 1)");
+
+            entity.HasOne(d => d.Evaluation).WithOne(p => p.GsdeanEvaluation)
+                .HasForeignKey<GsdeanEvaluation>(d => d.EvaluationId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_GSDean_Evaluations_EvaluationID");
+        });
+
+        modelBuilder.Entity<Hodevaluation>(entity =>
+        {
+            entity.HasKey(e => e.HodevalId).HasName("PK__HODEvalu__6A4AF4FAEBE6B771");
+
+            entity.ToTable("HODEvaluations", "taEvaluation");
+
+            entity.HasIndex(e => new { e.EvaluationId, e.CriterionId }, "UQ_HODEvaluations").IsUnique();
+
+            entity.Property(e => e.HodevalId).HasColumnName("HODEvalID");
+            entity.Property(e => e.CriterionId).HasColumnName("CriterionID");
+            entity.Property(e => e.EvaluationId).HasColumnName("EvaluationID");
+            entity.Property(e => e.RatingId).HasColumnName("RatingID");
+
+            entity.HasOne(d => d.Criterion).WithMany(p => p.Hodevaluations)
+                .HasForeignKey(d => d.CriterionId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_HODEvaluations_CriterionID");
+
+            entity.HasOne(d => d.Evaluation).WithMany(p => p.Hodevaluations)
+                .HasForeignKey(d => d.EvaluationId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_HODEvaluations_EvaluationID");
+
+            entity.HasOne(d => d.Rating).WithMany(p => p.Hodevaluations)
+                .HasForeignKey(d => d.RatingId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_HODEvaluations_RatingID");
+        });
+
+        modelBuilder.Entity<HodevaluationCriterion>(entity =>
+        {
+            entity.HasKey(e => e.CriterionId).HasName("PK__HODEvalu__647C3BD119DF663C");
+
+            entity.ToTable("HODEvaluation_Criteria", "taEvaluation");
+
+            entity.Property(e => e.CriterionId).HasColumnName("CriterionID");
+            entity.Property(e => e.CriterionName).HasMaxLength(255);
+            entity.Property(e => e.CriterionType).HasMaxLength(50);
+        });
+
+        modelBuilder.Entity<Notification>(entity =>
+        {
+            entity.HasKey(e => e.NotificationId).HasName("PK__Notifica__20CF2E3254FA65A4");
+
+            entity.ToTable("Notifications", "taEvaluation");
+
+            entity.Property(e => e.NotificationId).HasColumnName("NotificationID");
+            entity.Property(e => e.EmployeeId).HasColumnName("EmployeeID");
+            entity.Property(e => e.Message).HasMaxLength(1000);
+            entity.Property(e => e.Timestamp).HasDefaultValueSql("(getdate())");
+        });
+
+        modelBuilder.Entity<ProfessorCourseEvaluation>(entity =>
+        {
+            entity.HasKey(e => e.ProfEvalId).HasName("PK__Professo__DACBBA35DF4A614E");
+
+            entity.ToTable("ProfessorCourseEvaluations", "taEvaluation");
+
+            entity.Property(e => e.ProfEvalId).HasColumnName("ProfEvalID");
+            entity.Property(e => e.CourseCode).HasMaxLength(20);
+            entity.Property(e => e.CourseName).HasMaxLength(255);
+            entity.Property(e => e.EvaluationId).HasColumnName("EvaluationID");
+            entity.Property(e => e.HodReturnComment).HasColumnName("HOD_ReturnComment");
+            entity.Property(e => e.ProfessorEmployeeId).HasColumnName("Professor_EmployeeID");
+            entity.Property(e => e.TotalScore).HasComputedColumnSql("(([OfficeHoursScore]+[AttendanceScore])+[PerformanceScore])", false);
+
+            entity.HasOne(d => d.Evaluation).WithMany(p => p.ProfessorCourseEvaluations)
+                .HasForeignKey(d => d.EvaluationId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_ProfessorCourseEvaluations_EvaluationID");
+        });
+
+        modelBuilder.Entity<Rating>(entity =>
+        {
+            entity.HasKey(e => e.RatingId).HasName("PK__Ratings__FCCDF85C285DEC07");
+
+            entity.ToTable("Ratings", "taEvaluation");
+
+            entity.HasIndex(e => e.RatingName, "UQ__Ratings__F7CF97379B70F7DF").IsUnique();
+
+            entity.Property(e => e.RatingId).HasColumnName("RatingID");
+            entity.Property(e => e.RatingName).HasMaxLength(50);
+        });
+
+        modelBuilder.Entity<ReminderLog>(entity =>
+        {
+            entity.HasKey(e => e.LogId).HasName("PK__Reminder__5E5499A80E5A40CB");
+
+            entity.ToTable("ReminderLogs", "taEvaluation");
+
+            entity.Property(e => e.LogId).HasColumnName("LogID");
+            entity.Property(e => e.EvaluationId).HasColumnName("EvaluationID");
+            entity.Property(e => e.RecievedByEmployeeId).HasColumnName("RecievedBy_EmployeeID");
+            entity.Property(e => e.RecipientDescription).HasMaxLength(255);
+            entity.Property(e => e.SentByEmployeeId).HasColumnName("SentBy_EmployeeID");
+            entity.Property(e => e.Timestamp).HasDefaultValueSql("(getdate())");
+
+            entity.HasOne(d => d.Evaluation).WithMany(p => p.ReminderLogs)
+                .HasForeignKey(d => d.EvaluationId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_ReminderLogs_EvaluationID");
+        });
+
+        modelBuilder.Entity<ResearchActivity>(entity =>
+        {
+            entity.HasKey(e => e.ActivityId).HasName("PK__Research__45F4A7F1C12D163E");
+
+            entity.ToTable("ResearchActivities", "taEvaluation");
+
+            entity.Property(e => e.ActivityId).HasColumnName("ActivityID");
+            entity.Property(e => e.Journal).HasMaxLength(500);
+            entity.Property(e => e.Location).HasMaxLength(255);
+            entity.Property(e => e.StatusId).HasColumnName("StatusID");
+            entity.Property(e => e.SubmissionId).HasColumnName("SubmissionID");
+            entity.Property(e => e.Title).HasMaxLength(500);
+            entity.Property(e => e.Url)
+                .HasMaxLength(2048)
+                .HasColumnName("URL");
+
+            entity.HasOne(d => d.Status).WithMany(p => p.ResearchActivities)
+                .HasForeignKey(d => d.StatusId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_ResearchActivities_StatusID");
+
+            entity.HasOne(d => d.Submission).WithMany(p => p.ResearchActivities)
+                .HasForeignKey(d => d.SubmissionId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_ResearchActivities_SubmissionID");
+        });
+
+        modelBuilder.Entity<ResearchStatus>(entity =>
+        {
+            entity.HasKey(e => e.StatusId).HasName("PK__Research__C8EE20431C47CE6C");
+
+            entity.ToTable("ResearchStatuses", "taEvaluation");
+
+            entity.HasIndex(e => e.StatusKey, "UQ__Research__096C98C27DE9011A").IsUnique();
+
+            entity.Property(e => e.StatusId).HasColumnName("StatusID");
+            entity.Property(e => e.StatusKey)
+                .HasMaxLength(1)
+                .IsUnicode(false)
+                .IsFixedLength();
+            entity.Property(e => e.StatusName).HasMaxLength(100);
+        });
+
+        modelBuilder.Entity<Tasubmission>(entity =>
+        {
+            entity.HasKey(e => e.SubmissionId).HasName("PK__TASubmis__449EE105411A67B0");
+
+            entity.ToTable("TASubmissions", "taEvaluation");
+
+            entity.HasIndex(e => e.EvaluationId, "UQ__TASubmis__36AE68D20234AA6E").IsUnique();
+
+            entity.Property(e => e.SubmissionId).HasColumnName("SubmissionID");
+            entity.Property(e => e.EvaluationId).HasColumnName("EvaluationID");
+
+            entity.HasOne(d => d.Evaluation).WithOne(p => p.Tasubmission)
+                .HasForeignKey<Tasubmission>(d => d.EvaluationId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_TA_Submissions_EvaluationID");
+        });
+
+        modelBuilder.Entity<VpgsEvaluation>(entity =>
+        {
+            entity.HasKey(e => e.VpgsevalId).HasName("PK__VPGS_Eva__57C1D3BEE96AAFED");
+
+            entity.ToTable("VPGS_Evaluations", "taEvaluation");
+
+            entity.HasIndex(e => e.EvaluationId, "UQ__VPGS_Eva__36AE68D2910EDF18").IsUnique();
+
+            entity.Property(e => e.VpgsevalId).HasColumnName("VPGSEvalID");
+            entity.Property(e => e.EvaluationId).HasColumnName("EvaluationID");
+            entity.Property(e => e.ScientificScore).HasColumnType("decimal(3, 1)");
+
+            entity.HasOne(d => d.Evaluation).WithOne(p => p.VpgsEvaluation)
+                .HasForeignKey<VpgsEvaluation>(d => d.EvaluationId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_VPGS_Evaluations_EvaluationID");
+        });
+
+        OnModelCreatingPartial(modelBuilder);
+    }
+
+    partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
+}

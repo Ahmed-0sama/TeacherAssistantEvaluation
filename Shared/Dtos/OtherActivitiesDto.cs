@@ -11,5 +11,6 @@ namespace Shared.Dtos
         public bool HasTechnicalReportsOrArticles { get; set; }
         public bool HasGivenLecturesOrSeminars { get; set; }
         public bool HasAttendedScientificSeminars { get; set; }
+        public int GradeForTechnicalReportsOrArticles { get; set; }
     }
 }

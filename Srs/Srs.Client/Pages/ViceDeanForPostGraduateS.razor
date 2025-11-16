@@ -42,7 +42,17 @@
                                     <tr>
                                         <td>@ta.Name</td>
                                         <td>@ta.Department</td>
-                                        <td>@ta.status</td>
+                                        <td>
+                                            @if (ta.status == "Confirmed")
+                                                {
+                                                    <span class="result-pill">@ta.status</span>
+                                                }
+                                            else if (ta.status == "Waiting For Review")
+                                                {
+                                                   <span class="result-pill" style="background-color: antiquewhite; color: black;">@ta.status</span>
+                                                }
+                                            
+                                        </td>
                                         <td>
                                             <button class="btn btn-sm btn-primary" @onclick="() => OpenModal(ta)">
                                                 @(ta.status == "Confirmed" ? "عرض" : ta.status == "Waiting For Review" ? "تقييم" : "إجراء")
