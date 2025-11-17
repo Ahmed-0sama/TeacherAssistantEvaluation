@@ -98,7 +98,8 @@ namespace Srs.Controllers
                     {
                         message = "An error occurred while updating the evaluation period",
                         details = ex.Message
-                    });
+                    }
+                 );
             }
         }
         [HttpPost("{id}/Close")]
@@ -123,7 +124,8 @@ namespace Srs.Controllers
                     {
                         message = "An error occurred while closing the evaluation period",
                         details = ex.Message
-                    });
+                    }
+                );
             }
         }
     }

@@ -15,6 +15,7 @@ builder.Services.AddDbContext<SrsDbContext>(options =>
 builder.Services.AddRazorComponents()
     .AddInteractiveWebAssemblyComponents();
 builder.Services.AddScoped<IEvaluationPeriod, EvaluationPeriodService>();
+builder.Services.AddScoped<IEvaluation, EvaluationServices>();
 builder.Services.AddHttpClient();
 var app = builder.Build();
 
