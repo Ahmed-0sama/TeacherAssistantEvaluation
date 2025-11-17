@@ -1,11 +1,20 @@
+using Business_Access.Interfaces;
+using Business_Access.Services;
+using DataAccess.Context;
+using Microsoft.EntityFrameworkCore;
 using Srs.Client;
 using Srs.Components;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Services.AddControllers();
+
+builder.Services.AddDbContext<SrsDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddRazorComponents()
     .AddInteractiveWebAssemblyComponents();
+builder.Services.AddScoped<IEvaluationPeriod, EvaluationPeriodService>();
 builder.Services.AddHttpClient();
 var app = builder.Build();
 
@@ -23,6 +32,7 @@ else
 
 app.UseHttpsRedirection();
 
+app.MapControllers();
 
 app.UseAntiforgery();
 
