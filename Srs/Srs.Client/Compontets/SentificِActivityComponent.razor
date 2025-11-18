@@ -339,7 +339,7 @@
                     Location = "الرياض، السعودية",
                     PageCount = 12,
                     Date = new DateOnly(2024, 10, 15),
-                    Status = "منشور"
+                    Status =1
                 },
                 new ResearchPaperDto
                 {
@@ -349,7 +349,7 @@
                     Location = "القاهرة، مصر",
                     PageCount = 18,
                     Date = new DateOnly(2024, 8, 20),
-                    Status = "قيد المراجعة"
+                    Status = 1
                 }
             };
 
@@ -375,7 +375,7 @@
             Title = "",
             ConferenceOrJournal = "",
             Location = "",
-            Status = ""
+            Status = 1
         };
         showModal = true;
         Console.WriteLine($"showModal set to: {showModal}");
@@ -446,14 +446,14 @@
         StateHasChanged();
     }
 
-    private string GetStatusBadgeClass(string status)
+    private string GetStatusBadgeClass(int status)
     {
         return status switch
         {
-            "منشور" => "bg-success",
-            "قيد المراجعة" => "bg-warning text-dark",
-            "مقبول" => "bg-info",
-            "مرفوض" => "bg-danger",
+            1 => "bg-success",
+            2 => "bg-warning text-dark",
+            3 => "bg-info",
+            4 => "bg-danger",
             _ => "bg-secondary"
         };
     }

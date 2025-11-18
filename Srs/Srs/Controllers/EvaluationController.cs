@@ -1,4 +1,5 @@
 ﻿using Business_Access.Interfaces;
+using DataAccess.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Dtos.TASubmissions;
@@ -124,20 +125,18 @@ namespace Srs.Controllers
                 return StatusCode(500, new { message = "An error occurred while retrieving the evaluation.", details = ex.Message });
             }
         }
-        [HttpGet("CanEdit")]
+        [HttpGet("CanEdit/{taEmployeeId}")]
 
-        public async Task<IActionResult> CanTAEditEvaluation(int evaluationId, int taEmployeeId)
+        public async Task<IActionResult> CanTAEditEvaluation(int taEmployeeId)
         {
             try
             {
-                if (evaluationId <= 0)
-                    return BadRequest("Invalid evaluation ID");
-
                 if (taEmployeeId <= 0)
                     return BadRequest("Invalid TA employee ID");
 
-                var canEdit = await _evaluationService.CanTAEditEvaluationAsync(evaluationId, taEmployeeId);
-                return Ok(canEdit);
+                var evaluationId = await _evaluationService.CanTAEditEvaluationAsync(taEmployeeId);
+
+                return Ok(new { evaluationId });
             }
             catch (Exception ex)
             {

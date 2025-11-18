@@ -12,11 +12,26 @@ builder.Services.AddControllers();
 
 builder.Services.AddDbContext<SrsDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
 builder.Services.AddRazorComponents()
     .AddInteractiveWebAssemblyComponents();
+
 builder.Services.AddScoped<IEvaluationPeriod, EvaluationPeriodService>();
+builder.Services.AddScoped<IProfessorEvaluation, ProfessorEvaluationServices>();
 builder.Services.AddScoped<IEvaluation, EvaluationServices>();
 builder.Services.AddHttpClient();
+
+//allow  cors policy 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowBlazorWasm", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -27,11 +42,11 @@ if (app.Environment.IsDevelopment())
 else
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
 app.UseHttpsRedirection();
+app.UseCors("AllowBlazorWasm");
 
 app.MapControllers();
 

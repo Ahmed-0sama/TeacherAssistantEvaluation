@@ -14,6 +14,8 @@ namespace Shared.Dtos
         public string Location { get; set; } = string.Empty;
         public int PageCount { get; set; }
         public DateOnly Date { get; set; }
-        public string Status { get; set; } = string.Empty;
+        public int Status { get; set; }
+        public string Url { get; set; } = string.Empty;
+
     }
 }

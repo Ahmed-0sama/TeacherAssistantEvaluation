@@ -4,6 +4,7 @@
 <HeadContent>
     <link href="./Custom-Rtl.css" rel="stylesheet" />
 </HeadContent>
+
 <div class="card shadow-sm w-100" dir="rtl">
     <div class="card-body">
         <h3 style="color:cornflowerblue">رابعا : الأنشطة الطلابية</h3>
@@ -13,7 +14,8 @@
                 <div class="form-check form-check-rtl">
                     <InputCheckbox class="form-check-input"
                                    id="sportActivity"
-                                   @bind-Value="studentActivity.IsCompletedStudentActivity" />
+                                   @bind-Value="studentActivity.IsCompletedStudentActivity"
+                                   @bind-Value:after="SendDataToParent" />
                     <label class="form-check-label" for="sportActivity">
                         نشاط رياضي
                     </label>
@@ -23,7 +25,8 @@
                 <div class="form-check form-check-rtl">
                     <InputCheckbox class="form-check-input"
                                    id="socialActivity"
-                                   @bind-Value="studentActivity.IsCompletedSocialActivity" />
+                                   @bind-Value="studentActivity.IsCompletedSocialActivity"
+                                   @bind-Value:after="SendDataToParent" />
                     <label class="form-check-label" for="socialActivity">
                         نشاط اجتماعي
                     </label>
@@ -33,7 +36,8 @@
                 <div class="form-check form-check-rtl">
                     <InputCheckbox class="form-check-input"
                                    id="culturalActivity"
-                                   @bind-Value="studentActivity.IsCompletedCulturalActivity" />
+                                   @bind-Value="studentActivity.IsCompletedCulturalActivity"
+                                   @bind-Value:after="SendDataToParent" />
                     <label class="form-check-label" for="culturalActivity">
                         نشاط ثقافي
                     </label>
@@ -42,14 +46,23 @@
         </div>
     </div>
 </div>
-        
-                    
-@code{
+
+@code {
     private StudentActivityDto studentActivity = new StudentActivityDto();
+
     [Parameter]
     public EventCallback<StudentActivityDto> OnActivityLoaded { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Send initial data to parent when component loads
+        await SendDataToParent();
+    }
+
     private async Task SendDataToParent()
     {
+        Console.WriteLine($"📤 Sending student activity data: Sport={studentActivity.IsCompletedStudentActivity}, Social={studentActivity.IsCompletedSocialActivity}, Cultural={studentActivity.IsCompletedCulturalActivity}");
+
         if (OnActivityLoaded.HasDelegate)
         {
             await OnActivityLoaded.InvokeAsync(studentActivity);

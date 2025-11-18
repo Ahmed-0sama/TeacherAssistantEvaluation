@@ -343,27 +343,22 @@ namespace Business_Access.Services
                 throw new Exception($"Error getting evaluations for period {periodId}", ex);
             }
         }
-        public async Task<bool> CanTAEditEvaluationAsync(int evaluationId, int taEmployeeId)
+        public async Task<int?> CanTAEditEvaluationAsync(int taEmployeeId)
         {
             try
             {
                 var evaluation = await db.Evaluations
-                    .FirstOrDefaultAsync(e => e.EvaluationId == evaluationId);
+                    .FirstOrDefaultAsync(e => e.TaEmployeeId == taEmployeeId);
 
                 if (evaluation == null)
-                    return false;
+                    return null;
 
-                // Check if this is the correct TA
-                if (evaluation.TaEmployeeId != taEmployeeId)
-                    return false;
-
-                // Check if evaluation is in editable status (typically draft or returned)
-                var editableStatuses = new[] { 1, 6 }; // Draft, Returned for revision
-                return editableStatuses.Contains(evaluation.StatusId);
+                // Return the ID regardless of status
+                return evaluation.EvaluationId;
             }
             catch (Exception ex)
             {
-                throw new Exception($"Error checking if TA can edit evaluation {evaluationId}", ex);
+                throw new Exception($"Error checking if TA can edit evaluation {taEmployeeId}", ex);
             }
         }
 

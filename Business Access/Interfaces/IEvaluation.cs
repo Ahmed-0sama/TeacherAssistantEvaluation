@@ -25,6 +25,6 @@ namespace Business_Access.Interfaces
 
         Task<IEnumerable<GetEvaluationDto>> GetEvaluationsByPeriodAsync(int periodId);
 
-        Task<bool> CanTAEditEvaluationAsync(int evaluationId, int taEmployeeId);
+        Task<int?> CanTAEditEvaluationAsync(int taEmployeeId);
     }
 }

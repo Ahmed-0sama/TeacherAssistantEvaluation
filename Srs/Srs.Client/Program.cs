@@ -2,10 +2,17 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
-// Add this line to register HttpClient
-builder.Services.AddScoped(sp => new HttpClient
+// Debug: Print the base address
+Console.WriteLine($"HostEnvironment.BaseAddress: {builder.HostEnvironment.BaseAddress}");
+
+builder.Services.AddScoped(sp =>
 {
-    BaseAddress = new Uri(builder.HostEnvironment.BaseAddress)
+    var httpClient = new HttpClient
+    {
+        BaseAddress = new Uri(builder.HostEnvironment.BaseAddress)
+    };
+    Console.WriteLine($"HttpClient BaseAddress configured: {httpClient.BaseAddress}");
+    return httpClient;
 });
 
 await builder.Build().RunAsync();

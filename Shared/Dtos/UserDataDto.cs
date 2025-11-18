@@ -9,7 +9,8 @@ namespace Shared.Dtos
 {
     public class UserDataDto
     {
-            [Required(ErrorMessage = "Requird")]
+        public int Id { get; set; }
+        [Required(ErrorMessage = "Requird")]
             public string Name { get; set; } = string.Empty;
 
             [Required(ErrorMessage = "Requird")]
