@@ -155,7 +155,7 @@
                                             </td>
                                             <td class="py-3 text-center">
                                                 <span class="badge @GetStatusBadgeClass(paper.Status) fs-6 px-3 py-2">
-                                                    @paper.Status
+                                                    @GetStatusName(paper.Status)
                                                 </span>
                                             </td>
                                             <td class="py-3 text-center">
@@ -268,10 +268,10 @@
                             <label class="form-label fw-bold">الحالة <span class="text-danger">*</span></label>
                             <InputSelect class="form-select" @bind-Value="currentPaper.Status">
                                 <option value="">-- اختر الحالة --</option>
-                                <option value="منشور">منشور</option>
-                                <option value="قيد المراجعة">قيد المراجعة</option>
-                                <option value="مقبول">مقبول</option>
-                                <option value="مرفوض">مرفوض</option>
+                                <option value=1>منشور</option>
+                                <option value=2>قيد المراجعة</option>
+                                <option value=3>مقبول</option>
+                                <option value="4">مرفوض</option>
                             </InputSelect>
                             <ValidationMessage For="@(() => currentPaper.Status)" class="text-danger" />
                         </div>
@@ -296,6 +296,17 @@
     private List<ResearchPaperDto> researchPapers = new List<ResearchPaperDto>();
     private OtherActivitiesDto otherActivities = new OtherActivitiesDto();
     private string? errorMessage;
+    [Parameter]
+    public List<ResearchPaperDto>? InitialResearchPapers { get; set; }
+
+    [Parameter]
+    public OtherActivitiesDto? InitialOtherActivities { get; set; }
+
+    [Parameter]
+    public EventCallback<List<ResearchPaperDto>> OnResearchPapersLoaded { get; set; }
+
+    [Parameter]
+    public EventCallback<OtherActivitiesDto> OnOtherActivitiesLoaded { get; set; }
 
     // Modal state
     private bool showModal = false;
@@ -307,6 +318,21 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadActivityData();
+    }
+    protected override async Task OnParametersSetAsync()
+    {
+        if (InitialResearchPapers != null && InitialResearchPapers.Any())
+        {
+            researchPapers = InitialResearchPapers;
+            nextId = researchPapers.Max(p => p.Id) + 1;
+            Console.WriteLine($"Loaded {researchPapers.Count} initial research papers");
+        }
+
+        if (InitialOtherActivities != null)
+        {
+            otherActivities = InitialOtherActivities;
+            Console.WriteLine("Loaded initial other activities");
+        }
     }
 
     private async Task LoadActivityData()
@@ -329,29 +355,11 @@
                 ScientificResearchReport = false
             };
 
-            researchPapers = new List<ResearchPaperDto>
+            // 🆕 Only load sample data if no initial data was provided
+            if (researchPapers == null || !researchPapers.Any())
             {
-                new ResearchPaperDto
-                {
-                    Id = 1,
-                    Title = "تطبيقات التعلم الآلي في معالجة اللغة العربية",
-                    ConferenceOrJournal = "المؤتمر الدولي للذكاء الاصطناعي",
-                    Location = "الرياض، السعودية",
-                    PageCount = 12,
-                    Date = new DateOnly(2024, 10, 15),
-                    Status =1
-                },
-                new ResearchPaperDto
-                {
-                    Id = 2,
-                    Title = "خوارزميات التعلم العميق للتعرف على الصور",
-                    ConferenceOrJournal = "مجلة الحوسبة العربية",
-                    Location = "القاهرة، مصر",
-                    PageCount = 18,
-                    Date = new DateOnly(2024, 8, 20),
-                    Status = 1
-                }
-            };
+                researchPapers = new List<ResearchPaperDto>();
+            }
 
             await SendDataToParent();
         }
@@ -458,12 +466,6 @@
         };
     }
 
-    [Parameter]
-    public EventCallback<List<ResearchPaperDto>> OnResearchPapersLoaded { get; set; }
-
-    [Parameter]
-    public EventCallback<OtherActivitiesDto> OnOtherActivitiesLoaded { get; set; }
-
     private async Task SendDataToParent()
     {
         if (OnResearchPapersLoaded.HasDelegate)
@@ -475,5 +477,16 @@
         {
             await OnOtherActivitiesLoaded.InvokeAsync(otherActivities);
         }
+    }
+    private string GetStatusName(int status)
+    {
+        return status switch
+        {
+            1 => "نشر",
+            2 => "قيد المراجعة",
+            3 => "مقبول",
+            4 => "مرفوض",
+            _ => "bg-secondary"
+        };
     }
 }

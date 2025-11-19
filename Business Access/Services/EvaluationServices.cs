@@ -104,7 +104,7 @@ namespace Business_Access.Services
                 }
 
                 // Update evaluation status to "Submitted"
-                evaluation.StatusId = 2; // Submitted status - adjust based on your status IDs
+                evaluation.StatusId = 1; // Submitted status - adjust based on your status IDs
                 evaluation.DateSubmitted = DateTime.Now;
                 db.Evaluations.Update(evaluation);
                 await db.SaveChangesAsync();
@@ -352,9 +352,11 @@ namespace Business_Access.Services
 
                 if (evaluation == null)
                     return null;
-
-                // Return the ID regardless of status
-                return evaluation.EvaluationId;
+                if (evaluation.StatusId == 1)
+                {
+                    return evaluation.EvaluationId;
+                }
+                return null;
             }
             catch (Exception ex)
             {

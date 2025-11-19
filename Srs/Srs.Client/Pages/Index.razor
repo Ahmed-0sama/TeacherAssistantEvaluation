@@ -91,10 +91,11 @@
     </div>
 
     <div class="w-75 mb-4 shadow-sm">
-        <Srs.Client.Compontets.SentificِActivityComponent OnResearchPapersLoaded="HandleResearchPapers"
+        <Srs.Client.Compontets.SentificِActivityComponent InitialResearchPapers="researchPapers"
+                                                          InitialOtherActivities="otherActivities"
+                                                          OnResearchPapersLoaded="HandleResearchPapers"
                                                           OnOtherActivitiesLoaded="HandleOtherActivities" />
     </div>
-
     <div class="w-75 mb-4 shadow-sm">
         <Srs.Client.Compontets.AdministrativeِِActivityComponent OnActivityLoaded="HandleAdministrativeData" />
     </div>
@@ -156,7 +157,7 @@
         {
             userData = new Shared.Dtos.UserDataDto
             {
-                Id = 121,
+                Id = 120,
                 Name = "علياء احمد",
                 EmployeeNumber = 12323,
                 Qualification = "ماجستير في علوم الحاسب",
@@ -226,16 +227,10 @@
                     {
                         evaluationId = idElement.GetInt32();
                         Console.WriteLine($"Existing evaluation found, ID = {evaluationId}");
-                    }
-                    else
-                    {
-                        Console.WriteLine("Cannot edit — evaluation not in editable status.");
+
+                        await LoadExistingTAData();
                     }
                 }
-            }
-            else
-            {
-                Console.WriteLine($"Failed to get evaluation: {await response.Content.ReadAsStringAsync()}");
             }
         }
         catch (Exception ex)
@@ -342,4 +337,47 @@
         Console.WriteLine("Other activities received from child");
     }
 
+
+    private async Task LoadExistingTAData()
+    {
+        try
+        {
+            var response = await http.GetAsync($"/api/Evaluation/GetTASubmission/{evaluationId}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var existingData = await response.Content.ReadFromJsonAsync<UpdateTASubmissionsDto>();
+
+                if (existingData != null)
+                {
+                    // Map research activities
+                    researchPapers = existingData.ResearchActivities?.Select(r => new ResearchPaperDto
+                    {
+                        
+                        Title = r.Title,
+                        ConferenceOrJournal = r.Journal,
+                        Location = r.Location,
+                        PageCount = r.PageCount,
+                        Date = r.ActivityDate,
+                        Status = r.StatusId,
+                        Url = r.Url
+                    }).ToList() ?? new List<ResearchPaperDto>();
+
+                    // Map other activities
+                    otherActivities = new OtherActivitiesDto
+                    {
+                        HasTechnicalReportsOrArticles = existingData.HasTechnicalReports,
+                        HasGivenLecturesOrSeminars = existingData.HasSeminarLectures,
+                        HasAttendedScientificSeminars = existingData.HasAttendingSeminars
+                    };
+
+                    Console.WriteLine($"Loaded {researchPapers.Count} existing research papers");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading existing TA data: {ex.Message}");
+        }
+    }
 }
