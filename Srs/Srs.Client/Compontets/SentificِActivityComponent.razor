@@ -154,6 +154,9 @@
                                                 @paper.Date.ToString("yyyy/MM/dd")
                                             </td>
                                             <td class="py-3 text-center">
+                                                @* 🔍 Temporary debug line *@
+                                                <small class="text-muted">Status value: @paper.Status</small>
+
                                                 <span class="badge @GetStatusBadgeClass(paper.Status) fs-6 px-3 py-2">
                                                     @GetStatusName(paper.Status)
                                                 </span>
@@ -184,30 +187,42 @@
                 </div>
             </div>
 
+
             <div class="card shadow-sm mb-4" dir="rtl">
                 <div class="card-body">
                     <h5 class="card-title mb-4">انشطة علمية اخري</h5>
                     <div class="row g-3">
                         <div class="col-md-4">
                             <div class="form-check form-check-rtl">
-                                <input class="form-check-input" type="checkbox" id="attendSeminars" @bind="otherActivities.HasTechnicalReportsOrArticles">
-                                <label class="form-check-label" for="attendSeminars">
+                                <input type="checkbox"
+                                       class="form-check-input"
+                                       id="technicalReports"
+                                       @bind="otherActivities.HasTechnicalReportsOrArticles" />
+                                <label class="form-check-label" for="technicalReports">
                                     تقارير فنية او مقالات منشور(دون ان تكون ورقة بحثية)
                                 </label>
                             </div>
                         </div>
+
                         <div class="col-md-4">
                             <div class="form-check form-check-rtl">
-                                <input class="form-check-input" type="checkbox" id="publishArticle" @bind="otherActivities.HasGivenLecturesOrSeminars">
-                                <label class="form-check-label" for="publishArticle">
+                                <input type="checkbox"
+                                       class="form-check-input"
+                                       id="lectures"
+                                       @bind="otherActivities.HasGivenLecturesOrSeminars" />
+                                <label class="form-check-label" for="lectures">
                                     القاء محاضرات في ندوات او لقاءات
                                 </label>
                             </div>
                         </div>
+
                         <div class="col-md-4">
                             <div class="form-check form-check-rtl">
-                                <input class="form-check-input" type="checkbox" id="superviseStudents" @bind="otherActivities.HasAttendedScientificSeminars">
-                                <label class="form-check-label" for="superviseStudents">
+                                <input type="checkbox"
+                                       class="form-check-input"
+                                       id="seminars"
+                                       @bind="otherActivities.HasAttendedScientificSeminars"/>
+                                <label class="form-check-label" for="seminars">
                                     حضور ندوات علمية ودورات تدريبية علمية
                                 </label>
                             </div>
@@ -268,7 +283,7 @@
                             <label class="form-label fw-bold">الحالة <span class="text-danger">*</span></label>
                             <InputSelect class="form-select" @bind-Value="currentPaper.Status">
                                 <option value="">-- اختر الحالة --</option>
-                                <option value=1>منشور</option>
+                                <option value=1>منشور</option>  
                                 <option value=2>قيد المراجعة</option>
                                 <option value=3>مقبول</option>
                                 <option value="4">مرفوض</option>
@@ -296,6 +311,7 @@
     private List<ResearchPaperDto> researchPapers = new List<ResearchPaperDto>();
     private OtherActivitiesDto otherActivities = new OtherActivitiesDto();
     private string? errorMessage;
+
     [Parameter]
     public List<ResearchPaperDto>? InitialResearchPapers { get; set; }
 
@@ -313,25 +329,36 @@
     private bool isEditMode = false;
     private ResearchPaperDto currentPaper = new ResearchPaperDto();
     private int nextId = 3;
-    private int testCounter = 0;
 
     protected override async Task OnInitializedAsync()
     {
         await LoadActivityData();
     }
+
+
     protected override async Task OnParametersSetAsync()
     {
+        Console.WriteLine("=== OnParametersSetAsync Called ===");
+
         if (InitialResearchPapers != null && InitialResearchPapers.Any())
         {
-            researchPapers = InitialResearchPapers;
+            researchPapers = new List<ResearchPaperDto>(InitialResearchPapers);
             nextId = researchPapers.Max(p => p.Id) + 1;
-            Console.WriteLine($"Loaded {researchPapers.Count} initial research papers");
+            Console.WriteLine($"✅ Loaded {researchPapers.Count} initial research papers");
         }
 
         if (InitialOtherActivities != null)
         {
-            otherActivities = InitialOtherActivities;
-            Console.WriteLine("Loaded initial other activities");
+            // Create a NEW instance and copy values
+            otherActivities = new OtherActivitiesDto
+            {
+                HasTechnicalReportsOrArticles = InitialOtherActivities.HasTechnicalReportsOrArticles,
+                HasGivenLecturesOrSeminars = InitialOtherActivities.HasGivenLecturesOrSeminars,
+                HasAttendedScientificSeminars = InitialOtherActivities.HasAttendedScientificSeminars
+            };
+
+            // Force UI update after data is loaded
+            await InvokeAsync(StateHasChanged);
         }
     }
 
@@ -355,13 +382,11 @@
                 ScientificResearchReport = false
             };
 
-            // 🆕 Only load sample data if no initial data was provided
             if (researchPapers == null || !researchPapers.Any())
             {
                 researchPapers = new List<ResearchPaperDto>();
+                otherActivities = new OtherActivitiesDto();
             }
-
-            await SendDataToParent();
         }
         catch (Exception ex)
         {
@@ -373,6 +398,7 @@
             StateHasChanged();
         }
     }
+
     private void AddNewPaper()
     {
         Console.WriteLine("AddNewPaper method called!");
@@ -386,7 +412,6 @@
             Status = 1
         };
         showModal = true;
-        Console.WriteLine($"showModal set to: {showModal}");
         StateHasChanged();
     }
 
@@ -462,7 +487,8 @@
             2 => "bg-warning text-dark",
             3 => "bg-info",
             4 => "bg-danger",
-            _ => "bg-secondary"
+            0 => "bg-secondary",           // ✅ Handle unset status
+            _ => "bg-secondary text-white" // ✅ Handle unexpected values
         };
     }
 
@@ -478,15 +504,17 @@
             await OnOtherActivitiesLoaded.InvokeAsync(otherActivities);
         }
     }
+
     private string GetStatusName(int status)
     {
         return status switch
         {
-            1 => "نشر",
+            1 => "منشور",
             2 => "قيد المراجعة",
             3 => "مقبول",
             4 => "مرفوض",
-            _ => "bg-secondary"
+            0 => "غير محدد",      // ✅ Handle default/unset value
+            _ => "حالة غير معروفة"  // ✅ Handle any other unexpected value
         };
     }
 }

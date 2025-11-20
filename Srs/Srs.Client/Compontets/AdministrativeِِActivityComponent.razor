@@ -84,11 +84,24 @@
     private AdminstrativeActivityDto AdminstrativeActivityDto = new AdminstrativeActivityDto();
 
     [Parameter]
+    public AdminstrativeActivityDto? InitialData { get; set; }
+
+    [Parameter]
     public EventCallback<AdminstrativeActivityDto> OnActivityLoaded { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // Load initial data when passed from parent
+        if (InitialData != null)
+        {
+            AdminstrativeActivityDto = InitialData;
+            Console.WriteLine($"📥 Administrative component received initial data: IsAcademicGuidanceCommittee={InitialData.IsAcademicGuidanceCommittee}");
+        }
+    }
 
     private async Task OnDataChanged()
     {
-        // send to the index page
+        // Send to the index page
         await OnActivityLoaded.InvokeAsync(AdminstrativeActivityDto);
     }
 }

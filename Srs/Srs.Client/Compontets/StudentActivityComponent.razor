@@ -49,20 +49,34 @@
 
 @code {
     private StudentActivityDto studentActivity = new StudentActivityDto();
+    private bool hasSentInitialData = false;
+
+    [Parameter]
+    public StudentActivityDto? InitialData { get; set; }
 
     [Parameter]
     public EventCallback<StudentActivityDto> OnActivityLoaded { get; set; }
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnParametersSetAsync()
     {
-        // Send initial data to parent when component loads
-        await SendDataToParent();
+        // If the parent passed initial data, apply it
+        if (InitialData != null)
+        {
+            studentActivity = InitialData;
+            Console.WriteLine($"📥 Student activity component received initial data: Sport={InitialData.IsCompletedStudentActivity}, Social={InitialData.IsCompletedSocialActivity}, Cultural={InitialData.IsCompletedCulturalActivity}");
+        }
+
+        // Ensure parent gets the current state once after parameters are set
+        if (!hasSentInitialData)
+        {
+            await SendDataToParent();
+            hasSentInitialData = true;
+        }
     }
 
     private async Task SendDataToParent()
     {
         Console.WriteLine($"📤 Sending student activity data: Sport={studentActivity.IsCompletedStudentActivity}, Social={studentActivity.IsCompletedSocialActivity}, Cultural={studentActivity.IsCompletedCulturalActivity}");
-
         if (OnActivityLoaded.HasDelegate)
         {
             await OnActivityLoaded.InvokeAsync(studentActivity);
