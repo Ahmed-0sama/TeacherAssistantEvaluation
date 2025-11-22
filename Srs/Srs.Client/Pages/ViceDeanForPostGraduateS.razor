@@ -1,5 +1,7 @@
-﻿@page "/vicedean"
+﻿@page "/GSDean"
 @using Shared.Dtos
+@using Shared.Dtos.GSDean
+@using Shared.Dtos.TASubmissions
 @inject HttpClient Http
 @inject IJSRuntime JS
 @rendermode InteractiveWebAssembly
@@ -44,14 +46,13 @@
                                         <td>@ta.Department</td>
                                         <td>
                                             @if (ta.status == "Confirmed")
-                                                {
-                                                    <span class="result-pill">@ta.status</span>
-                                                }
+                                            {
+                                                <span class="result-pill">@ta.status</span>
+                                            }
                                             else if (ta.status == "Waiting For Review")
-                                                {
-                                                   <span class="result-pill" style="background-color: antiquewhite; color: black;">@ta.status</span>
-                                                }
-                                            
+                                            {
+                                                <span class="result-pill" style="background-color: antiquewhite; color: black;">@ta.status</span>
+                                            }
                                         </td>
                                         <td>
                                             <button class="btn btn-sm btn-primary" @onclick="() => OpenModal(ta)">
@@ -68,6 +69,7 @@
         </div>
     </div>
 </div>
+
 <!-- Modal -->
 @if (ModalVisable)
 {
@@ -75,110 +77,178 @@
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content" dir="rtl">
                 <div class="modal-header" dir="rtl">
-                    <button type="button" class="btn-close ms-0 me-auto" @onclick="() => ModalVisable = false"></button>
-                    <h5 class="modal-title">تفاصيل مساعد التدريس</h5>
+                    <button type="button" class="btn-close ms-0 me-auto" @onclick="CloseModal"></button>
+                    <h5 class="modal-title">بيانات التقدم في الماجيستير</h5>
                 </div>
                 <div class="modal-body">
-                    <div class="border rounded p-3 bg-light mb-2">
-                        <h5 class="mb-3 text-primary">البيانات الأساسية</h5>
-
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">اسم مساعد التدريس</label>
-                                <input type="text" class="form-control" disabled value="@selectedTA?.Name" />
+                    @if (isLoadingModalData)
+                    {
+                        <div class="text-center p-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">جارٍ التحميل...</span>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">الرقم الوظيفي:</label>
-                                <input type="text" class="form-control" disabled value="@selectedTA?.EmployeeNumber" />
+                            <p class="mt-2">جارٍ تحميل البيانات...</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="border rounded p-3 bg-light mb-2">
+                            <h5 class="mb-3 text-primary">البيانات الأساسية</h5>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">اسم مساعد التدريس</label>
+                                    <input type="text" class="form-control" disabled value="@selectedTA?.Name" />
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">الرقم الوظيفي:</label>
+                                    <input type="text" class="form-control" disabled value="@selectedTA?.EmployeeNumber" />
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">القسم</label>
+                                    <input type="text" class="form-control" disabled value="@selectedTA?.Department" />
+                                </div>
                             </div>
                         </div>
 
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">القسم</label>
-                                <input type="text" class="form-control" disabled value="@selectedTA?.Department" />
-                            </div>
-                        </div>
-                    </div>
-                    <div class="border rounded p-3 bg-light mb-2">
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">التخصص/البرنامج في الماجيستير</label>
-                                <input type="text" class="form-control" value="@mastersDto.Major" disabled="@IsReadOnly" />
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">االساعات المجتازة</label>
-                                <input type="text" class="form-control" value="@mastersDto.HoursGained" disabled="@IsReadOnly" />
+                        <div class="border rounded p-3 bg-light mb-2">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">التخصص/البرنامج في الماجيستير</label>
+                                    <input type="text" class="form-control" @bind="mastersDto.Major" readonly="@IsReadOnly" />
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">الساعات المجتازة</label>
+                                    <input type="number" class="form-control" @bind="@mastersDto.HoursGained" readonly="@IsReadOnly" />
+                                </div>
                             </div>
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label fw-bold">المعدل التراكمي</label>
-                                    <input type="text" class="form-control" value="@mastersDto.Grade" disabled="@IsReadOnly" />
+                                    <input type="number" step="0.01" class="form-control" @bind="@mastersDto.Grade" readonly="@IsReadOnly" />
                                 </div>
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label fw-bold">التاريخ المتوقع للاتمام</label>
-                                        <input type="date" class="form-control" value="@mastersDto.EstimatedGraduationDate" disabled="@IsReadOnly" />
-                                    </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">التاريخ المتوقع للإتمام</label>
+                                    <input type="date" class="form-control"
+                                           @bind="mastersDto.EstimatedGraduationDate"
+                                           @bind:format="yyyy-MM-dd"
+                                           readonly="@IsReadOnly" />
+                                </div>
                             </div>
+
                             <div class="row">
                                 <label class="form-label fw-bold mb-3">مؤشرات التقدم</label>
 
                                 <div class="col-md-4 mb-3 d-flex align-items-center">
-                                    <input type="checkbox" class="form-check-input ms-2" checked="@mastersDto.ResearchPointsCompleted" disabled="@IsReadOnly" />
+                                    <input type="checkbox"
+                                           class="form-check-input ms-2"
+                                           @bind="mastersDto.ResearchPointsCompleted"
+                                           disabled="@IsReadOnly" />
                                     <label class="form-check-label fw-bold">اختيار النقطة البحثية</label>
                                 </div>
 
                                 <div class="col-md-4 mb-3 d-flex align-items-center">
-                                    <input type="checkbox" class="form-check-input ms-2" checked="@mastersDto.SearchInResources" disabled="@IsReadOnly" />
+                                    <input type="checkbox"
+                                           class="form-check-input ms-2"
+                                           @bind="mastersDto.SearchInResources"
+                                           disabled="@IsReadOnly" />
                                     <label class="form-check-label fw-bold">البحث في المصادر</label>
                                 </div>
 
                                 <div class="col-md-4 mb-3 d-flex align-items-center">
-                                    <input type="checkbox" class="form-check-input ms-2" checked="@mastersDto.SearchPlanning" disabled="@IsReadOnly" />
+                                    <input type="checkbox"
+                                           class="form-check-input ms-2"
+                                           @bind="mastersDto.SearchPlanning"
+                                           disabled="@IsReadOnly" />
                                     <label class="form-check-label fw-bold">وضع الخطة البحثية</label>
                                 </div>
+
                                 <div class="col-md-4 mb-3 d-flex align-items-center">
-                                    <input type="checkbox" class="form-check-input ms-2" checked="@mastersDto.CollectDataAndAnalyze" disabled="@IsReadOnly" />
+                                    <input type="checkbox"
+                                           class="form-check-input ms-2"
+                                           @bind="mastersDto.CollectDataAndAnalyze"
+                                           disabled="@IsReadOnly" />
                                     <label class="form-check-label fw-bold">جمع وتحليل البيانات</label>
                                 </div>
+
                                 <div class="col-md-4 mb-3 d-flex align-items-center">
-                                    <input type="checkbox" class="form-check-input ms-2" checked="@mastersDto.ResearchReportWriting" disabled="@IsReadOnly" />
-                                    <label class="form-check-label fw-bold">كتابة البحث /الابحاث</label>
+                                    <input type="checkbox"
+                                           class="form-check-input ms-2"
+                                           @bind="mastersDto.ResearchReportWriting"
+                                           disabled="@IsReadOnly" />
+                                    <label class="form-check-label fw-bold">كتابة البحث/الأبحاث</label>
                                 </div>
+
                                 <div class="col-md-4 mb-3 d-flex align-items-center">
-                                    <input type="checkbox" class="form-check-input ms-2" checked="@mastersDto.ScientificResearchReport" disabled="@IsReadOnly" />
+                                    <input type="checkbox"
+                                           class="form-check-input ms-2"
+                                           @bind="mastersDto.ScientificResearchReport"
+                                           disabled="@IsReadOnly" />
                                     <label class="form-check-label fw-bold">كتابة الرسالة العلمية</label>
                                 </div>
                             </div>
-                            </div>
-                            </div>
-                    <div class="border rounded p-3 bg-light">
-                        <div class="row">
-                            <label class="form-label fw-bold mb-3">تقييم التقدم والملاحظات</label>
-
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label fw-bold">درجة تقييم التقدم (من 5)</label>
-                                <input type="number" class="form-control" value="@mastersDto.GradeGivenbySupervisor"
-                                       min="0" max="5" disabled="@IsReadOnly"
-                                       oninput="this.value = Math.min(5, Math.max(0, this.value))" />
-                            </div>
                         </div>
-                    </div>
-                     
+
+                        <div class="border rounded p-3 bg-light">
+                            <div class="row">
+                                <label class="form-label fw-bold mb-3">تقييم التقدم والملاحظات</label>
+
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label fw-bold">درجة تقييم التقدم (من 5)</label>
+                                    <input type="number"
+                                           class="form-control"
+                                           @bind="mastersDto.GradeGivenbySupervisor"
+                                           readonly="@IsReadOnly"
+                                           min="0" max="5" step="0.1" />
+                                </div>
+
+                                @if (IsReadOnly && mastersDto.GradeGivenbySupervisor.HasValue)
+                                {
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label fw-bold">نسبة الإنجاز</label>
+                                        <input type="text"
+                                               class="form-control"
+                                               value="@($"{mastersDto.GradeGivenbySupervisor:F2}%")"
+                                               readonly />
+                                    </div>
+                                }
+                            </div>
+
+                            @if (!string.IsNullOrEmpty(mastersDto.Status))
+                            {
+                                <div class="row">
+                                    <div class="col-12 mb-3">
+                                        <label class="form-label fw-bold">الملاحظات</label>
+                                        <textarea class="form-control" rows="3" readonly>@mastersDto.Status</textarea>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @onclick="() => ModalVisable = false">إغلاق</button>
-                    @if (!IsReadOnly)
+                    <button type="button" class="btn btn-secondary" @onclick="CloseModal">إغلاق</button>
+                    @if (!IsReadOnly && !isLoadingModalData)
                     {
-                        <button type="button" class="btn btn-primary">اعتماد الدرجة</button>
+                        <button type="button" class="btn btn-primary"
+                                @onclick="() => SendData(mastersDto)"
+                                disabled="@isSaving">
+                            @(isSaving ? "جارٍ الحفظ..." : "اعتماد الدرجة")
+                        </button>
                     }
                 </div>
             </div>
         </div>
     </div>
 }
+
 @code {
     private bool isLoading = true;
+    private bool isLoadingModalData = false;
+    private bool isSaving = false;
     private string? errorMessage;
     private List<UserDataDto> taList = new();
     private UserDataDto? selectedTA;
@@ -190,12 +260,17 @@
     {
         try
         {
-            // var response = await Http.GetFromJsonAsync<Shared.Dtos.MastersDto>($"api/userdata/{userid}");
-            taList = new List<UserDataDto> {
-            new UserDataDto { Name = "علياء نبيل", Department = "علوم الحاسب", EmployeeNumber = 679789, status = "Confirmed" },
-            new UserDataDto { Name = "سارة حسن", Department = "علوم الحاسب", EmployeeNumber = 679790, status = "Waiting For Review" },
-            new UserDataDto { Name = "أحمد محمود", Department = "علوم الحاسب", EmployeeNumber = 679791, status = "Waiting For Review" }
-};
+            var evaluations = await Http.GetFromJsonAsync<List<GetEvaluationDto>>("/api/evaluation/period/1");
+
+            // Map GetEvaluationDto to UserDataDto
+            taList = evaluations.Select(e => new UserDataDto
+            {
+                Name = $"TA #{e.TaEmployeeId}",
+                Department = e.PeriodName,
+                EmployeeNumber = e.TaEmployeeId,
+                status = e.StatusName,
+                EvaluationId = e.EvaluationId
+            }).ToList();
         }
         catch (Exception ex)
         {
@@ -206,17 +281,122 @@
             isLoading = false;
         }
     }
-    private void OpenModal(UserDataDto ta)
+
+    private async Task OpenModal(UserDataDto ta)
     {
-        if (ta.status == "Confirmed")
-        {
-            IsReadOnly = true;
-        }
-        else
-        {
-            IsReadOnly = false;
-        }
         selectedTA = ta;
         ModalVisable = true;
+        isLoadingModalData = true;
+
+        // Determine if readonly based on status
+        IsReadOnly = ta.status == "Confirmed";
+
+        // Reset the DTO
+        mastersDto = new MastersDto();
+
+        try
+        {
+            // Try to fetch existing GSDean evaluation data
+            var response = await Http.GetAsync($"/api/GSdean/GetByEvaluation/{ta.EvaluationId}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var existingData = await response.Content.ReadFromJsonAsync<List<GsdeanEvaluationDto>>();
+
+                // If data exists, populate the form
+                if (existingData != null && existingData.Any())
+                {
+                    var data = existingData.First(); // Get the first evaluation
+                    mastersDto = new MastersDto
+                    {
+                        Major = data.ProgramName,
+                        HoursGained = data.CompletedHours,
+                        Grade = data.Gpa,
+                        EstimatedGraduationDate = data.ExpectedCompletionDate,
+                        GradeGivenbySupervisor = data.ProgressScore ?? 0,
+                        Status = data.EvaluationComments,
+                        ResearchPointsCompleted = data.TopicChosen,
+                        SearchInResources = data.LiteratureReview,
+                        SearchPlanning = data.ResearchPlan,
+                        CollectDataAndAnalyze = data.DataCollection,
+                        ResearchReportWriting = data.Writing,
+                        ScientificResearchReport = data.ThesisDefense
+                    };
+                }
+            }
+            else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                // No existing data - this is fine for new evaluations
+                Console.WriteLine("No existing evaluation found - creating new");
+            }
+            else
+            {
+                Console.WriteLine($"Error fetching data: {response.StatusCode}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading evaluation data: {ex.Message}");
+        }
+        finally
+        {
+            isLoadingModalData = false;
+        }
+    }
+
+    private async Task SendData(MastersDto dto)
+    {
+        if (isSaving) return;
+
+        isSaving = true;
+        try
+        {
+            var createDto = new CreateGsdeanEvaluationDto
+            {
+                EvaluationId = selectedTA.EvaluationId,
+                ProgramName = dto.Major,
+                CompletedHours = dto.HoursGained,
+                Gpa = dto.Grade,
+                ProgressScore = dto.GradeGivenbySupervisor,
+                ExpectedCompletionDate = dto.EstimatedGraduationDate,
+                EvaluationComments = dto.Status,
+                TopicChosen = dto.ResearchPointsCompleted,
+                LiteratureReview = dto.SearchInResources,
+                ResearchPlan = dto.SearchPlanning,
+                DataCollection = dto.CollectDataAndAnalyze,
+                Writing = dto.ResearchReportWriting,
+                ThesisDefense = dto.ScientificResearchReport
+            };
+
+            var response = await Http.PostAsJsonAsync("/api/GSdean/CreateEvaluation", createDto);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var msg = await response.Content.ReadAsStringAsync();
+                await JS.InvokeVoidAsync("alert", $"خطأ في حفظ البيانات: {msg}");
+                return;
+            }
+
+            await JS.InvokeVoidAsync("alert", "تم حفظ التقييم بنجاح!");
+            CloseModal();
+
+            // Refresh the list
+            await OnInitializedAsync();
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"خطأ: {ex.Message}");
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private void CloseModal()
+    {
+        ModalVisable = false;
+        mastersDto = new MastersDto();
+        selectedTA = null;
     }
 }

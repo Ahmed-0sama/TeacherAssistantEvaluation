@@ -12,10 +12,11 @@
         <div class="row g-3 mt-3" dir="rtl">
             <div class="col-md-6">
                 <div class="form-check form-check-rtl">
-                    <InputCheckbox class="form-check-input"
-                                   id="IsAcademicGuidanceCommittee"
-                                   @bind-Value="AdminstrativeActivityDto.IsAcademicGuidanceCommittee"
-                                   @bind-Value:after="OnDataChanged" />
+                    <input type="checkbox"
+                           class="form-check-input"
+                           id="IsAcademicGuidanceCommittee"
+                           checked="@AdminstrativeActivityDto.IsAcademicGuidanceCommittee"
+                           @onchange="@((e) => UpdateCheckbox(nameof(AdminstrativeActivityDto.IsAcademicGuidanceCommittee), e))" />
                     <label class="form-check-label" for="IsAcademicGuidanceCommittee">
                         لجنة الارشاد الاكاديمي
                     </label>
@@ -23,10 +24,11 @@
             </div>
             <div class="col-md-6">
                 <div class="form-check form-check-rtl">
-                    <InputCheckbox class="form-check-input"
-                                   id="ISchedulingCommittee"
-                                   @bind-Value="AdminstrativeActivityDto.ISchedulingCommittee"
-                                   @bind-Value:after="OnDataChanged" />
+                    <input type="checkbox"
+                           class="form-check-input"
+                           id="ISchedulingCommittee"
+                           checked="@AdminstrativeActivityDto.ISchedulingCommittee"
+                           @onchange="@((e) => UpdateCheckbox(nameof(AdminstrativeActivityDto.ISchedulingCommittee), e))" />
                     <label class="form-check-label" for="ISchedulingCommittee">
                         لجنة الجدولة
                     </label>
@@ -34,10 +36,11 @@
             </div>
             <div class="col-md-6">
                 <div class="form-check form-check-rtl">
-                    <InputCheckbox class="form-check-input"
-                                   id="IsQualityWorksCommittee"
-                                   @bind-Value="AdminstrativeActivityDto.IsQualityWorksCommittee"
-                                   @bind-Value:after="OnDataChanged" />
+                    <input type="checkbox"
+                           class="form-check-input"
+                           id="IsQualityWorksCommittee"
+                           checked="@AdminstrativeActivityDto.IsQualityWorksCommittee"
+                           @onchange="@((e) => UpdateCheckbox(nameof(AdminstrativeActivityDto.IsQualityWorksCommittee), e))" />
                     <label class="form-check-label" for="IsQualityWorksCommittee">
                         لجنة اعمال الجودة
                     </label>
@@ -45,10 +48,11 @@
             </div>
             <div class="col-md-6">
                 <div class="form-check form-check-rtl">
-                    <InputCheckbox class="form-check-input"
-                                   id="IsLaboratoryEquipmentCommittee"
-                                   @bind-Value="AdminstrativeActivityDto.IsLaboratoryEquipmentCommittee"
-                                   @bind-Value:after="OnDataChanged" />
+                    <input type="checkbox"
+                           class="form-check-input"
+                           id="IsLaboratoryEquipmentCommittee"
+                           checked="@AdminstrativeActivityDto.IsLaboratoryEquipmentCommittee"
+                           @onchange="@((e) => UpdateCheckbox(nameof(AdminstrativeActivityDto.IsLaboratoryEquipmentCommittee), e))" />
                     <label class="form-check-label" for="IsLaboratoryEquipmentCommittee">
                         لجنة التجهيزات المعملية
                     </label>
@@ -56,10 +60,11 @@
             </div>
             <div class="col-md-6">
                 <div class="form-check form-check-rtl">
-                    <InputCheckbox class="form-check-input"
-                                   id="IsExaminationsOrganizingCommittee"
-                                   @bind-Value="AdminstrativeActivityDto.IsExaminationsOrganizingCommittee"
-                                   @bind-Value:after="OnDataChanged" />
+                    <input type="checkbox"
+                           class="form-check-input"
+                           id="IsExaminationsOrganizingCommittee"
+                           checked="@AdminstrativeActivityDto.IsExaminationsOrganizingCommittee"
+                           @onchange="@((e) => UpdateCheckbox(nameof(AdminstrativeActivityDto.IsExaminationsOrganizingCommittee), e))" />
                     <label class="form-check-label" for="IsExaminationsOrganizingCommittee">
                         لجنة تنظيم الامتحانات
                     </label>
@@ -67,10 +72,11 @@
             </div>
             <div class="col-md-6">
                 <div class="form-check form-check-rtl">
-                    <InputCheckbox class="form-check-input"
-                                   id="IsSocialOrSportsActivityCommittees"
-                                   @bind-Value="AdminstrativeActivityDto.IsSocialOrSportsActivityCommittees"
-                                   @bind-Value:after="OnDataChanged" />
+                    <input type="checkbox"
+                           class="form-check-input"
+                           id="IsSocialOrSportsActivityCommittees"
+                           checked="@AdminstrativeActivityDto.IsSocialOrSportsActivityCommittees"
+                           @onchange="@((e) => UpdateCheckbox(nameof(AdminstrativeActivityDto.IsSocialOrSportsActivityCommittees), e))" />
                     <label class="form-check-label" for="IsSocialOrSportsActivityCommittees">
                         لجان النشاط الاجتماعي او الرياضي
                     </label>
@@ -82,6 +88,7 @@
 
 @code {
     private AdminstrativeActivityDto AdminstrativeActivityDto = new AdminstrativeActivityDto();
+    private bool isInitialized = false;
 
     [Parameter]
     public AdminstrativeActivityDto? InitialData { get; set; }
@@ -91,17 +98,72 @@
 
     protected override async Task OnParametersSetAsync()
     {
-        // Load initial data when passed from parent
-        if (InitialData != null)
+        // Only load data once to prevent overwriting
+        if (InitialData != null && !isInitialized)
         {
-            AdminstrativeActivityDto = InitialData;
-            Console.WriteLine($"📥 Administrative component received initial data: IsAcademicGuidanceCommittee={InitialData.IsAcademicGuidanceCommittee}");
+            Console.WriteLine("=== AdministrativeComponent OnParametersSetAsync (FIRST TIME) ===");
+            Console.WriteLine($"📥 Received InitialData:");
+            Console.WriteLine($"   IsAcademicGuidanceCommittee = {InitialData.IsAcademicGuidanceCommittee}");
+            Console.WriteLine($"   ISchedulingCommittee = {InitialData.ISchedulingCommittee}");
+            Console.WriteLine($"   IsQualityWorksCommittee = {InitialData.IsQualityWorksCommittee}");
+            Console.WriteLine($"   IsLaboratoryEquipmentCommittee = {InitialData.IsLaboratoryEquipmentCommittee}");
+            Console.WriteLine($"   IsExaminationsOrganizingCommittee = {InitialData.IsExaminationsOrganizingCommittee}");
+            Console.WriteLine($"   IsSocialOrSportsActivityCommittees = {InitialData.IsSocialOrSportsActivityCommittees}");
+
+            // Create NEW instance with copied values
+            AdminstrativeActivityDto = new AdminstrativeActivityDto
+            {
+                IsAcademicGuidanceCommittee = InitialData.IsAcademicGuidanceCommittee,
+                ISchedulingCommittee = InitialData.ISchedulingCommittee,
+                IsQualityWorksCommittee = InitialData.IsQualityWorksCommittee,
+                IsLaboratoryEquipmentCommittee = InitialData.IsLaboratoryEquipmentCommittee,
+                IsExaminationsOrganizingCommittee = InitialData.IsExaminationsOrganizingCommittee,
+                IsSocialOrSportsActivityCommittees = InitialData.IsSocialOrSportsActivityCommittees
+            };
+
+            isInitialized = true;
+            Console.WriteLine("✅ Data copied to local instance and marked as initialized");
+
+            // Force UI update
+            await InvokeAsync(StateHasChanged);
+        }
+        else if (InitialData != null && isInitialized)
+        {
+            Console.WriteLine("⏭️ Skipping OnParametersSetAsync - already initialized");
         }
     }
 
-    private async Task OnDataChanged()
+    private async Task UpdateCheckbox(string propertyName, ChangeEventArgs e)
     {
-        // Send to the index page
+        bool isChecked = (bool)(e.Value ?? false);
+
+        Console.WriteLine($"🔄 Checkbox changed: {propertyName} = {isChecked}");
+
+        // Update the property
+        switch (propertyName)
+        {
+            case nameof(AdminstrativeActivityDto.IsAcademicGuidanceCommittee):
+                AdminstrativeActivityDto.IsAcademicGuidanceCommittee = isChecked;
+                break;
+            case nameof(AdminstrativeActivityDto.ISchedulingCommittee):
+                AdminstrativeActivityDto.ISchedulingCommittee = isChecked;
+                break;
+            case nameof(AdminstrativeActivityDto.IsQualityWorksCommittee):
+                AdminstrativeActivityDto.IsQualityWorksCommittee = isChecked;
+                break;
+            case nameof(AdminstrativeActivityDto.IsLaboratoryEquipmentCommittee):
+                AdminstrativeActivityDto.IsLaboratoryEquipmentCommittee = isChecked;
+                break;
+            case nameof(AdminstrativeActivityDto.IsExaminationsOrganizingCommittee):
+                AdminstrativeActivityDto.IsExaminationsOrganizingCommittee = isChecked;
+                break;
+            case nameof(AdminstrativeActivityDto.IsSocialOrSportsActivityCommittees):
+                AdminstrativeActivityDto.IsSocialOrSportsActivityCommittees = isChecked;
+                break;
+        }
+
+        // Send updated data to parent
         await OnActivityLoaded.InvokeAsync(AdminstrativeActivityDto);
+        StateHasChanged();
     }
 }

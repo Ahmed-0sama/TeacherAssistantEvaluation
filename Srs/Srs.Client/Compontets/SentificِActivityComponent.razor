@@ -1,4 +1,5 @@
 ﻿@using Shared.Dtos
+@using Shared.Dtos.GSDean
 @inject HttpClient Http
 @inject IJSRuntime JSRuntime
 <HeadContent>
@@ -154,9 +155,6 @@
                                                 @paper.Date.ToString("yyyy/MM/dd")
                                             </td>
                                             <td class="py-3 text-center">
-                                                @* 🔍 Temporary debug line *@
-                                                <small class="text-muted">Status value: @paper.Status</small>
-
                                                 <span class="badge @GetStatusBadgeClass(paper.Status) fs-6 px-3 py-2">
                                                     @GetStatusName(paper.Status)
                                                 </span>
@@ -186,7 +184,6 @@
                     </div>
                 </div>
             </div>
-
 
             <div class="card shadow-sm mb-4" dir="rtl">
                 <div class="card-body">
@@ -221,7 +218,7 @@
                                 <input type="checkbox"
                                        class="form-check-input"
                                        id="seminars"
-                                       @bind="otherActivities.HasAttendedScientificSeminars"/>
+                                       @bind="otherActivities.HasAttendedScientificSeminars" />
                                 <label class="form-check-label" for="seminars">
                                     حضور ندوات علمية ودورات تدريبية علمية
                                 </label>
@@ -233,12 +230,13 @@
         }
     </div>
 </div>
+
 <!--Modal -->
 @if (showModal)
 {
-<div class="modal-overlay">
-    <div class="modal-container">
-        <div class="modal-header">
+    <div class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
                 <h5 class="modal-title m-0">
                     <i class="bi bi-file-earmark-plus me-2"></i>
                     @(isEditMode ? "تعديل البحث" : "إضافة بحث جديد")
@@ -283,7 +281,7 @@
                             <label class="form-label fw-bold">الحالة <span class="text-danger">*</span></label>
                             <InputSelect class="form-select" @bind-Value="currentPaper.Status">
                                 <option value="">-- اختر الحالة --</option>
-                                <option value=1>منشور</option>  
+                                <option value=1>منشور</option>
                                 <option value=2>قيد المراجعة</option>
                                 <option value=3>مقبول</option>
                                 <option value="4">مرفوض</option>
@@ -313,6 +311,9 @@
     private string? errorMessage;
 
     [Parameter]
+    public int EvaluationId { get; set; }
+
+    [Parameter]
     public List<ResearchPaperDto>? InitialResearchPapers { get; set; }
 
     [Parameter]
@@ -335,7 +336,6 @@
         await LoadActivityData();
     }
 
-
     protected override async Task OnParametersSetAsync()
     {
         Console.WriteLine("=== OnParametersSetAsync Called ===");
@@ -349,7 +349,6 @@
 
         if (InitialOtherActivities != null)
         {
-            // Create a NEW instance and copy values
             otherActivities = new OtherActivitiesDto
             {
                 HasTechnicalReportsOrArticles = InitialOtherActivities.HasTechnicalReportsOrArticles,
@@ -357,7 +356,6 @@
                 HasAttendedScientificSeminars = InitialOtherActivities.HasAttendedScientificSeminars
             };
 
-            // Force UI update after data is loaded
             await InvokeAsync(StateHasChanged);
         }
     }
@@ -366,31 +364,93 @@
     {
         isLoading = true;
         errorMessage = null;
+
         try
         {
-            mastersData = new MastersDto
+            // Validate EvaluationId
+            if (EvaluationId <= 0)
             {
-                Major = "علوم الحاسب --تعلم الالة",
-                HoursGained = 24,
-                Grade = 3.75,
-                EstimatedGraduationDate = new DateOnly(2026, 6, 15),
-                ResearchPointsCompleted = true,
-                SearchInResources = true,
-                SearchPlanning = false,
-                CollectDataAndAnalyze = true,
-                ResearchReportWriting = false,
-                ScientificResearchReport = false
-            };
+                errorMessage = "معرف التقييم غير صالح";
+                return;
+            }
 
+            // Fetch data from API
+            var response = await Http.GetAsync($"/api/GSDean/GetEvaluationForTA/{EvaluationId}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var evaluationData = await response.Content.ReadFromJsonAsync<GsdeanEvaluationDto>();
+
+                if (evaluationData != null)
+                {
+                    // Map API data to mastersData
+                    mastersData = new MastersDto
+                    {
+                        Major = evaluationData.ProgramName,
+                        HoursGained = evaluationData.CompletedHours,
+                        Grade = evaluationData.Gpa,
+                        EstimatedGraduationDate = evaluationData.ExpectedCompletionDate,
+                        GradeGivenbySupervisor = evaluationData.ProgressScore ?? 0,
+                        Status = evaluationData.EvaluationComments,
+                        ResearchPointsCompleted = evaluationData.TopicChosen,
+                        SearchInResources = evaluationData.LiteratureReview,
+                        SearchPlanning = evaluationData.ResearchPlan,
+                        CollectDataAndAnalyze = evaluationData.DataCollection,
+                        ResearchReportWriting = evaluationData.Writing,
+                        ScientificResearchReport = evaluationData.ThesisDefense
+                    };
+
+                    Console.WriteLine("✅ Data loaded successfully from API");
+                }
+                else
+                {
+                    errorMessage = "لم يتم العثور على بيانات التقييم";
+                }
+            }
+            else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                // No data found - initialize with empty data
+                Console.WriteLine("No evaluation data found - initializing empty form");
+                mastersData = new MastersDto
+                {
+                    Major = "",
+                    HoursGained = 0,
+                    Grade = 0,
+                    EstimatedGraduationDate = DateOnly.FromDateTime(DateTime.Now),
+                    ResearchPointsCompleted = false,
+                    SearchInResources = false,
+                    SearchPlanning = false,
+                    CollectDataAndAnalyze = false,
+                    ResearchReportWriting = false,
+                    ScientificResearchReport = false
+                };
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                errorMessage = $"خطأ في تحميل البيانات: {response.StatusCode} - {errorContent}";
+            }
+
+            // Initialize research papers and activities if not loaded from parameters
             if (researchPapers == null || !researchPapers.Any())
             {
                 researchPapers = new List<ResearchPaperDto>();
+            }
+
+            if (otherActivities == null)
+            {
                 otherActivities = new OtherActivitiesDto();
             }
         }
+        catch (HttpRequestException httpEx)
+        {
+            errorMessage = $"خطأ في الاتصال بالخادم: {httpEx.Message}";
+            Console.WriteLine($"HTTP Error: {httpEx}");
+        }
         catch (Exception ex)
         {
-            errorMessage = "حدث خطأ أثناء تحميل البيانات: " + ex.Message;
+            errorMessage = $"حدث خطأ أثناء تحميل البيانات: {ex.Message}";
+            Console.WriteLine($"Error loading data: {ex}");
         }
         finally
         {
@@ -487,8 +547,8 @@
             2 => "bg-warning text-dark",
             3 => "bg-info",
             4 => "bg-danger",
-            0 => "bg-secondary",           // ✅ Handle unset status
-            _ => "bg-secondary text-white" // ✅ Handle unexpected values
+            0 => "bg-secondary",
+            _ => "bg-secondary text-white"
         };
     }
 
@@ -513,8 +573,8 @@
             2 => "قيد المراجعة",
             3 => "مقبول",
             4 => "مرفوض",
-            0 => "غير محدد",      // ✅ Handle default/unset value
-            _ => "حالة غير معروفة"  // ✅ Handle any other unexpected value
+            0 => "غير محدد",
+            _ => "حالة غير معروفة"
         };
     }
 }

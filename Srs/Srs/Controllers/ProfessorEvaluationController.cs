@@ -49,7 +49,6 @@ namespace Srs.Controllers
                 return StatusCode(500, new { message = ex.Message });
             }
         }
-        // Get all evaluations by a professor
         [HttpGet("professor/{professorEmployeeId}")]
         public async Task<IActionResult> GetByProfessor(int professorEmployeeId)
         {

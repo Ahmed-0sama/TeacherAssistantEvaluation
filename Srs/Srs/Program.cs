@@ -17,6 +17,7 @@ builder.Services.AddRazorComponents()
     .AddInteractiveWebAssemblyComponents();
 
 builder.Services.AddScoped<IEvaluationPeriod, EvaluationPeriodService>();
+builder.Services.AddScoped<IGSDean, GSDeanService>();
 builder.Services.AddScoped<IProfessorEvaluation, ProfessorEvaluationServices>();
 builder.Services.AddScoped<IEvaluation, EvaluationServices>();
 builder.Services.AddHttpClient();

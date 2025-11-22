@@ -76,7 +76,17 @@ namespace Business_Access.Services
                     HasTechnicalReports = submissionDto.HasTechnicalReports,
                     HasSeminarLectures = submissionDto.HasSeminarLectures,
                     HasAttendingSeminars = submissionDto.HasAttendingSeminars,
-                    AdvisedStudentCount = submissionDto.AdvisedStudentCount
+                    AdvisedStudentCount = submissionDto.AdvisedStudentCount,
+                    IsInAcademicAdvisingCommittee = submissionDto.IsInAcademicAdvisingCommittee,
+                    IsInSchedulingCommittee = submissionDto.IsInSchedulingCommittee,
+                    IsInQualityAssuranceCommittee = submissionDto.IsInQualityAssuranceCommittee,
+                    IsInLabEquipmentCommittee = submissionDto.IsInLabEquipmentCommittee,
+                    IsInExamOrganizationCommittee = submissionDto.IsInExamOrganizationCommittee,
+                    IsInSocialOrSportsCommittee = submissionDto.IsInSocialOrSportsCommittee,
+                    ParticipatedInSports = submissionDto.ParticipatedInSports,
+                    ParticipatedInSocial = submissionDto.ParticipatedInSocial,
+                    ParticipatedInCultural = submissionDto.ParticipatedInCultural
+
                 };
 
                 db.Tasubmissions.Add(submission);
@@ -221,6 +231,10 @@ namespace Business_Access.Services
                     ParticipatedInSports = submission.ParticipatedInSports,
                     IsInLabEquipmentCommittee = submission.IsInLabEquipmentCommittee,
                     IsInAcademicAdvisingCommittee = submission.IsInAcademicAdvisingCommittee,
+                    IsInQualityAssuranceCommittee = submission.IsInQualityAssuranceCommittee,
+                    IsInSchedulingCommittee = submission.IsInSchedulingCommittee,
+                    IsInSocialOrSportsCommittee = submission.IsInSocialOrSportsCommittee,
+
                     IsInExamOrganizationCommittee = submission.IsInExamOrganizationCommittee,
                     CommitteeParticipation = new CommiteParticipationDto
                     {
@@ -349,7 +363,7 @@ namespace Business_Access.Services
                     .Include(e => e.Period)
                     .Include(e => e.Status)
                     .Include(e => e.Tasubmission)
-                    .Where(e => e.PeriodId == periodId)
+                    .Where(e => e.PeriodId == periodId)//to add the status must be 2 but i removed it to check and debug
                     .OrderBy(e => e.TaEmployeeId)
                     .ToListAsync();
 

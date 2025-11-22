@@ -24,5 +24,6 @@ namespace Shared.Dtos
             [Required(ErrorMessage = "Requird")]
             public string College { get; set; } = string.Empty;
             public string status { get; set; } = string.Empty;
+        public int EvaluationId { get; set; }
     }
 }
