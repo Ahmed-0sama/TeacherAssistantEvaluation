@@ -59,7 +59,7 @@ namespace Business_Access.Services
                     AttendanceScore = evaluationDto.AttendanceScore,
                     PerformanceScore = evaluationDto.PerformanceScore,
                     TotalScore = totalScore,
-                    Comments = evaluationDto.Comments?.Trim(),
+                    Comments = evaluationDto.Comments,
                     IsReturned = false,
                     HodReturnComment = null
                 };

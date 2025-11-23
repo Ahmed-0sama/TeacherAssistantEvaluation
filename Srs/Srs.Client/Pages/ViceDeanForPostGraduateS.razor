@@ -214,25 +214,25 @@
                                                value="@($"{mastersDto.GradeGivenbySupervisor:F2}%")"
                                                readonly />
                                     </div>
+
                                 }
                             </div>
-
-                            @if (!string.IsNullOrEmpty(mastersDto.Status))
-                            {
-                                <div class="row">
-                                    <div class="col-12 mb-3">
-                                        <label class="form-label fw-bold">الملاحظات</label>
-                                        <textarea class="form-control" rows="3" readonly>@mastersDto.Status</textarea>
-                                    </div>
-                                </div>
-                            }
-                        </div>
+                        </div> 
+                        
                     }
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @onclick="CloseModal">إغلاق</button>
                     @if (!IsReadOnly && !isLoadingModalData)
                     {
+                        <div class="w-100 mb-3">
+                            <label class="form-label fw-bold"> الملاحظات اضافية</label>
+                            <textarea class="form-control"
+                                      rows="3"
+                                      @bind="mastersDto.Notes"
+                                      placeholder="اضف ملاحظات حول تقدم الطلاب مثال مطابقتة للخطة او اي تحديات يواجهها"></textarea>
+                        </div>
+                        <button type="button" class="btn btn-secondary" @onclick="CloseModal">إغلاق</button>
+
                         <button type="button" class="btn btn-primary"
                                 @onclick="() => SendData(mastersDto)"
                                 disabled="@isSaving">
@@ -320,7 +320,8 @@
                         SearchPlanning = data.ResearchPlan,
                         CollectDataAndAnalyze = data.DataCollection,
                         ResearchReportWriting = data.Writing,
-                        ScientificResearchReport = data.ThesisDefense
+                        ScientificResearchReport = data.ThesisDefense,
+                        Notes = data.EvaluationComments
                     };
                 }
             }
@@ -359,13 +360,14 @@
                 Gpa = dto.Grade,
                 ProgressScore = dto.GradeGivenbySupervisor,
                 ExpectedCompletionDate = dto.EstimatedGraduationDate,
-                EvaluationComments = dto.Status,
+                EvaluationComments = dto.Notes,
                 TopicChosen = dto.ResearchPointsCompleted,
                 LiteratureReview = dto.SearchInResources,
                 ResearchPlan = dto.SearchPlanning,
                 DataCollection = dto.CollectDataAndAnalyze,
                 Writing = dto.ResearchReportWriting,
                 ThesisDefense = dto.ScientificResearchReport
+
             };
 
             var response = await Http.PostAsJsonAsync("/api/GSdean/CreateEvaluation", createDto);

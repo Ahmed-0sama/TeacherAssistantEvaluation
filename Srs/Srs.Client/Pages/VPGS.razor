@@ -1,0 +1,614 @@
+﻿@page "/vpgs"
+<h3>VPGS</h3>
+@using Shared.Dtos
+@using Shared.Dtos.GSDean
+@using Shared.Dtos.TASubmissions
+@using Shared.Dtos.VPGSEvaluation
+@inject HttpClient Http
+@inject IJSRuntime JS
+@rendermode InteractiveWebAssembly
+<HeadContent>
+    <link href="./Custom-Rtl.css" rel="stylesheet" />
+</HeadContent>
+
+<h3 class="text-center mb-4">تققيم النشاط العلمي لمساعدي التدريس</h3>
+
+<div class="card shadow-sm" dir="rtl">
+    <div class="card-body">
+        <h3 class="text-center" style="color:cornflowerblue;">قائمة مساعدي التدريس</h3>
+        <hr style="color:cornflowerblue;" />
+
+        <div class="d-flex justify-content-center">
+            <div class="w-75 mb-4 shadow-sm">
+                @if (isLoading)
+                {
+                    <p class="text-center">جارٍ تحميل البيانات...</p>
+                }
+                else if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="alert alert-danger text-center">@errorMessage</div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped text-center align-middle" dir="rtl">
+                            <thead class="table-primary">
+                                <tr>
+                                    <th>اسم مساعد التدريس</th>
+                                    <th>القسم</th>
+                                    <th>الحالة</th>
+                                    <th>إجراء</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var ta in taList)
+                                {
+                                    <tr>
+                                        <td>@ta.Name</td>
+                                        <td>@ta.Department</td>
+                                        <td>
+                                            @if (ta.status == "Confirmed")
+                                            {
+                                                <span class="result-pill">@ta.status</span>
+                                            }
+                                            else if (ta.status == "Waiting For Review")
+                                            {
+                                                <span class="result-pill" style="background-color: antiquewhite; color: black;">@ta.status</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary" @onclick="() => OpenModal(ta)">
+                                                @(ta.status == "Confirmed" ? "عرض" : ta.status == "Waiting For Review" ? "تقييم" : "إجراء")
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (ModalVisable)
+{
+    <div class="modal d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5);">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content" dir="rtl">
+                <div class="modal-header" dir="rtl">
+                    <button type="button" class="btn-close ms-0 me-auto" @onclick="CloseModal"></button>
+                    <h5 class="modal-title">بيانات التقدم في الماجيستير</h5>
+                </div>
+                <div class="modal-body">
+                    @if (isLoadingModalData)
+                    {
+                        <div class="text-center p-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">جارٍ التحميل...</span>
+                            </div>
+                            <p class="mt-2">جارٍ تحميل البيانات...</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="border rounded p-3 bg-light mb-2">
+                            <h5 class="mb-3 text-primary">البيانات الأساسية</h5>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">اسم مساعد التدريس</label>
+                                    <input type="text" class="form-control" disabled value="@selectedTA?.Name" />
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">الرقم الوظيفي:</label>
+                                    <input type="text" class="form-control" disabled value="@selectedTA?.EmployeeNumber" />
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">القسم</label>
+                                    <input type="text" class="form-control" disabled value="@selectedTA?.Department" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="border rounded p-3 bg-light mb-2">
+                            <h5 class="mb-3 text-primary">بيانات الماجيستير (للعرض فقط)</h5>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">التخصص/البرنامج في الماجيستير</label>
+                                    <input type="text" class="form-control" @bind="mastersDto.Major" disabled />
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">الساعات المجتازة</label>
+                                    <input type="number" class="form-control" @bind="@mastersDto.HoursGained" disabled />
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">المعدل التراكمي</label>
+                                    <input type="number" step="0.01" class="form-control" @bind="@mastersDto.Grade" disabled />
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">التاريخ المتوقع للإتمام</label>
+                                    <input type="date" class="form-control"
+                                           @bind="mastersDto.EstimatedGraduationDate"
+                                           @bind:format="yyyy-MM-dd"
+                                           disabled />
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <label class="form-label fw-bold mb-3">مؤشرات التقدم</label>
+
+                                <div class="col-md-4 mb-3 d-flex align-items-center">
+                                    <input type="checkbox"
+                                           class="form-check-input ms-2"
+                                           @bind="mastersDto.ResearchPointsCompleted"
+                                           disabled />
+                                    <label class="form-check-label fw-bold">اختيار النقطة البحثية</label>
+                                </div>
+
+                                <div class="col-md-4 mb-3 d-flex align-items-center">
+                                    <input type="checkbox"
+                                           class="form-check-input ms-2"
+                                           @bind="mastersDto.SearchInResources"
+                                           disabled />
+                                    <label class="form-check-label fw-bold">البحث في المصادر</label>
+                                </div>
+
+                                <div class="col-md-4 mb-3 d-flex align-items-center">
+                                    <input type="checkbox"
+                                           class="form-check-input ms-2"
+                                           @bind="mastersDto.SearchPlanning"
+                                           disabled />
+                                    <label class="form-check-label fw-bold">وضع الخطة البحثية</label>
+                                </div>
+
+                                <div class="col-md-4 mb-3 d-flex align-items-center">
+                                    <input type="checkbox"
+                                           class="form-check-input ms-2"
+                                           @bind="mastersDto.CollectDataAndAnalyze"
+                                           disabled />
+                                    <label class="form-check-label fw-bold">جمع وتحليل البيانات</label>
+                                </div>
+
+                                <div class="col-md-4 mb-3 d-flex align-items-center">
+                                    <input type="checkbox"
+                                           class="form-check-input ms-2"
+                                           @bind="mastersDto.ResearchReportWriting"
+                                           disabled />
+                                    <label class="form-check-label fw-bold">كتابة البحث/الأبحاث</label>
+                                </div>
+
+                                <div class="col-md-4 mb-3 d-flex align-items-center">
+                                    <input type="checkbox"
+                                           class="form-check-input ms-2"
+                                           @bind="mastersDto.ScientificResearchReport"
+                                           disabled />
+                                    <label class="form-check-label fw-bold">كتابة الرسالة العلمية</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="border rounded p-3 bg-light mb-2">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="text-primary mb-0">الأبحاث والأوراق العلمية</h5>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover table-striped text-center align-middle">
+                                    <thead class="table-primary">
+                                        <tr>
+                                            <th>عنوان البحث او الورقة</th>
+                                            <th>اسم المؤتمر/الدورية</th>
+                                            <th>المكان</th>
+                                            <th>عدد الصفحات</th>
+                                            <th>التاريخ</th>
+                                            <th>الحالة</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @if (researchPapers != null && researchPapers.Any())
+                                        {
+                                            @foreach (var paper in researchPapers)
+                                            {
+                                                <tr>
+                                                    <td>@paper.Title</td>
+                                                    <td>@paper.ConferenceOrJournal</td>
+                                                    <td>@paper.Location</td>
+                                                    <td>@paper.PageCount</td>
+                                                    <td>@paper.Date.ToString("yyyy/MM/dd")</td>
+                                                    <td>@GetStatusName(paper.Status)</td>
+                                                </tr>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <tr>
+                                                <td colspan="6" class="text-center text-muted">لا توجد أبحاث مسجلة</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="border rounded p-3 bg-light mb-2">
+                            <div class="row">
+                                <label class="form-label fw-bold mb-3">تقييم التقدم والملاحظات</label>
+
+                                <div class="col-md-6 mb-3">
+                                    <div class="alert alert-primary text-center mt-4 py-3">
+                                        <div class="d-flex justify-content-center align-items-center gap-3">
+                                            <span class="fs-5 fw-bold">المجموع الكلي:</span>
+                                            <span class="fs-2 fw-bold text-primary">@scientificScore</span>
+                                            <span class="fs-5 text-muted">/ 30</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                @if (IsReadOnly)
+                                {
+                                    <div class="col-md-6 mb-3">
+                                        <div class="alert alert-primary text-center mt-4 py-3">
+                                            <div class="d-flex justify-content-center align-items-center gap-3">
+                                                <span class="fs-5 fw-bold">المجموع الكلي:</span>
+                                                <span class="fs-2 fw-bold text-primary">@scientificScore</span>
+                                                <span class="fs-5 text-muted">/ 30</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    @if (!IsReadOnly && !isLoadingModalData)
+                    {
+                        <button type="button" class="btn btn-secondary" @onclick="CloseModal">إغلاق</button>
+
+                        <button type="button" class="btn btn-primary"
+                                @onclick="SaveEvaluation"
+                                disabled="@isSaving">
+                            @(isSaving ? "جارٍ الحفظ..." : "اعتماد الدرجة")
+                        </button>
+                    }
+                    else if (IsReadOnly)
+                    {
+                        <button type="button" class="btn btn-secondary" @onclick="CloseModal">إغلاق</button>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool isLoading = true;
+    private string errorMessage = "";
+    private List<UserDataDto> taList = new();
+    private bool ModalVisable = false;
+    private UserDataDto? selectedTA;
+    private MastersDto mastersDto = new();
+    private bool isLoadingModalData = false;
+    private bool isSaving = false;
+    private bool IsReadOnly => selectedTA?.status == "Confirmed";
+    private List<ResearchPaperDto> researchPapers = new();
+
+    // VPGS specific fields
+    private decimal scientificScore = 0;
+    private int? currentVpgsEvaluationId = null;
+
+    // Paper modal properties
+    private bool showPaperModal = false;
+    private bool isEditMode = false;
+    private ResearchPaperDto currentPaper = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+        try
+        {
+            var evaluations = await Http.GetFromJsonAsync<List<GetEvaluationDto>>("/api/evaluation/period/1");
+
+            if (evaluations != null)
+            {
+                // Map GetEvaluationDto to UserDataDto
+                taList = evaluations.Select(e => new UserDataDto
+                {
+                    Name = $"TA #{e.TaEmployeeId}",
+                    Department = e.PeriodName,
+                    EmployeeNumber = e.TaEmployeeId,
+                    status = e.StatusName,
+                    EvaluationId = e.EvaluationId
+                }).ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"حدث خطأ أثناء تحميل البيانات: {ex.Message}";
+            Console.WriteLine($"Error: {ex}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task OpenModal(UserDataDto ta)
+    {
+        selectedTA = ta;
+        ModalVisable = true;
+        isLoadingModalData = true;
+
+        try
+        {
+            // Get the evaluation ID for this TA
+            int evaluationId = ta.EvaluationId;
+
+            // Try to fetch existing VPGS evaluation
+            var response = await Http.GetAsync($"/api/Vpgs/evaluation/{evaluationId}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var vpgsData = await response.Content.ReadFromJsonAsync<VpgsEvaluationResponseDto>();
+
+                if (vpgsData != null)
+                {
+                    currentVpgsEvaluationId = vpgsData.VpgsevalId;
+                    scientificScore = vpgsData.ScientificScore;
+
+                    Console.WriteLine($"✅ Loaded VPGS evaluation - Score: {scientificScore}");
+                }
+            }
+            else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                // No existing evaluation - initialize for new entry
+                currentVpgsEvaluationId = null;
+                scientificScore = 0;
+                Console.WriteLine("No existing VPGS evaluation - ready for new entry");
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"⚠️ Error loading VPGS: {errorContent}");
+            }
+
+            // Load masters progress data from another endpoint if available
+            await LoadMastersProgressData(evaluationId);
+
+            // Load research papers from another endpoint if available
+            await LoadResearchPapers(evaluationId);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading modal data: {ex}");
+            await JS.InvokeVoidAsync("alert", $"حدث خطأ: {ex.Message}");
+        }
+        finally
+        {
+            isLoadingModalData = false;
+        }
+    }
+
+    private async Task LoadMastersProgressData(int evaluationId)
+    {
+        try
+        {
+            var response = await Http.GetAsync($"/api/GSDean/GetEvaluationForTA/{evaluationId}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var gsdeanData = await response.Content.ReadFromJsonAsync<GsdeanEvaluationDto>();
+
+                if (gsdeanData != null)
+                {
+                    mastersDto = new MastersDto
+                    {
+                        Major = gsdeanData.ProgramName,
+                        HoursGained = gsdeanData.CompletedHours ,
+                        Grade = gsdeanData.Gpa ,
+                        EstimatedGraduationDate = gsdeanData.ExpectedCompletionDate,
+                        ResearchPointsCompleted = gsdeanData.TopicChosen,
+                        SearchInResources = gsdeanData.LiteratureReview ,
+                        SearchPlanning = gsdeanData.ResearchPlan,
+                        CollectDataAndAnalyze = gsdeanData.DataCollection ,
+                        ResearchReportWriting = gsdeanData.Writing ,
+                        ScientificResearchReport = gsdeanData.ThesisDefense 
+                    };
+
+                    Console.WriteLine("✅ Masters data loaded from GSDean");
+                }
+            }
+            else
+            {
+                // Initialize empty
+                mastersDto = new MastersDto
+                {
+                    EstimatedGraduationDate = DateOnly.FromDateTime(DateTime.Now)
+                };
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading masters data: {ex}");
+            mastersDto = new MastersDto
+            {
+                EstimatedGraduationDate = DateOnly.FromDateTime(DateTime.Now)
+            };
+        }
+    }
+
+    private async Task LoadResearchPapers(int evaluationId)
+    {
+        try
+        {
+            Console.WriteLine($"🔍 Loading research papers for evaluation ID: {evaluationId}");
+
+            var response = await Http.GetAsync($"/api/Evaluation/GetTASubmission/{evaluationId}");
+
+            Console.WriteLine($"📡 Response Status: {response.StatusCode}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                // The API returns TASubmissionResponseDto, not a direct list
+                var submissionData = await response.Content.ReadFromJsonAsync<TASubmissionResponseDto>();
+
+                if (submissionData?.ResearchActivities != null && submissionData.ResearchActivities.Any())
+                {
+                    // Map ResearchActivityResponseDto to ResearchPaperDto
+                    researchPapers = submissionData.ResearchActivities.Select(activity => new ResearchPaperDto
+                    {
+                        Title = activity.Title,
+                        ConferenceOrJournal = activity.Journal,
+                        Location = activity.Location,
+                        PageCount = activity.PageCount,
+                        Date = activity.ActivityDate, // Convert DateOnly to DateTime
+                        Status = GetStatusCode(activity.StatusName) // Convert status name to code
+                    }).ToList();
+
+                    Console.WriteLine($"✅ Successfully loaded {researchPapers.Count} research papers");
+
+                    // Log each paper for debugging
+                    foreach (var paper in researchPapers)
+                    {
+                        Console.WriteLine($"  - Paper: {paper.Title}, Status: {paper.Status}, Date: {paper.Date}");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("ℹ️ No research activities found in submission");
+                    researchPapers = new List<ResearchPaperDto>();
+                }
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"❌ Error Response: {errorContent}");
+                researchPapers = new List<ResearchPaperDto>();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Exception loading papers: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            researchPapers = new List<ResearchPaperDto>();
+        }
+    }
+
+    private void CloseModal()
+    {
+        ModalVisable = false;
+        mastersDto = new MastersDto();
+        selectedTA = null;
+        researchPapers = new();
+        scientificScore = 0;
+        currentVpgsEvaluationId = null;
+    }
+
+    private async Task SaveEvaluation()
+    {
+        isSaving = true;
+
+        try
+        {
+            if (scientificScore < 0 || scientificScore > 100)
+            {
+                await JS.InvokeVoidAsync("alert", "الدرجة العلمية يجب أن تكون بين 0 و 100");
+                return;
+            }
+
+            if (currentVpgsEvaluationId == null)
+            {
+                // Create new VPGS evaluation
+                var createDto = new CreateVpgsEvaluationDto
+                {
+                    EvaluationId = selectedTA!.EvaluationId,
+                    ScientificScore = scientificScore
+                };
+
+                var response = await Http.PostAsJsonAsync("/api/Vpgs/create", createDto);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    await JS.InvokeVoidAsync("alert", "تم حفظ التقييم بنجاح");
+                    Console.WriteLine($"✅ VPGS evaluation created successfully");
+                    CloseModal();
+                    await OnInitializedAsync(); // Reload the list
+                }
+                else
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    await JS.InvokeVoidAsync("alert", $"فشل حفظ التقييم: {error}");
+                    Console.WriteLine($"❌ Failed to create VPGS: {error}");
+                }
+            }
+            else
+            {
+                // Update existing VPGS evaluation
+                var updateDto = new UpdateVpgsEvaluationDto
+                {
+                    ScientificScore = scientificScore
+                };
+
+                var response = await Http.PutAsJsonAsync($"/api/Vpgs/evaluation/{selectedTA!.EvaluationId}", updateDto);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    await JS.InvokeVoidAsync("alert", "تم تحديث التقييم بنجاح");
+                    Console.WriteLine($"✅ VPGS evaluation updated successfully");
+                    CloseModal();
+                    await OnInitializedAsync(); // Reload the list
+                }
+                else
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    await JS.InvokeVoidAsync("alert", $"فشل تحديث التقييم: {error}");
+                    Console.WriteLine($"❌ Failed to update VPGS: {error}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving evaluation: {ex}");
+            await JS.InvokeVoidAsync("alert", $"حدث خطأ أثناء الحفظ: {ex.Message}");
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private string GetStatusName(int status)
+    {
+        return status switch
+        {
+            1 => "منشور",
+            2 => "قيد المراجعة",
+            3 => "مقبول",
+            4 => "مرفوض",
+            _ => "غير محدد"
+        };
+    }
+
+    private void ClosePaperModal()
+    {
+        showPaperModal = false;
+        currentPaper = new();
+    }
+    private int GetStatusCode(string statusName)
+    {
+        return statusName?.ToLower() switch
+        {
+            "published" => 1,
+            "under review" => 2,
+            "accepted" => 3,
+            "rejected" => 4,
+            "submitted" => 2, // Assuming "Submitted" maps to "Under Review"
+            _ => 0
+        };
+    }
+}

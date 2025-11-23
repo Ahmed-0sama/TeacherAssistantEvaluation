@@ -20,5 +20,6 @@ namespace Shared.Dtos
         public bool ScientificResearchReport { get; set; }
         public decimal? GradeGivenbySupervisor { get; set; }
         public string Status { get; set; }
+        public string? Notes { get; set; }
     }
 }
