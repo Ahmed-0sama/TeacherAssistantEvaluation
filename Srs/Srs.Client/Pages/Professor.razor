@@ -319,10 +319,6 @@
             {
                 await LoadDataFromApi();
             }
-            else
-            {
-                LoadDummyData();
-            }
         }
         catch (Exception ex)
         {
@@ -389,14 +385,6 @@
         }
     }
 
-    private void LoadDummyData()
-    {
-        // This method is no longer used - all data now comes from the API
-        // Data sources:
-        // - List: https://localhost:7223/api/Evaluation/period/1
-        // - Details: https://localhost:7223/api/Evaluation/{id}
-        // - Professor Evaluations: https://localhost:7223/api/ProfessorEvaluation/professor/{professorId}
-    }
 
     private void OpenModal(TAEvaluationViewModel eval)
     {

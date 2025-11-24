@@ -1,5 +1,4 @@
 ﻿@page "/vpgs"
-<h3>VPGS</h3>
 @using Shared.Dtos
 @using Shared.Dtos.GSDean
 @using Shared.Dtos.TASubmissions
@@ -58,7 +57,7 @@
                                         </td>
                                         <td>
                                             <button class="btn btn-sm btn-primary" @onclick="() => OpenModal(ta)">
-                                                @(ta.status == "Confirmed" ? "عرض" : ta.status == "Waiting For Review" ? "تقييم" : "إجراء")
+                                                @(ta.HasVpgsEvaluation == true ? "عرض" : "تقييم")
                                             </button>
                                         </td>
                                     </tr>
@@ -116,7 +115,8 @@
                         </div>
 
                         <div class="border rounded p-3 bg-light mb-2">
-                            <h5 class="mb-3 text-primary">بيانات الماجيستير (للعرض فقط)</h5>
+                            <h5 class="mb-3 text-primary">بيانات الماجيستير</h5>
+
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label fw-bold">التخصص/البرنامج في الماجيستير</label>
@@ -127,11 +127,13 @@
                                     <input type="number" class="form-control" @bind="@mastersDto.HoursGained" disabled />
                                 </div>
                             </div>
+
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label fw-bold">المعدل التراكمي</label>
                                     <input type="number" step="0.01" class="form-control" @bind="@mastersDto.Grade" disabled />
                                 </div>
+
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label fw-bold">التاريخ المتوقع للإتمام</label>
                                     <input type="date" class="form-control"
@@ -145,53 +147,54 @@
                                 <label class="form-label fw-bold mb-3">مؤشرات التقدم</label>
 
                                 <div class="col-md-4 mb-3 d-flex align-items-center">
-                                    <input type="checkbox"
-                                           class="form-check-input ms-2"
-                                           @bind="mastersDto.ResearchPointsCompleted"
-                                           disabled />
-                                    <label class="form-check-label fw-bold">اختيار النقطة البحثية</label>
+                                    <img src="icons/@(mastersDto.ResearchPointsCompleted ? "check-circle-fill.svg" : "check-circle.svg")"
+                                         width="22" height="22" class="ms-2" />
+                                    <span class="fw-bold @(mastersDto.ResearchPointsCompleted ? "text-dark" : "text-muted")">
+                                        اختيار النقطة البحثية
+                                    </span>
                                 </div>
 
                                 <div class="col-md-4 mb-3 d-flex align-items-center">
-                                    <input type="checkbox"
-                                           class="form-check-input ms-2"
-                                           @bind="mastersDto.SearchInResources"
-                                           disabled />
-                                    <label class="form-check-label fw-bold">البحث في المصادر</label>
+                                    <img src="icons/@(mastersDto.SearchInResources ? "check-circle-fill.svg" : "check-circle.svg")"
+                                         width="22" height="22" class="ms-2" />
+                                    <span class="fw-bold @(mastersDto.SearchInResources ? "text-dark" : "text-muted")">
+                                        البحث في المصادر
+                                    </span>
                                 </div>
 
                                 <div class="col-md-4 mb-3 d-flex align-items-center">
-                                    <input type="checkbox"
-                                           class="form-check-input ms-2"
-                                           @bind="mastersDto.SearchPlanning"
-                                           disabled />
-                                    <label class="form-check-label fw-bold">وضع الخطة البحثية</label>
+                                    <img src="icons/@(mastersDto.SearchPlanning ? "check-circle-fill.svg" : "check-circle.svg")"
+                                         width="22" height="22" class="ms-2" />
+                                    <span class="fw-bold @(mastersDto.SearchPlanning ? "text-dark" : "text-muted")">
+                                        وضع الخطة البحثية
+                                    </span>
                                 </div>
 
                                 <div class="col-md-4 mb-3 d-flex align-items-center">
-                                    <input type="checkbox"
-                                           class="form-check-input ms-2"
-                                           @bind="mastersDto.CollectDataAndAnalyze"
-                                           disabled />
-                                    <label class="form-check-label fw-bold">جمع وتحليل البيانات</label>
+                                    <img src="icons/@(mastersDto.CollectDataAndAnalyze ? "check-circle-fill.svg" : "check-circle.svg")"
+                                         width="22" height="22" class="ms-2" />
+                                    <span class="fw-bold @(mastersDto.CollectDataAndAnalyze ? "text-dark" : "text-muted")">
+                                        جمع وتحليل البيانات
+                                    </span>
                                 </div>
 
                                 <div class="col-md-4 mb-3 d-flex align-items-center">
-                                    <input type="checkbox"
-                                           class="form-check-input ms-2"
-                                           @bind="mastersDto.ResearchReportWriting"
-                                           disabled />
-                                    <label class="form-check-label fw-bold">كتابة البحث/الأبحاث</label>
+                                    <img src="icons/@(mastersDto.ResearchReportWriting ? "check-circle-fill.svg" : "check-circle.svg")"
+                                         width="22" height="22" class="ms-2" />
+                                    <span class="fw-bold @(mastersDto.ResearchReportWriting ? "text-dark" : "text-muted")">
+                                        كتابة البحث/الأبحاث
+                                    </span>
                                 </div>
 
                                 <div class="col-md-4 mb-3 d-flex align-items-center">
-                                    <input type="checkbox"
-                                           class="form-check-input ms-2"
-                                           @bind="mastersDto.ScientificResearchReport"
-                                           disabled />
-                                    <label class="form-check-label fw-bold">كتابة الرسالة العلمية</label>
+                                    <img src="icons/@(mastersDto.ScientificResearchReport ? "check-circle-fill.svg" : "check-circle.svg")"
+                                         width="22" height="22" class="ms-2" />
+                                    <span class="fw-bold @(mastersDto.ScientificResearchReport ? "text-dark" : "text-muted")">
+                                        كتابة الرسالة العلمية
+                                    </span>
                                 </div>
                             </div>
+
                         </div>
 
                         <div class="border rounded p-3 bg-light mb-2">
@@ -235,6 +238,7 @@
                                 </table>
                             </div>
                         </div>
+
                         <div class="border rounded p-3 bg-light mb-2">
                             <div class="row">
                                 <label class="form-label fw-bold mb-3">تقييم التقدم والملاحظات</label>
@@ -242,43 +246,41 @@
                                 <div class="col-md-6 mb-3">
                                     <div class="alert alert-primary text-center mt-4 py-3">
                                         <div class="d-flex justify-content-center align-items-center gap-3">
-                                            <span class="fs-5 fw-bold">المجموع الكلي:</span>
-                                            <span class="fs-2 fw-bold text-primary">@scientificScore</span>
-                                            <span class="fs-5 text-muted">/ 30</span>
+                                            <span class="fs-5 fw-bold">الدرجة النهائية للنشاط العلمي:</span>
+
+                                            @if (IsViewMode)
+                                            {
+                                                <span class="fs-2 fw-bold text-primary">@scientificScore</span>
+                                            }
+                                            else
+                                            {
+                                                <InputNumber @bind-Value="scientificScore"
+                                                             class="form-control text-center fs-2 fw-bold"
+                                                             style="max-width: 100px;"
+                                                             Min="0" Max="5" />
+                                            }
+
+                                            <span class="fs-5 text-muted">/ 5</span>
                                         </div>
                                     </div>
                                 </div>
-
-                                @if (IsReadOnly)
-                                {
-                                    <div class="col-md-6 mb-3">
-                                        <div class="alert alert-primary text-center mt-4 py-3">
-                                            <div class="d-flex justify-content-center align-items-center gap-3">
-                                                <span class="fs-5 fw-bold">المجموع الكلي:</span>
-                                                <span class="fs-2 fw-bold text-primary">@scientificScore</span>
-                                                <span class="fs-5 text-muted">/ 30</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                }
                             </div>
                         </div>
                     }
                 </div>
                 <div class="modal-footer">
-                    @if (!IsReadOnly && !isLoadingModalData)
+                    @if (IsViewMode)
                     {
                         <button type="button" class="btn btn-secondary" @onclick="CloseModal">إغلاق</button>
-
+                    }
+                    else if (!isLoadingModalData)
+                    {
+                        <button type="button" class="btn btn-secondary" @onclick="CloseModal">إغلاق</button>
                         <button type="button" class="btn btn-primary"
                                 @onclick="SaveEvaluation"
                                 disabled="@isSaving">
                             @(isSaving ? "جارٍ الحفظ..." : "اعتماد الدرجة")
                         </button>
-                    }
-                    else if (IsReadOnly)
-                    {
-                        <button type="button" class="btn btn-secondary" @onclick="CloseModal">إغلاق</button>
                     }
                 </div>
             </div>
@@ -296,6 +298,7 @@
     private bool isLoadingModalData = false;
     private bool isSaving = false;
     private bool IsReadOnly => selectedTA?.status == "Confirmed";
+    private bool IsViewMode => selectedTA?.HasVpgsEvaluation == true;
     private List<ResearchPaperDto> researchPapers = new();
 
     // VPGS specific fields
@@ -314,16 +317,20 @@
         {
             var evaluations = await Http.GetFromJsonAsync<List<GetEvaluationDto>>("/api/evaluation/period/1");
 
+            // Get VPGS existence map for the period
+            var vpgsExistenceMap = await Http.GetFromJsonAsync<Dictionary<int, bool>>("/api/Vpgs/period/1/existenceMap")
+                ?? new Dictionary<int, bool>();
+
             if (evaluations != null)
             {
-                // Map GetEvaluationDto to UserDataDto
                 taList = evaluations.Select(e => new UserDataDto
                 {
                     Name = $"TA #{e.TaEmployeeId}",
                     Department = e.PeriodName,
                     EmployeeNumber = e.TaEmployeeId,
                     status = e.StatusName,
-                    EvaluationId = e.EvaluationId
+                    EvaluationId = e.EvaluationId,
+                    HasVpgsEvaluation = vpgsExistenceMap.ContainsKey(e.EvaluationId)
                 }).ToList();
             }
         }
@@ -409,15 +416,15 @@
                     mastersDto = new MastersDto
                     {
                         Major = gsdeanData.ProgramName,
-                        HoursGained = gsdeanData.CompletedHours ,
-                        Grade = gsdeanData.Gpa ,
+                        HoursGained = gsdeanData.CompletedHours,
+                        Grade = gsdeanData.Gpa,
                         EstimatedGraduationDate = gsdeanData.ExpectedCompletionDate,
                         ResearchPointsCompleted = gsdeanData.TopicChosen,
-                        SearchInResources = gsdeanData.LiteratureReview ,
+                        SearchInResources = gsdeanData.LiteratureReview,
                         SearchPlanning = gsdeanData.ResearchPlan,
-                        CollectDataAndAnalyze = gsdeanData.DataCollection ,
-                        ResearchReportWriting = gsdeanData.Writing ,
-                        ScientificResearchReport = gsdeanData.ThesisDefense 
+                        CollectDataAndAnalyze = gsdeanData.DataCollection,
+                        ResearchReportWriting = gsdeanData.Writing,
+                        ScientificResearchReport = gsdeanData.ThesisDefense
                     };
 
                     Console.WriteLine("✅ Masters data loaded from GSDean");
@@ -466,13 +473,12 @@
                         ConferenceOrJournal = activity.Journal,
                         Location = activity.Location,
                         PageCount = activity.PageCount,
-                        Date = activity.ActivityDate, // Convert DateOnly to DateTime
-                        Status = GetStatusCode(activity.StatusName) // Convert status name to code
+                        Date = activity.ActivityDate,
+                        Status = GetStatusCode(activity.StatusName)
                     }).ToList();
 
                     Console.WriteLine($"✅ Successfully loaded {researchPapers.Count} research papers");
 
-                    // Log each paper for debugging
                     foreach (var paper in researchPapers)
                     {
                         Console.WriteLine($"  - Paper: {paper.Title}, Status: {paper.Status}, Date: {paper.Date}");
@@ -515,9 +521,9 @@
 
         try
         {
-            if (scientificScore < 0 || scientificScore > 100)
+            if (scientificScore < 0 || scientificScore > 5)
             {
-                await JS.InvokeVoidAsync("alert", "الدرجة العلمية يجب أن تكون بين 0 و 100");
+                await JS.InvokeVoidAsync("alert", "الدرجة العلمية يجب أن تكون بين 0 و 5");
                 return;
             }
 
@@ -599,6 +605,7 @@
         showPaperModal = false;
         currentPaper = new();
     }
+
     private int GetStatusCode(string statusName)
     {
         return statusName?.ToLower() switch
@@ -607,7 +614,7 @@
             "under review" => 2,
             "accepted" => 3,
             "rejected" => 4,
-            "submitted" => 2, // Assuming "Submitted" maps to "Under Review"
+            "submitted" => 2,
             _ => 0
         };
     }

@@ -1,0 +1,481 @@
+﻿@page "/hod"
+@using Shared.Dtos
+@using Shared.Dtos.HODEvaluation
+@using Shared.Dtos.ProfessorEvaluationDto
+@inject HttpClient Http
+@inject IJSRuntime JS
+@rendermode InteractiveWebAssembly
+
+<HeadContent>
+    <link href="./Custom-Rtl.css" rel="stylesheet" />
+</HeadContent>
+
+<h3 class="text-center mb-4">تققيم رئيس القسم لمساعدي التدريس</h3>
+
+<div class="card shadow-sm" dir="rtl">
+    <div class="card-body">
+        <h3 class="text-center" style="color:cornflowerblue;">قائمة مساعدي التدريس</h3>
+        <hr style="color:cornflowerblue;" />
+
+        <div class="d-flex justify-content-center">
+            <div class="w-75 mb-4 shadow-sm">
+                @if (isLoading)
+                {
+                    <p class="text-center">جارٍ تحميل البيانات...</p>
+                }
+                else if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="alert alert-danger text-center">@errorMessage</div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped text-center align-middle" dir="rtl">
+                            <thead class="table-secondary">
+                                <tr>
+                                    <th>اسم مساعد التدريس</th>
+                                    <th>الفترة</th>
+                                    <th>الحالة</th>
+                                    <th>حالة التقييم</th>
+                                    <th>إجراء</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var ta in taList)
+                                {
+                                    <tr>
+                                        <td>@ta.Name</td>
+                                        <td>@ta.Department</td>
+                                        <td>@ta.status</td>
+                                        <td>
+                                            @if (ta.HasHodEvaluation == true)
+                                            {
+                                                <span class="badge bg-success">تم التقييم</span>
+                                            }
+                                            else if (ta.status == "Submitted")
+                                            {
+                                                <span class="badge bg-warning text-dark">بانتظار التقييم</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">غير متاح</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (ta.status == "Submitted" || ta.HasHodEvaluation == true)
+                                            {
+                                                <button class="btn btn-sm btn-primary" @onclick="() => OpenModal(ta)">
+                                                    @(ta.HasHodEvaluation == true ? "عرض التقييم" : "تقييم")
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <button class="btn btn-sm btn-secondary" disabled>غير متاح</button>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (showModal)
+{
+    <div class="modal d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5);">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content" dir="rtl">
+                <div class="modal-header">
+                    <button type="button" class="btn-close ms-0 me-auto" @onclick="CloseModal"></button>
+                    <h5 class="modal-title">تقييم رئيس القسم - @selectedTA?.Name</h5>
+                </div>
+                <div class="modal-body">
+                    @if (isLoadingModal)
+                    {
+                        <div class="text-center p-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">جارٍ التحميل...</span>
+                            </div>
+                            <p class="mt-2">جارٍ تحميل البيانات...</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <!-- Basic Info -->
+                        <div class="border rounded p-3 bg-light mb-3">
+                            <h5 class="mb-3 text-primary">البيانات الأساسية</h5>
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label fw-bold">اسم مساعد التدريس</label>
+                                    <input type="text" class="form-control" disabled value="@selectedTA?.Name" />
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label fw-bold">الفترة</label>
+                                    <input type="text" class="form-control" disabled value="@selectedTA?.Department" />
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label fw-bold">الحالة</label>
+                                    <input type="text" class="form-control" disabled value="@selectedTA?.status" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Evaluation Criteria -->
+                        <div class="border rounded p-3 bg-light mb-3">
+                            <h5 class="mb-3 text-primary">معايير التقييم</h5>
+
+                            @if (criteria != null && criteria.Any())
+                            {
+                                @foreach (var criterion in criteria)
+                                {
+                                    <div class="card mb-3">
+                                        <div class="card-body">
+                                            <h6 class="card-title">@criterion.CriterionName</h6>
+                                            <p class="text-muted small mb-2">النوع: @criterion.CriterionType</p>
+
+                                            <div class="row align-items-center">
+                                                <div class="col-md-8">
+                                                    @if (IsViewMode)
+                                                    {
+                                                        var evalItem = hodEvaluationData?.Evaluations?.FirstOrDefault(e => e.CriterionId == criterion.CriterionId);
+                                                        <span class="badge bg-primary fs-6">
+                                                            @(evalItem?.RatingName ?? "لم يتم التقييم")
+                                                        </span>
+                                                    }
+                                                    else
+                                                    {
+                                                        var currentRating = selectedRatings.ContainsKey(criterion.CriterionId)
+                                                        ? selectedRatings[criterion.CriterionId]
+                                                        : 0;
+                                                        <select class="form-select"
+                                                                value="@currentRating"
+                                                                @onchange="(e) => UpdateRating(criterion.CriterionId, int.Parse(e.Value?.ToString() ))">
+                                                            <option value="0">-- اختر التقييم --</option>
+                                                            @foreach (var rating in ratings)
+                                                            {
+                                                                <option value="@rating.RatingId">@rating.RatingName (@rating.ScoreValue نقطة)</option>
+                                                            }
+                                                        </select>
+                                                    }
+                                                </div>
+                                                <div class="col-md-4 text-end">
+                                                    @if (IsViewMode)
+                                                    {
+                                                        var evalItem = hodEvaluationData?.Evaluations?.FirstOrDefault(e => e.CriterionId == criterion.CriterionId);
+                                                        <span class="badge bg-success fs-5">@(evalItem?.ScoreValue ?? 0) نقطة</span>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <div class="alert alert-warning">لا توجد معايير تقييم متاحة</div>
+                            }
+                        </div>
+
+                        <!-- Comments Section -->
+                        <div class="border rounded p-3 bg-light mb-3">
+                            <h5 class="mb-3 text-primary">الملاحظات والتعليقات</h5>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">نقاط القوة</label>
+                                <textarea class="form-control"
+                                          rows="3"
+                                          @bind="hodStrengths"
+                                          disabled="@IsViewMode"
+                                          placeholder="اذكر نقاط القوة لمساعد التدريس..."></textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">نقاط الضعف</label>
+                                <textarea class="form-control"
+                                          rows="3"
+                                          @bind="hodWeaknesses"
+                                          disabled="@IsViewMode"
+                                          placeholder="اذكر نقاط الضعف ومجالات التحسين..."></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Score Summary -->
+                        @if (IsViewMode && hodEvaluationData != null)
+                        {
+                            <div class="alert alert-info">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="fs-5 fw-bold">المجموع الكلي:</span>
+                                    <span class="fs-3 fw-bold text-primary">@hodEvaluationData.TotalScore / @hodEvaluationData.MaxScore</span>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+                <div class="modal-footer">
+                    @if (IsViewMode)
+                    {
+                        <button type="button" class="btn btn-secondary" @onclick="CloseModal">إغلاق</button>
+                    }
+                    else if (!isLoadingModal)
+                    {
+                        <button type="button" class="btn btn-secondary" @onclick="CloseModal">إلغاء</button>
+                        <button type="button" class="btn btn-primary"
+                                @onclick="SaveEvaluation"
+                                disabled="@isSaving">
+                            @(isSaving ? "جارٍ الحفظ..." : "حفظ التقييم")
+                        </button>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<UserDataDto> taList = new();
+    private bool isLoading = true;
+    private string errorMessage = string.Empty;
+    private bool showModal = false;
+    private bool isLoadingModal = false;
+    private bool isSaving = false;
+    private UserDataDto? selectedTA;
+
+    // Evaluation data
+    private List<HodCriterionDto> criteria = new();
+    private List<RatingDto> ratings = new();
+    private Dictionary<int, int> selectedRatings = new(); // CriterionId -> RatingId
+    private string hodStrengths = string.Empty;
+    private string hodWeaknesses = string.Empty;
+    private HodEvaluationResponseDto? hodEvaluationData;
+    private MastersDto mastersDto= new MastersDto();
+
+    private bool IsViewMode => selectedTA?.HasHodEvaluation == true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+        try
+        {
+            // Load evaluations from API
+            var evaluations = await Http.GetFromJsonAsync<List<EvaluationApiResponseDto>>("api/evaluation/period/1")
+                ?? new List<EvaluationApiResponseDto>();
+
+            // Check which evaluations have HOD evaluations
+            var hodEvaluationIds = new HashSet<int>();
+            try
+            {
+                var hodEvaluations = await Http.GetFromJsonAsync<List<HodEvaluationResponseDto>>("api/HodEvaluation/GetHodEvaluationByPeriod/1")
+                    ?? new List<HodEvaluationResponseDto>();
+
+                hodEvaluationIds = hodEvaluations.Select(h => h.EvaluationId).ToHashSet();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Warning: Could not load HOD evaluations: {ex.Message}");
+            }
+
+            // Map API response to UserDataDto
+            taList = evaluations.Select(e => new UserDataDto
+            {
+                Name = $"TA #{e.taEmployeeId}",
+                Department = e.periodName,
+                EmployeeNumber = e.taEmployeeId,
+                status = e.statusName,
+                EvaluationId = e.evaluationId,
+                HasHodEvaluation = hodEvaluationIds.Contains(e.evaluationId)
+            }).ToList();
+
+            // Load criteria and ratings (uncomment these when endpoints are ready)
+            /*
+            criteria = await Http.GetFromJsonAsync<List<HodCriterionDto>>("api/HodEvaluation/criteria")
+                ?? new List<HodCriterionDto>();
+
+            ratings = await Http.GetFromJsonAsync<List<RatingDto>>("api/HodEvaluation/ratings")
+                ?? new List<RatingDto>();
+            */
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"حدث خطأ أثناء تحميل البيانات: {ex.Message}";
+            Console.WriteLine($"Error: {ex}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task OpenModal(UserDataDto ta)
+    {
+        selectedTA = ta;
+        showModal = true;
+        isLoadingModal = true;
+
+        // Reset data
+        selectedRatings.Clear();
+        hodStrengths = string.Empty;
+        hodWeaknesses = string.Empty;
+        hodEvaluationData = null;
+
+        try
+        {
+            // Load criteria and ratings if not already loaded
+            if (!criteria.Any())
+            {
+                // TODO: Uncomment when endpoint is available
+                // criteria = await Http.GetFromJsonAsync<List<HodCriterionDto>>("api/HodEvaluation/criteria")
+                //     ?? new List<HodCriterionDto>();
+            }
+
+            if (!ratings.Any())
+            {
+                // TODO: Uncomment when endpoint is available
+                // ratings = await Http.GetFromJsonAsync<List<RatingDto>>("api/HodEvaluation/ratings")
+                //     ?? new List<RatingDto>();
+            }
+
+            if (ta.HasHodEvaluation == true)
+            {
+                // Load existing evaluation
+                var response = await Http.GetAsync($"api/HodEvaluation/HodEvaluationByEvaluationId/{ta.EvaluationId}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    hodEvaluationData = await response.Content.ReadFromJsonAsync<HodEvaluationResponseDto>();
+
+                    if (hodEvaluationData != null)
+                    {
+                        hodStrengths = hodEvaluationData.HodStrengths ?? string.Empty;
+                        hodWeaknesses = hodEvaluationData.HodWeaknesses ?? string.Empty;
+
+                        // Populate selected ratings
+                        foreach (var eval in hodEvaluationData.Evaluations ?? new List<HodEvaluationDto>())
+                        {
+                            if (eval.RatingId > 0)
+                            {
+                                selectedRatings[eval.CriterionId] = eval.RatingId;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading evaluation: {ex}");
+            await JS.InvokeVoidAsync("alert", $"حدث خطأ: {ex.Message}");
+        }
+        finally
+        {
+            isLoadingModal = false;
+        }
+    }
+
+    private void CloseModal()
+    {
+        showModal = false;
+        selectedTA = null;
+        selectedRatings.Clear();
+        hodStrengths = string.Empty;
+        hodWeaknesses = string.Empty;
+        hodEvaluationData = null;
+    }
+
+    private void UpdateRating(int criterionId, int ratingId)
+    {
+        if (ratingId > 0)
+        {
+            selectedRatings[criterionId] = ratingId;
+        }
+        else
+        {
+            selectedRatings.Remove(criterionId);
+        }
+    }
+
+    private async Task SaveEvaluation()
+    {
+        if (selectedTA == null) return;
+
+        isSaving = true;
+
+        try
+        {
+            // Validate all criteria are rated
+            if (selectedRatings.Count != criteria.Count)
+            {
+                await JS.InvokeVoidAsync("alert", "الرجاء تقييم جميع المعايير");
+                return;
+            }
+
+            var criterionRatings = selectedRatings.Select(kvp => new CriterionRatingDto
+            {
+                CriterionId = kvp.Key,
+                RatingId = kvp.Value
+            }).ToList();
+
+            if (selectedTA.HasHodEvaluation == true)
+            {
+                // Update existing evaluation
+                var updateDto = new UpdateHodEvaluationDto
+                {
+                    CriterionRatings = criterionRatings,
+                    HodStrengths = hodStrengths,
+                    HodWeaknesses = hodWeaknesses
+                };
+
+                var response = await Http.PutAsJsonAsync($"api/HodEvaluation/UpdateHodEvaluation/{selectedTA.EvaluationId}", updateDto);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    await JS.InvokeVoidAsync("alert", "تم تحديث التقييم بنجاح");
+                    CloseModal();
+                    await OnInitializedAsync();
+                }
+                else
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    await JS.InvokeVoidAsync("alert", $"فشل تحديث التقييم: {error}");
+                }
+            }
+            else
+            {
+                // Create new evaluation
+                var createDto = new CreateHodEvaluationDto
+                {
+                    EvaluationId = selectedTA.EvaluationId,
+                    CriterionRatings = criterionRatings,
+                    HodStrengths = hodStrengths,
+                    HodWeaknesses = hodWeaknesses
+                };
+
+                var response = await Http.PostAsJsonAsync("api/HodEvaluation/create", createDto);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    await JS.InvokeVoidAsync("alert", "تم حفظ التقييم بنجاح");
+                    CloseModal();
+                    await OnInitializedAsync();
+                }
+                else
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    await JS.InvokeVoidAsync("alert", $"فشل حفظ التقييم: {error}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving evaluation: {ex}");
+            await JS.InvokeVoidAsync("alert", $"حدث خطأ أثناء الحفظ: {ex.Message}");
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+}

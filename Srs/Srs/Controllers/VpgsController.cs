@@ -90,5 +90,25 @@ namespace Srs.Controllers
                 return StatusCode(500, new { message = "An error occurred while updating the VPGS evaluation", details = ex.Message });
             }
         }
+        [HttpGet("period/{periodId}/existenceMap")]
+        public async Task<IActionResult> GetVpgsExistenceMap(int periodId)
+        {
+            try
+            {
+                var results = await _vpgsService.GetVpgsEvaluationsByPeriodAsync(periodId);
+
+                // Return a dictionary of evaluationId -> true (exists)
+                var existenceMap = results.ToDictionary(
+                    r => r.EvaluationId,
+                    r => true
+                );
+
+                return Ok(existenceMap);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred", details = ex.Message });
+            }
+        }
     }
 }

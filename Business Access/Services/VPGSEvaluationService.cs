@@ -91,12 +91,12 @@ namespace Business_Access.Services
                 .Include(ve => ve.Evaluation)
                     .ThenInclude(e => e.Status)
                 .Include(ve => ve.Evaluation)
-                    .ThenInclude(e => e.Tasubmission) // Include TA submissions
-                        .ThenInclude(ts => ts.SubmissionId) // Include submission files
+                    .ThenInclude(e => e.Tasubmission) // This is correct - loads the TA submission
                 .FirstOrDefaultAsync(ve => ve.EvaluationId == evaluationId);
 
             if (vpgsEval == null)
                 return null;
+
             return MapToResponseDto(vpgsEval);
         }
         public async Task UpdateVpgsEvaluationAsync(int evaluationId, UpdateVpgsEvaluationDto evaluationDto)
