@@ -49,6 +49,19 @@ namespace Srs.Controllers
                 return StatusCode(500, new { message = ex.Message });
             }
         }
+        [HttpGet("GetByEvaluaionID/{evaluationId}")]
+        public async Task<IActionResult> GetByEvaluationIdAsync(int evaluationId)
+        {
+            try
+            {
+                var results = await IProfessorEvaluation.GetByEvaluationIdAsync(evaluationId);
+                return Ok(results);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
         [HttpGet("professor/{professorEmployeeId}")]
         public async Task<IActionResult> GetByProfessor(int professorEmployeeId)
         {

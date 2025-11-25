@@ -152,6 +152,22 @@ namespace Business_Access.Services
                 throw;
             }
         }
+        public async Task<List<ProfessorCourseEvaluation>> GetByEvaluationIdAsync(int evaluationId)
+        {
+            // Validate input
+            if (evaluationId <= 0)
+                throw new ArgumentException("Invalid evaluationId. It must be a positive number.", nameof(evaluationId));
+
+                var evaluations = await _db.ProfessorCourseEvaluations
+                    .Where(p => p.EvaluationId == evaluationId)
+                    .ToListAsync();
+                if (evaluations == null || !evaluations.Any())
+                {
+                    return new List<ProfessorCourseEvaluation>();
+                }
+
+                return evaluations;
+        }
         private ProfessorEvaluationResponseDto MapToResponseDto(ProfessorCourseEvaluation profEvaluation)
         {
             var professorName = $"Professor {profEvaluation.ProfessorEmployeeId}"; // Placeholder

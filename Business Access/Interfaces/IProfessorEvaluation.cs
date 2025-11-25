@@ -1,4 +1,5 @@
-﻿using Shared.Dtos.ProfessorEvaluationDto;
+﻿using DataAccess.Entities;
+using Shared.Dtos.ProfessorEvaluationDto;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,6 +18,8 @@ namespace Business_Access.Interfaces
         Task<ProfessorEvaluationResponseDto> GetProfessorEvaluationByIdAsync(int profEvalId);
 
         Task<IEnumerable<ProfessorEvaluationResponseDto>> GetEvaluationsByProfessorAsync(int professorEmployeeId);
+        Task<List<ProfessorCourseEvaluation>> GetByEvaluationIdAsync(int evaluationId);
+
 
     }
 }
