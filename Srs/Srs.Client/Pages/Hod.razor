@@ -275,14 +275,15 @@
                                         <div class="card bg-primary bg-opacity-10 shadow-sm mx-auto mt-4" style="max-width: 600px; border-radius: 12px;">
                                             <div class="card-body text-center py-4">
                                                 <h3 class="text-primary fw-semibold mb-2" style="direction: rtl; font-size: 18px;">المجموع الكلي للعبء التدريسي</h3>
-                                                <p class="text-primary fw-bold fs-4 mb-0" style="direction: ltr;">@((CalculateAverageScore()) + (teachingdto.gradegiven ?? 0))  / 40</p>
+                                                <p class="text-primary fw-bold fs-4 mb-0" style="direction: ltr;">@(teachingLoadScore) / 40</p>
                                             </div>
                                         </div>
                                     }
                                 </div>
                         </div>
-                            <Srs.Client.Compontets.TeachingActivitiesEvaluation />
-
+                            <Srs.Client.Compontets.TeachingActivitiesEvaluation TeachingLoadScore="@teachingLoadScore" />
+                             <Srs.Client.Compontets.ScientificActivityComponentForHod  EvaluationId="@selectedTA.EvaluationId" />
+                             <Srs.Client.Compontets.GradesComponent/>
                         <!-- Comments Section -->
                         <div class="border rounded p-3 bg-light mb-3">
                             <h5 class="mb-3 text-primary">الملاحظات والتعليقات</h5>
@@ -362,7 +363,7 @@
     private bool IsViewMode => selectedTA?.HasHodEvaluation == true;
     private bool showDetailsModal = false;
     private ProfessorEvaluationResponseDto? selectedEvaluation;
-
+    double teachingLoadScore => (CalculateAverageScore()) + (teachingdto.gradegiven ?? 0);
     private int CalculateAverageScore()
     {
         if (profdto == null || !profdto.Any())
@@ -513,6 +514,7 @@
             isLoadingModal = false;
         }
     }
+
 
     private void CloseModal()
     {

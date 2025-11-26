@@ -104,7 +104,7 @@
                     </div>
                 </div>
             </div>
-
+            }
             <!-- Research Papers Section -->
             <div class="card shadow-sm mb-4">
                 <div class="card-body">
@@ -129,6 +129,7 @@
                                         <th class="py-3 fw-semibold text-center">التاريخ</th>
                                         <th class="py-3 fw-semibold text-center">الحالة</th>
                                         <th class="py-3 fw-semibold text-center">إجراء</th>
+
                                     </tr>
                                 </thead>
                                 <tbody class="table-group-divider">
@@ -159,18 +160,19 @@
                                                     @GetStatusName(paper.Status)
                                                 </span>
                                             </td>
-                                            <td class="py-3 text-center">
-                                                <div class="btn-group btn-group-sm" role="group">
-                                                    <button class="btn btn-outline-primary"
-                                                            @onclick="() => EditPaper(paper.Id)">
-                                                        <i class="bi bi-pencil-square me-1"></i>تعديل
-                                                    </button>
-                                                    <button class="btn btn-outline-danger"
-                                                            @onclick="() => DeletePaper(paper.Id)">
-                                                        <i class="bi bi-trash3 me-1"></i>حذف
-                                                    </button>
-                                                </div>
-                                            </td>
+
+                                                <td class="py-3 text-center">
+                                                    <div class="btn-group btn-group-sm" role="group">
+                                                        <button class="btn btn-outline-primary"
+                                                        @onclick="() => EditPaper(paper.Id)">
+                                                            <i class="bi bi-pencil-square me-1"></i>تعديل
+                                                        </button>
+                                                        <button class="btn btn-outline-danger"
+                                                        @onclick="() => DeletePaper(paper.Id)">
+                                                            <i class="bi bi-trash3 me-1"></i>حذف
+                                                        </button>
+                                                    </div>
+                                                </td>
                                         </tr>
                                     }
                                 </tbody>
@@ -227,7 +229,7 @@
                     </div>
                 </div>
             </div>
-        }
+        
     </div>
 </div>
 
@@ -312,7 +314,6 @@
 
     [Parameter]
     public int EvaluationId { get; set; }
-
     [Parameter]
     public List<ResearchPaperDto>? InitialResearchPapers { get; set; }
 
@@ -390,7 +391,8 @@
                         HoursGained = evaluationData.CompletedHours,
                         Grade = evaluationData.Gpa,
                         EstimatedGraduationDate = evaluationData.ExpectedCompletionDate,
-                        GradeGivenbySupervisor = evaluationData.ProgressScore ?? 0,
+                        //GradeGivenbySupervisor = evaluationData.ProgressScore ?? 0,
+                        //mock data for testing
                         Status = evaluationData.EvaluationComments,
                         ResearchPointsCompleted = evaluationData.TopicChosen,
                         SearchInResources = evaluationData.LiteratureReview,

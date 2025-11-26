@@ -86,16 +86,22 @@
     </div>
 </div>
 
-<div class="card bg-primary bg-opacity-10 shadow-sm mx-auto mt-3" style="max-width: 800px;">
+<div class="card bg-primary bg-opacity-10 shadow-sm mx-auto mt-3 mb-4" style="max-width: 800px;">
     <div class="card-body text-center py-4">
         <h5 class="text-primary fw-semibold mb-2">المجموع الكلي للنشاط التعليمي</h5>
         <p class="text-primary fw-bold fs-3 mb-0">
-            @teachingActivityEvaluation.TotalTeachingActivityScore.ToString("F1") / 50
+            @GetTotalWithTeachingLoad().ToString("F1") / 50
+        </p>
+        <p class="text-muted small mt-2">
+            (النشاط التعليمي: @teachingActivityEvaluation.TotalTeachingActivityScore.ToString("F1") + العبء التدريسي: @TeachingLoadScore.ToString("F1"))
         </p>
     </div>
 </div>
 
 @code {
+    [Parameter]
+    public double TeachingLoadScore { get; set; }
+
     private HodEvaluationTeachingActivityDto teachingActivityEvaluation = new();
 
     // Grade options with Arabic labels
@@ -126,6 +132,11 @@
             teachingActivityEvaluation.TotalDirectTeachingActivities;
 
         StateHasChanged();
+    }
+
+    private decimal GetTotalWithTeachingLoad()
+    {
+        return teachingActivityEvaluation.TotalTeachingActivityScore +(decimal)TeachingLoadScore;
     }
 
     private async Task SubmitEvaluation()

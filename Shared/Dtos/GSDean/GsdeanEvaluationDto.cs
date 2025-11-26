@@ -23,5 +23,6 @@ namespace Shared.Dtos.GSDean
         public bool DataCollection { get; set; }
         public bool Writing { get; set; }
         public bool ThesisDefense { get; set; }
+        
     }
 }

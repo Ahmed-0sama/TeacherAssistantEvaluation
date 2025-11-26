@@ -183,16 +183,18 @@ namespace Business_Access.Services
                 throw new Exception("Error fetching GS dean evaluation for TA", ex);
             }
         }
-        public async Task<IEnumerable<GsdeanEvaluationDto>> GetByEvaluationIdAsync(int evaluationId)
+        public async Task<GsdeanEvaluationDto> GetByEvaluationIdAsync(int evaluationId)
         {
             try
             {
-                var entities = await _context.GsdeanEvaluations
+                var entity = await _context.GsdeanEvaluations
                     .Include(g => g.Evaluation)
-                    .Where(g => g.EvaluationId == evaluationId)
-                    .ToListAsync();
+                    .FirstOrDefaultAsync(g => g.EvaluationId == evaluationId);
 
-                return entities.Select(MapToDto);
+                if (entity == null)
+                    return null;
+
+                return MapToDto(entity);
             }
             catch (Exception ex)
             {

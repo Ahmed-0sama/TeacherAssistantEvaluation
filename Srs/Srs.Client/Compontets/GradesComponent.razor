@@ -1,0 +1,222 @@
+﻿<div class="card shadow-sm mx-auto" style="max-width: 1100px;">
+    <div class="card-body p-4">
+        <h5 class="text-end text-dark mb-4">
+            1-2 رابعاً: الأنشطة الطلابية
+        </h5>
+
+        <div class="row mb-3 align-items-center">
+            <div class="col-md-8 text-end">
+                <label class="form-label mb-0">نشاط رياضي</label>
+            </div>
+            <div class="col-md-4">
+                <select class="form-select" @bind="teachingActivityEvaluation.PreparingPracticalNotes" @bind:after="CalculateTotals">
+                    <option value="">اختر</option>
+                    @foreach (var option in gradeOptions)
+                    {
+                        <option value="@option.Value">@option.Label</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div class="row mb-3 align-items-center">
+            <div class="col-md-8 text-end">
+                <label class="form-label mb-0">نشاط اجتماعي</label>
+            </div>
+            <div class="col-md-4">
+                <select class="form-select" @bind="teachingActivityEvaluation.PreparingNewTeachingAids" @bind:after="CalculateTotals">
+                    <option value="">اختر</option>
+                    @foreach (var option in gradeOptions)
+                    {
+                        <option value="@option.Value">@option.Label</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div class="row mb-3 align-items-center">
+            <div class="col-md-8 text-end">
+                <label class="form-label mb-0">نشاط ثقافي</label>
+            </div>
+            <div class="col-md-4">
+                <select class="form-select" @bind="teachingActivityEvaluation.AssistingInPracticalExperiments" @bind:after="CalculateTotals">
+                    <option value="">اختر</option>
+                    @foreach (var option in gradeOptions)
+                    {
+                        <option value="@option.Value">@option.Label</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div class="border-top pt-3">
+            <p class="text-end fw-semibold mb-0">
+                إجمالي تقييم الأنشطة التعليمية المباشرة والمعادلة:
+                @teachingActivityEvaluation.TotalDirectTeachingActivities / 10
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="card bg-primary bg-opacity-10 shadow-sm mx-auto mt-3 mb-4" style="max-width: 800px;">
+    <div class="card-body text-center py-1">
+        <h5 class="text-primary fw-semibold mb-2">المجموع الكلي للنشاط التعليمي</h5>
+        <p class="text-primary fw-bold fs-3 mb-0">
+            @GetTotalWithTeachingLoad().ToString("F1") / 10
+        </p>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-4" style="max-width">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+            <span class="fw-semibold fs-5">استقصاء الطلاب :</span>
+            <div class="d-flex align-items-center gap-2">
+                <span class="fs-3 fw-bold text-primary">@teachingActivityEvaluation.TotalTeachingActivityScore</span>
+                <span class="fs-5 text-muted">/ 5</span>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="card shadow-sm mb-4" style="max-width">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+            <span class="fw-semibold fs-5"> الارشاد الاكاديمي :</span>
+            <div class="d-flex align-items-center gap-2">
+                <span class="fs-3 fw-bold text-primary">@teachingActivityEvaluation.TotalTeachingActivityScore</span>
+                <span class="fs-5 text-muted">/ 5</span>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="card shadow-sm mx-auto mb-4" style="max-width: 1100px;">
+    <div class="card-body p-4">
+        <h5 class="text-end text-dark mb-4">
+          السمات الشخصية
+        </h5>
+
+        <div class="row mb-3 align-items-center">
+            <div class="col-md-8 text-end">
+                <label class="form-label mb-0">التعاون والعمل الجماعي</label>
+            </div>
+            <div class="col-md-4">
+                <select class="form-select" @bind="teachingActivityEvaluation.PreparingPracticalNotes" @bind:after="CalculateTotals">
+                    <option value="">اختر</option>
+                    @foreach (var option in gradeOptions)
+                    {
+                        <option value="@option.Value">@option.Label</option>
+                    }
+                </select>
+            </div>
+        </div>
+        <div class="row mb-3 align-items-center">
+            <div class="col-md-8 text-end">
+                <label class="form-label mb-0">الالتزام بالمواعيد</label>
+            </div>
+            <div class="col-md-4">
+                <select class="form-select" @bind="teachingActivityEvaluation.PreparingPracticalNotes" @bind:after="CalculateTotals">
+                    <option value="">اختر</option>
+                    @foreach (var option in gradeOptions)
+                    {
+                        <option value="@option.Value">@option.Label</option>
+                    }
+                </select>
+            </div>
+        </div>
+        <div class="row mb-3 align-items-center">
+            <div class="col-md-8 text-end">
+                <label class="form-label mb-0">المظهر العام</label>
+            </div>
+            <div class="col-md-4">
+                <select class="form-select" @bind="teachingActivityEvaluation.PreparingPracticalNotes" @bind:after="CalculateTotals">
+                    <option value="">اختر</option>
+                    @foreach (var option in gradeOptions)
+                    {
+                        <option value="@option.Value">@option.Label</option>
+                    }
+                </select>
+            </div>
+        </div>
+        <div class="row mb-3 align-items-center">
+            <div class="col-md-8 text-end">
+                <label class="form-label mb-0">المبادرة و تحمل المسؤولية</label>
+            </div>
+            <div class="col-md-4">
+                <select class="form-select" @bind="teachingActivityEvaluation.PreparingPracticalNotes" @bind:after="CalculateTotals">
+                    <option value="">اختر</option>
+                    @foreach (var option in gradeOptions)
+                    {
+                        <option value="@option.Value">@option.Label</option>
+                    }
+                </select>
+            </div>
+            </div>
+        <div class="row mb-3 align-items-center">
+            <div class="col-md-8 text-end">
+                <label class="form-label mb-0">ادارة الوقت</label>
+            </div>
+            <div class="col-md-4">
+                <select class="form-select" @bind="teachingActivityEvaluation.PreparingPracticalNotes" @bind:after="CalculateTotals">
+                    <option value="">اختر</option>
+                    @foreach (var option in gradeOptions)
+                    {
+                        <option value="@option.Value">@option.Label</option>
+                    }
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public double TeachingLoadScore { get; set; }
+
+    private HodEvaluationTeachingActivityDto teachingActivityEvaluation = new();
+
+    // Grade options with Arabic labels
+    private List<GradeOption> gradeOptions = new List<GradeOption>
+    {
+        new GradeOption { Value = 5, Label = "ممتاز" },
+        new GradeOption { Value = 4, Label = "جيد جداً" },
+        new GradeOption { Value = 3, Label = "جيد" },
+        new GradeOption { Value = 2, Label = "مقبول" },
+        new GradeOption { Value = 1, Label = "ضعيف" }
+    };
+
+    protected override void OnInitialized()
+    {
+        teachingActivityEvaluation = new HodEvaluationTeachingActivityDto();
+    }
+
+    private void CalculateTotals()
+    {
+        teachingActivityEvaluation.TotalDirectTeachingActivities =
+            (teachingActivityEvaluation.PreparingPracticalNotes ?? 0) +
+            (teachingActivityEvaluation.PreparingNewTeachingAids ?? 0) +
+            (teachingActivityEvaluation.AssistingInPracticalExperiments ?? 0) +
+            (teachingActivityEvaluation.ParticipatingInOrganizingCourses ?? 0) +
+            (teachingActivityEvaluation.OtherAssignedTeachingActivities ?? 0);
+
+        teachingActivityEvaluation.TotalTeachingActivityScore =
+            teachingActivityEvaluation.TotalDirectTeachingActivities;
+
+        StateHasChanged();
+    }
+
+    private decimal GetTotalWithTeachingLoad()
+    {
+        return teachingActivityEvaluation.TotalTeachingActivityScore + (decimal)TeachingLoadScore;
+    }
+
+    private async Task SubmitEvaluation()
+    {
+    }
+
+    // Helper class for grade options
+    public class GradeOption
+    {
+        public int Value { get; set; }
+        public string Label { get; set; }
+    }
+}
