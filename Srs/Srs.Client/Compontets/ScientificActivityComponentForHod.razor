@@ -338,6 +338,38 @@
     private AdminstrativeActivityDto administrativeData = new AdminstrativeActivityDto();
     private string? errorMessage;
     private decimal vpg ;
+    [Parameter] public EventCallback<Dictionary<int, int>> OnRatingsChanged { get; set; }
+    [Parameter] public bool IsViewMode { get; set; }
+    [Parameter] public Dictionary<int, int>? ExistingRatings { get; set; }
+
+    private Dictionary<int, int> administrativeRatings = new();
+
+    // In OnParametersSet or OnInitialized, load existing ratings
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+
+        if (ExistingRatings != null && ExistingRatings.Any())
+        {
+            administrativeRatings = new Dictionary<int, int>(ExistingRatings);
+        }
+    }
+
+    // If you have any input fields for administrative activities (criteria 6-11),
+    // update them to send ratings back like this:
+    private void UpdateAdministrativeRating(int criterionId, int ratingValue)
+    {
+        if (ratingValue > 0)
+        {
+            administrativeRatings[criterionId] = ratingValue;
+        }
+        else
+        {
+            administrativeRatings.Remove(criterionId);
+        }
+
+        OnRatingsChanged.InvokeAsync(administrativeRatings);
+    }
 
     [Parameter]
     public int EvaluationId { get; set; }

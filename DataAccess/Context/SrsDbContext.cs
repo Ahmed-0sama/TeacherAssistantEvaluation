@@ -1,7 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using DataAccess.Entities;
+﻿using DataAccess.Entities;
+using DataAccess.SeedData;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
 
 namespace DataAccess.Context;
 
@@ -47,6 +48,12 @@ public partial class SrsDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder);
+
+        HodEvaluationCriterionSeed.SeedCriteria(modelBuilder);
+        RatingSeed.SeedRatings(modelBuilder);
+
+        OnModelCreatingPartial(modelBuilder);
         modelBuilder.Entity<Evaluation>(entity =>
         {
             entity.HasKey(e => e.EvaluationId).HasName("PK__Evaluati__36AE68D3DC67C19C");

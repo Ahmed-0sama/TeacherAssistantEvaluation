@@ -241,34 +241,10 @@
 }
 
 @code {
-    // Unified Model for Table Display
-    public class TAEvaluationViewModel
-    {
-        // From Evaluation API
-        public int EvaluationId { get; set; }
-        public int TAEmployeeId { get; set; }
-        public int PeriodId { get; set; }
-        public string PeriodName { get; set; } = string.Empty;
-        public int StatusId { get; set; }
-        public string StatusName { get; set; } = string.Empty;
-        public bool CanEdit { get; set; }
-
-        // From TA Details API (to be fetched)
-        public string TAName { get; set; } = string.Empty;
-        public string WorkId { get; set; } = string.Empty;
-        public string CourseCode { get; set; } = string.Empty;
-        public string CourseName { get; set; } = string.Empty;
-        public int NumberOfClasses { get; set; }
-
-        // From Professor Evaluation (if exists)
-        public int? ProfEvalId { get; set; }
-        public int? ProfessorEvaluationTotal { get; set; }
-        public bool IsEvaluated => ProfEvalId.HasValue;
-    }
 
     // State variables
-    private List<TAEvaluationViewModel> evaluationsList = new();
-    private TAEvaluationViewModel? selectedEvaluation;
+    private List<TAEvaluationViewModelDto> evaluationsList = new();
+    private TAEvaluationViewModelDto? selectedEvaluation;
     private ProfessorEvaluationResponseDto currentProfEval = new();
 
     private bool isLoading = true;
@@ -351,7 +327,7 @@
         }
 
         // Step 3: Combine data
-        evaluationsList = new List<TAEvaluationViewModel>();
+        evaluationsList = new List<TAEvaluationViewModelDto>();
 
         foreach (var eval in apiEvaluations)
         {
@@ -360,7 +336,7 @@
 
             var profEval = existingEvaluations.FirstOrDefault(pe => pe.EvaluationId == eval.evaluationId);
 
-            var viewModel = new TAEvaluationViewModel
+            var viewModel = new TAEvaluationViewModelDto
             {
                 EvaluationId = eval.evaluationId,
                 TAEmployeeId = eval.taEmployeeId,
@@ -386,7 +362,7 @@
     }
 
 
-    private void OpenModal(TAEvaluationViewModel eval)
+    private void OpenModal(TAEvaluationViewModelDto eval)
     {
         selectedEvaluation = eval;
         validationErrors.Clear();
@@ -418,7 +394,7 @@
         StateHasChanged();
     }
 
-    private async void LoadExistingEvaluationAsync(TAEvaluationViewModel eval)
+    private async void LoadExistingEvaluationAsync(TAEvaluationViewModelDto eval)
     {
         try
         {
@@ -455,7 +431,7 @@
         }
     }
 
-    private void SetDefaultEvaluation(TAEvaluationViewModel eval)
+    private void SetDefaultEvaluation(TAEvaluationViewModelDto eval)
     {
         currentProfEval = new ProfessorEvaluationResponseDto
         {

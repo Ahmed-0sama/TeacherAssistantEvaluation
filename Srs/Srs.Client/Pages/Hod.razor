@@ -281,9 +281,21 @@
                                     }
                                 </div>
                         </div>
-                            <Srs.Client.Compontets.TeachingActivitiesEvaluation TeachingLoadScore="@teachingLoadScore" />
-                             <Srs.Client.Compontets.ScientificActivityComponentForHod  EvaluationId="@selectedTA.EvaluationId" />
-                             <Srs.Client.Compontets.GradesComponent/>
+                            <Srs.Client.Compontets.TeachingActivitiesEvaluation TeachingLoadScore="@teachingLoadScore"
+                                                                                OnRatingsChanged="OnTeachingActivitiesRatingsChanged"
+                                                                                IsViewMode="@IsViewMode"
+                                                                                ExistingRatings="@GetExistingRatings("DirectTeaching")" />
+
+                            <Srs.Client.Compontets.ScientificActivityComponentForHod EvaluationId="@selectedTA.EvaluationId"
+                                                                                     OnRatingsChanged="OnScientificActivityRatingsChanged"
+                                                                                     IsViewMode="@IsViewMode"
+                                                                                     ExistingRatings="@GetExistingRatings("Administrative")" />
+
+                            <Srs.Client.Compontets.GradesComponent OnPersonalTraitsChanged="OnPersonalTraitsRatingsChanged"
+                                                                   OnStudentActivitiesChanged="OnStudentActivitiesRatingsChanged"
+                                                                   IsViewMode="@IsViewMode"
+                                                                   ExistingPersonalTraits="@GetExistingRatings("PersonalTraits")"
+                                                                   ExistingStudentActivities="@GetExistingRatings("StudentActivities")" />
                         <!-- Comments Section -->
                         <div class="border rounded p-3 bg-light mb-3">
                             <h5 class="mb-3 text-primary">الملاحظات والتعليقات</h5>
@@ -349,7 +361,11 @@
     private bool isSaving = false;
     private UserDataDto? selectedTA;
     private TeachingDataDto teachingdto=new TeachingDataDto();
-
+    //dictionaries to hold ratings for different criteria
+    private Dictionary<int, int> teachingActivitiesRatings = new();
+    private Dictionary<int, int> scientificActivityRatings = new();
+    private Dictionary<int, int> personalTraitsRatings = new();
+    private Dictionary<int, int> studentActivitiesRatings = new();
     // Evaluation data
     private List<HodCriterionDto> criteria = new();
     private List<RatingDto> ratings = new();
@@ -364,6 +380,37 @@
     private bool showDetailsModal = false;
     private ProfessorEvaluationResponseDto? selectedEvaluation;
     double teachingLoadScore => (CalculateAverageScore()) + (teachingdto.gradegiven ?? 0);
+
+    private void OnTeachingActivitiesRatingsChanged(Dictionary<int, int> ratings)
+    {
+        teachingActivitiesRatings = ratings;
+    }
+
+    private void OnScientificActivityRatingsChanged(Dictionary<int, int> ratings)
+    {
+        scientificActivityRatings = ratings;
+    }
+
+    private void OnPersonalTraitsRatingsChanged(Dictionary<int, int> ratings)
+    {
+        personalTraitsRatings = ratings;
+    }
+
+    private void OnStudentActivitiesRatingsChanged(Dictionary<int, int> ratings)
+    {
+        studentActivitiesRatings = ratings;
+    }
+
+    private Dictionary<int, int> GetExistingRatings(string criterionType)
+    {
+        if (hodEvaluationData?.Evaluations == null)
+            return new Dictionary<int, int>();
+
+        return hodEvaluationData.Evaluations
+            .Where(e => e.CriterionType == criterionType)
+            .ToDictionary(e => e.CriterionId, e => e.RatingId);
+    }
+
     private int CalculateAverageScore()
     {
         if (profdto == null || !profdto.Any())
@@ -403,7 +450,7 @@
                 EmployeeNumber = e.taEmployeeId,
                 status = e.statusName,
                 EvaluationId = e.evaluationId,
-                HasHodEvaluation = hodEvaluationIds.Contains(e.evaluationId)
+                //HasHodEvaluation = hodEvaluationIds.Contains(e.evaluationId)
             }).ToList();
         }
         catch (Exception ex)
@@ -546,14 +593,31 @@
 
         try
         {
-            // Validate all criteria are rated
-            if (selectedRatings.Count != criteria.Count)
+            // Combine all ratings from different sections
+            var allRatings = new Dictionary<int, int>();
+
+            // Add ratings from all components
+            foreach (var rating in teachingActivitiesRatings)
+                allRatings[rating.Key] = rating.Value;
+
+            foreach (var rating in scientificActivityRatings)
+                allRatings[rating.Key] = rating.Value;
+
+            foreach (var rating in personalTraitsRatings)
+                allRatings[rating.Key] = rating.Value;
+
+            foreach (var rating in studentActivitiesRatings)
+                allRatings[rating.Key] = rating.Value;
+
+            // Validate that we have ratings (adjust the count based on your total criteria)
+            if (allRatings.Count == 0)
             {
-                await JS.InvokeVoidAsync("alert", "الرجاء تقييم جميع المعايير");
+                await JS.InvokeVoidAsync("alert", "الرجاء تقييم المعايير المطلوبة");
                 return;
             }
 
-            var criterionRatings = selectedRatings.Select(kvp => new CriterionRatingDto
+            // Convert to DTO format
+            var criterionRatings = allRatings.Select(kvp => new CriterionRatingDto
             {
                 CriterionId = kvp.Key,
                 RatingId = kvp.Value
@@ -569,7 +633,9 @@
                     HodWeaknesses = hodWeaknesses
                 };
 
-                var response = await Http.PutAsJsonAsync($"api/HodEvaluation/UpdateHodEvaluation/{selectedTA.EvaluationId}", updateDto);
+                var response = await Http.PutAsJsonAsync(
+                    $"api/HodEvaluation/UpdateHodEvaluation/{selectedTA.EvaluationId}",
+                    updateDto);
 
                 if (response.IsSuccessStatusCode)
                 {
