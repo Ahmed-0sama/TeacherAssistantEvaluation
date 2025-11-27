@@ -435,7 +435,10 @@
                 var hodEvaluations = await Http.GetFromJsonAsync<List<HodEvaluationResponseDto>>("api/HodEvaluation/GetHodEvaluationByPeriod/1")
                     ?? new List<HodEvaluationResponseDto>();
 
-                hodEvaluationIds = hodEvaluations.Select(h => h.EvaluationId).ToHashSet();
+                hodEvaluationIds = hodEvaluations
+                    .Where(h => h.Evaluations != null && h.Evaluations.Any())
+                    .Select(h => h.EvaluationId)
+                    .ToHashSet();
             }
             catch (Exception ex)
             {
@@ -450,7 +453,7 @@
                 EmployeeNumber = e.taEmployeeId,
                 status = e.statusName,
                 EvaluationId = e.evaluationId,
-                //HasHodEvaluation = hodEvaluationIds.Contains(e.evaluationId)
+                HasHodEvaluation = hodEvaluationIds.Contains(e.evaluationId)
             }).ToList();
         }
         catch (Exception ex)

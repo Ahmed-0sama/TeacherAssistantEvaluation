@@ -197,5 +197,11 @@ namespace Business_Access.Services
                 throw;
             }
         }
+            public async Task<bool> HasHodEvaluationAsync(int evaluationId)
+        {
+            return await _db.Hodevaluations
+                .AnyAsync(h => h.EvaluationId == evaluationId);
+        }
+    
     }
 }

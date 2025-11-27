@@ -46,6 +46,19 @@ namespace Srs.Controllers
                 return StatusCode(500, new { message = "An error occurred while updating the HOD evaluation", details = ex.Message });
             }
         }
+        [HttpGet("HasHodEvaluation/{evaluationId}")]
+        public async Task<IActionResult> HasHodEvaluation(int evaluationId)
+        {
+            try
+            {
+                var hasEvaluation = await _hodEvaluationService.HasHodEvaluationAsync(evaluationId);
+                return Ok(new { evaluationId, hasHodEvaluation = hasEvaluation });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred", details = ex.Message });
+            }
+        }
         [HttpGet("HodEvaluationByEvaluationId/{evaluationId}")]
         public async Task<IActionResult> GetHodEvaluationByEvaluationId(int evaluationId)
         {
