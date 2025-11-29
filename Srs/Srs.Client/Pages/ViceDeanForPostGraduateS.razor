@@ -249,6 +249,7 @@
     private bool isLoading = true;
     private bool isLoadingModalData = false;
     private bool isSaving = false;
+	private const int EvaluationPeriodId = 1;//should get it from api
     private string? errorMessage;
     private List<UserDataDto> taList = new();
     private UserDataDto? selectedTA;
@@ -354,7 +355,7 @@
         {
             var createDto = new CreateGsdeanEvaluationDto
             {
-                EvaluationId = selectedTA.EvaluationId,
+                EvaluationPeriodId = EvaluationPeriodId,
                 ProgramName = dto.Major,
                 CompletedHours = dto.HoursGained,
                 Gpa = dto.Grade,

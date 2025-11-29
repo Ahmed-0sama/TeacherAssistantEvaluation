@@ -27,7 +27,7 @@ namespace Srs.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
-        [HttpGet("GetById{id}")]
+        [HttpGet("GetById/{id}")]
         public async Task<IActionResult> GetById(int id)
         {
             try
@@ -42,13 +42,26 @@ namespace Srs.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
-        [HttpGet("GetByEvaluation/{evaluationId}")]
-        public async Task<IActionResult> GetByEvaluationId(int evaluationId)
+        [HttpGet("GetByEvaluationPeriod/{evaluationPeriodId}")]
+        public async Task<IActionResult> GetByEvaluationPeriodId(int evaluationPeriodId)
         {
             try
             {
-                var result = await _gsDeanService.GetByEvaluationIdAsync(evaluationId);
-                return Ok(result);
+                var results = await _gsDeanService.GetByEvaluationPeriodIdAsync(evaluationPeriodId);
+                return Ok(results);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+        [HttpGet("GetByTAEmployee/{taEmployeeId}")]
+        public async Task<IActionResult> GetByTAEmployeeId(int taEmployeeId)
+        {
+            try
+            {
+                var results = await _gsDeanService.GetByTAEmployeeIdAsync(taEmployeeId);
+                return Ok(results);
             }
             catch (Exception ex)
             {
@@ -91,16 +104,14 @@ namespace Srs.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
-        [HttpGet("GetEvaluationForTA/{evaluationId}")]
-        public async Task<IActionResult> GetEvaluationForTA(int evaluationId)
+        [HttpGet("GetEvaluationForTA/{evaluationPeriodId}/{taEmployeeId}")]
+        public async Task<IActionResult> GetEvaluationForTA(int evaluationPeriodId, int taEmployeeId)
         {
             try
             {
-                var result = await _gsDeanService.GetByEvaluationIdForTAAsync(evaluationId);
-
+                var result = await _gsDeanService.GetByEvaluationPeriodAndTAAsync(evaluationPeriodId, taEmployeeId);
                 if (result == null)
                     return NotFound("Evaluation not found");
-
                 return Ok(result);
             }
             catch (Exception ex)

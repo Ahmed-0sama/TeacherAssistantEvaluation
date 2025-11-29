@@ -9,7 +9,8 @@ namespace Shared.Dtos.GSDean
     public class GsdeanEvaluationDto
     {
         public int GsevalId { get; set; }
-        public int EvaluationId { get; set; }
+        public int EvaluationPeriodId { get; set; }
+        public int TaEmployeeId { get; set; }
         public string ProgramName { get; set; } = null!;
         public int CompletedHours { get; set; }
         public decimal Gpa { get; set; }

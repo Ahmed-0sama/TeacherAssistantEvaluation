@@ -9,8 +9,10 @@ namespace Shared.Dtos.ProfessorEvaluationDto
 {
     public class CreateProfessorEvaluationDto
     {
-        [Required(ErrorMessage = "Evaluation ID is required")]
-        public int EvaluationId { get; set; }
+        [Required(ErrorMessage = "EvaluationPeriodId is required")]
+        public int EvaluationPeriodId { get; set; }
+         [Required(ErrorMessage = "TA Employee ID is required")]
+        public int TaEmployeeId { get; set; }
 
         [Required(ErrorMessage = "Professor Employee ID is required")]
         public int ProfessorEmployeeId { get; set; }

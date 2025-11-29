@@ -9,7 +9,8 @@ namespace Shared.Dtos.ProfessorEvaluationDto
     public class ProfessorEvaluationResponseDto
     {
         public int ProfEvalId { get; set; }
-        public int EvaluationId { get; set; }
+        public int EvaluationPeriodId { get; set; }
+        public int TaEmployeeId {  get; set; }
         public int ProfessorEmployeeId { get; set; }
         public string ProfessorName { get; set; }
         public string CourseCode { get; set; }
@@ -23,5 +24,8 @@ namespace Shared.Dtos.ProfessorEvaluationDto
         public string? HodReturnComment { get; set; }
         public bool IsSubmitted { get; set; }
         public DateTime? SubmittedDate { get; set; }
+        public int StatusId { get; set; }
+        public string PeriodName { get; set; }
+        public string StatusName { get; set; }
     }
 }

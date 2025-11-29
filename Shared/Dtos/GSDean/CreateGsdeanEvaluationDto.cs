@@ -10,7 +10,9 @@ namespace Shared.Dtos.GSDean
     public class CreateGsdeanEvaluationDto
     {
         [Required]
-        public int EvaluationId { get; set; }
+        public int EvaluationPeriodId { get; set; }
+        [Required]
+        public int TaEmployeeId { get; set; }
         [Required]
         [StringLength(200)]
         public string ProgramName { get; set; }

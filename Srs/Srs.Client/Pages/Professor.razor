@@ -1,5 +1,6 @@
 ﻿@page "/professor"
 @using Shared.Dtos
+@using Shared.Dtos.EvaluationPeriod
 @using Shared.Dtos.ProfessorEvaluationDto
 @inject HttpClient Http
 @inject IJSRuntime JS
@@ -100,7 +101,7 @@
                             <p class="mb-2"><strong>اسم المساعد:</strong> @selectedEvaluation.TAName</p>
                         </div>
                         <div class="col-6">
-                            <p class="mb-2"><strong>الرقم الوظيفي:</strong> @selectedEvaluation.WorkId</p>
+                            <p class="mb-2"><strong>الرقم الوظيفي:</strong> @selectedEvaluation.TAEmployeeId</p>
                         </div>
                         <div class="col-6">
                             <p class="mb-2"><strong>المقرر:</strong> @selectedEvaluation.CourseName</p>
@@ -260,6 +261,9 @@
     // TODO: Replace with actual logged-in professor ID from authentication
     private int currentProfessorId = 123;
 
+    // CHANGED: Now using EvaluationPeriodId instead of looking up evaluations
+    private int currentEvaluationPeriodId = 1; // TODO: Get from actual period selection or API
+
     private int Total => currentProfEval.OfficeHoursScore +
                          currentProfEval.AttendanceScore +
                          currentProfEval.PerformanceScore;
@@ -308,17 +312,8 @@
 
     private async Task LoadDataFromApi()
     {
-        // Step 1: Get evaluations for the period
-        var evalResponse = await Http.GetAsync("api/Evaluation/period/1");
-        if (!evalResponse.IsSuccessStatusCode)
-        {
-            throw new Exception("فشل تحميل قائمة التقييمات");
-        }
-
-        var apiEvaluations = await evalResponse.Content.ReadFromJsonAsync<List<EvaluationApiResponseDto>>() ?? new();
-
-        // Step 2: Get existing professor evaluations
-        var profEvalResponse = await Http.GetAsync($"api/ProfessorEvaluation/professor/{currentProfessorId}");
+        // Step 1: Get existing professor evaluations for this professor
+        var profEvalResponse = await Http.GetAsync($"api/ProfessorEvaluation/GetByProfessor/{currentProfessorId}");
         var existingEvaluations = new List<ProfessorEvaluationResponseDto>();
 
         if (profEvalResponse.IsSuccessStatusCode)
@@ -326,38 +321,88 @@
             existingEvaluations = await profEvalResponse.Content.ReadFromJsonAsync<List<ProfessorEvaluationResponseDto>>() ?? new();
         }
 
-        // Step 3: Combine data
+        // Step 2: Get period details
+        var periodResponse = await Http.GetAsync($"api/EvaluationPeriod/{currentEvaluationPeriodId}");
+        if (!periodResponse.IsSuccessStatusCode)
+        {
+            throw new Exception("فشل تحميل بيانات الفترة");
+        }
+
+        var periodDetails = await periodResponse.Content.ReadFromJsonAsync<GetEvaluationPeriodDto>();
+
+        // Step 3: Get list of TAs using UserDataDto
+        // TODO: Replace with your actual endpoint to get TAs for the period
+        var taListResponse = await Http.GetAsync($"api/TA/GetActiveTAsForPeriod/{currentEvaluationPeriodId}");
+        List<UserDataDto> allTAs = new();
+
+        if (taListResponse.IsSuccessStatusCode)
+        {
+            allTAs = await taListResponse.Content.ReadFromJsonAsync<List<UserDataDto>>() ?? new();
+        }
+
+        // Step 4: Combine data
         evaluationsList = new List<TAEvaluationViewModelDto>();
 
-        foreach (var eval in apiEvaluations)
+        foreach (var ta in allTAs)
         {
-            // TODO: Fetch TA details from external API
-            // var taDetails = await Http.GetAsync($"api/TADetails/{eval.taEmployeeId}");
+            // CHANGED: Map EmployeeNumber to string
+            int taEmployeeId = ta.EmployeeNumber;
 
-            var profEval = existingEvaluations.FirstOrDefault(pe => pe.EvaluationId == eval.evaluationId);
+            // Get all professor evaluations for this TA in this period
+            var profEvalsForTA = existingEvaluations
+                .Where(pe => pe.EvaluationPeriodId == currentEvaluationPeriodId && pe.TaEmployeeId == taEmployeeId)
+                .ToList();
 
-            var viewModel = new TAEvaluationViewModelDto
+            if (profEvalsForTA.Any())
             {
-                EvaluationId = eval.evaluationId,
-                TAEmployeeId = eval.taEmployeeId,
-                PeriodId = eval.periodId,
-                PeriodName = eval.periodName,
-                StatusId = eval.statusId,
-                StatusName = eval.statusName,
-                CanEdit = eval.canEdit,
+                foreach (var profEval in profEvalsForTA)
+                {
+                    var viewModel = new TAEvaluationViewModelDto
+                    {
+                        ProfEvalId = profEval.ProfEvalId,
+                        EvaluationPeriodId = currentEvaluationPeriodId,
+                        TAEmployeeId = taEmployeeId,                     // MAPPED from EmployeeNumber
+                        PeriodId = currentEvaluationPeriodId,
+                        PeriodName = periodDetails?.PeriodName ?? "فترة غير معروفة",
+                        StatusId = profEval.StatusId,
+                        StatusName = profEval.StatusName,
+                        CanEdit = profEval.StatusId <= 6,
 
-                // TODO: Replace with actual API data
-                TAName = $"مساعد {eval.taEmployeeId}", // Placeholder
-                WorkId = $"EMP{eval.taEmployeeId:000}", // Placeholder
-                CourseCode = profEval?.CourseCode ?? "CS101", // From prof eval or placeholder
-                CourseName = profEval?.CourseName ?? "مقرر دراسي", // From prof eval or placeholder
-                NumberOfClasses = 12, // TODO: Get from API
+                        TAName = ta.Name,                                // From UserDataDto
+                        CourseCode = profEval.CourseCode,
+                        CourseName = profEval.CourseName,
+                        NumberOfClasses = 12,                            // Default or get from another source
 
-                ProfEvalId = profEval?.ProfEvalId,
-                ProfessorEvaluationTotal = profEval?.TotalScore
-            };
+                        ProfessorEvaluationTotal = profEval.TotalScore
+                    };
 
-            evaluationsList.Add(viewModel);
+                    evaluationsList.Add(viewModel);
+                }
+            }
+            else
+            {
+                // TA hasn't been evaluated yet
+                var viewModel = new TAEvaluationViewModelDto
+                {
+                    ProfEvalId = null,
+                    EvaluationPeriodId = currentEvaluationPeriodId,
+                    TAEmployeeId = taEmployeeId,                         // MAPPED from EmployeeNumber
+                    PeriodId = currentEvaluationPeriodId,
+                    PeriodName = periodDetails?.PeriodName ?? "فترة غير معروفة",
+                    StatusId = 1,
+                    StatusName = "قيد الانتظار",
+                    CanEdit = true,
+
+                    TAName = ta.Name,                                    // From UserDataDto
+                    CourseCode = "N/A",
+                    CourseName = "يحتاج تقييم",
+                    NumberOfClasses = 12,
+
+                    ProfessorEvaluationTotal = null
+                };
+
+                evaluationsList.Add(viewModel);
+            }
         }
     }
 
@@ -378,14 +423,16 @@
             // New evaluation
             currentProfEval = new ProfessorEvaluationResponseDto
             {
-                EvaluationId = eval.EvaluationId,
+                EvaluationPeriodId = eval.EvaluationPeriodId,  // CHANGED from EvaluationId
+                TaEmployeeId = eval.TAEmployeeId,              // NEW
                 ProfessorEmployeeId = currentProfessorId,
                 CourseCode = eval.CourseCode,
                 CourseName = eval.CourseName,
                 OfficeHoursScore = 0,
                 AttendanceScore = 0,
                 PerformanceScore = 0,
-                Comments = ""
+                Comments = "",
+                StatusId = 1  // NEW: Default status
             };
             isReadOnly = false;
         }
@@ -398,8 +445,8 @@
     {
         try
         {
-            // Fetch the full professor evaluation details
-            var response = await Http.GetAsync($"api/ProfessorEvaluation/GetProfessorEvaluationById{eval.ProfEvalId}");
+            // CHANGED: Fixed URL (added missing slash)
+            var response = await Http.GetAsync($"api/ProfessorEvaluation/GetProfessorEvaluationById/{eval.ProfEvalId}");
 
             if (response.IsSuccessStatusCode)
             {
@@ -411,7 +458,6 @@
                 }
                 else
                 {
-                    // Fallback to basic data
                     SetDefaultEvaluation(eval);
                 }
             }
@@ -436,14 +482,16 @@
         currentProfEval = new ProfessorEvaluationResponseDto
         {
             ProfEvalId = eval.ProfEvalId!.Value,
-            EvaluationId = eval.EvaluationId,
+            EvaluationPeriodId = eval.EvaluationPeriodId,  // CHANGED from EvaluationId
+            TaEmployeeId = eval.TAEmployeeId,              // NEW
             ProfessorEmployeeId = currentProfessorId,
             CourseCode = eval.CourseCode,
             CourseName = eval.CourseName,
             OfficeHoursScore = 0,
             AttendanceScore = 0,
             PerformanceScore = 0,
-            Comments = ""
+            Comments = "",
+            StatusId = eval.StatusId  // NEW
         };
     }
 
@@ -456,7 +504,7 @@
         StateHasChanged();
     }
 
-    // Validation methods
+    // Validation methods remain the same
     private void ValidateOfficeHours()
     {
         validationErrors.Remove("officeHours");
@@ -528,14 +576,13 @@
 
         try
         {
-            // TODO: Replace with actual API calls when ready
-            bool useRealApi = true; // Set to true when API is ready
+            bool useRealApi = true;
 
             if (useRealApi)
             {
                 if (selectedEvaluation!.IsEvaluated)
                 {
-                    // Update existing evaluation
+                    // CHANGED: Update existing evaluation - now using profEvalId
                     var updateDto = new UpdateProfessorEvaluationDto
                     {
                         CourseCode = currentProfEval.CourseCode,
@@ -543,11 +590,13 @@
                         OfficeHoursScore = currentProfEval.OfficeHoursScore,
                         AttendanceScore = currentProfEval.AttendanceScore,
                         PerformanceScore = currentProfEval.PerformanceScore,
-                        Comments = currentProfEval.Comments
+                        Comments = currentProfEval.Comments,
+                       // StatusId = currentProfEval.StatusId  // NEW
                     };
 
+                    // CHANGED: Now uses profEvalId instead of evaluationId
                     var response = await Http.PutAsJsonAsync(
-                        $"api/ProfessorEvaluation/UpdateEvaluationByEvaluationId{currentProfEval.EvaluationId}",
+                        $"api/ProfessorEvaluation/UpdateEvaluation/{currentProfEval.ProfEvalId}",
                         updateDto);
 
                     if (response.IsSuccessStatusCode)
@@ -564,17 +613,19 @@
                 }
                 else
                 {
-                    // Create new evaluation
+                    // CHANGED: Create new evaluation with new fields
                     var createDto = new CreateProfessorEvaluationDto
                     {
-                        EvaluationId = currentProfEval.EvaluationId,
+                        EvaluationPeriodId = currentProfEval.EvaluationPeriodId,  // CHANGED from EvaluationId
+                        TaEmployeeId = currentProfEval.TaEmployeeId,              // NEW
                         ProfessorEmployeeId = currentProfessorId,
                         CourseCode = currentProfEval.CourseCode,
                         CourseName = currentProfEval.CourseName,
                         OfficeHoursScore = currentProfEval.OfficeHoursScore,
                         AttendanceScore = currentProfEval.AttendanceScore,
                         PerformanceScore = currentProfEval.PerformanceScore,
-                        Comments = currentProfEval.Comments
+                        Comments = currentProfEval.Comments,
+                        //StatusId = 1  // NEW: Default status for new evaluation
                     };
 
                     var response = await Http.PostAsJsonAsync("api/ProfessorEvaluation/CreateProfessorEvaluation", createDto);

@@ -23,7 +23,7 @@ namespace Business_Access.Services
             return new GsdeanEvaluationDto
             {
                 GsevalId = entity.GsevalId,
-                EvaluationId = entity.EvaluationId,
+                EvaluationPeriodId = entity.EvaluationPeriodId,
                 ProgramName = entity.ProgramName,
                 CompletedHours = entity.CompletedHours,
                 Gpa = entity.Gpa,
@@ -46,7 +46,7 @@ namespace Business_Access.Services
             try
             {
                 var entity = await _context.GsdeanEvaluations
-                    .Include(g => g.Evaluation)
+                    .Include(g => g.EvaluationPeriod)
                     .FirstOrDefaultAsync(g => g.GsevalId == gsevalId);
 
                 return entity == null ? null : MapToDto(entity);
@@ -61,7 +61,8 @@ namespace Business_Access.Services
             try
             {
                 var entities = await _context.GsdeanEvaluations
-                    .Include(g => g.Evaluation)
+                    .Include(g => g.EvaluationPeriod)
+                    .Include(g=>g.Status)
                     .ToListAsync();
 
                 return entities.Select(MapToDto);
@@ -82,7 +83,8 @@ namespace Business_Access.Services
             {
                 var entity = new GsdeanEvaluation
                 {
-                    EvaluationId = dto.EvaluationId,
+                    EvaluationPeriodId = dto.EvaluationPeriodId,
+                    TaEmployeeId= dto.TaEmployeeId,
                     ProgramName = dto.ProgramName,
                     CompletedHours = dto.CompletedHours,
                     Gpa = dto.Gpa,
@@ -125,7 +127,6 @@ namespace Business_Access.Services
                     throw new KeyNotFoundException("GS Dean evaluation not found");
 
                 // Update fields
-                entity.EvaluationId = dto.EvaluationId;
                 entity.ProgramName = dto.ProgramName;
                 entity.CompletedHours = dto.CompletedHours;
                 entity.Gpa = dto.Gpa;
@@ -150,16 +151,21 @@ namespace Business_Access.Services
                 throw new Exception("Error updating GS Dean evaluation", ex);
             }
         }
-        public async Task<GSDeanTAViewDto> GetByEvaluationIdForTAAsync(int evaluationId)
+        public async Task<GSDeanTAViewDto> GetByEvaluationPeriodAndTAAsync(int evaluationPeriodId, int taEmployeeId)
         {
-            if (evaluationId <= 0)
-                throw new ArgumentException("Invalid evaluation Id");
+            if (evaluationPeriodId <= 0)
+                throw new ArgumentException("Invalid evaluation period Id");
+
+            if (taEmployeeId<=0)
+                throw new ArgumentException("Invalid TA employee Id");
 
             try
             {
                 var entity = await _context.GsdeanEvaluations
-                    .Include(g => g.Evaluation)
-                    .FirstOrDefaultAsync(g => g.EvaluationId == evaluationId);
+                    .Include(g => g.EvaluationPeriod)  
+                    .Include(g => g.Status)            
+                    .FirstOrDefaultAsync(g => g.EvaluationPeriodId == evaluationPeriodId
+                                           && g.TaEmployeeId == taEmployeeId);
 
                 if (entity == null)
                     return null;
@@ -183,22 +189,41 @@ namespace Business_Access.Services
                 throw new Exception("Error fetching GS dean evaluation for TA", ex);
             }
         }
-        public async Task<GsdeanEvaluationDto> GetByEvaluationIdAsync(int evaluationId)
+        public async Task<IEnumerable<GsdeanEvaluationDto>> GetByEvaluationPeriodIdAsync(int evaluationPeriodId)
         {
             try
             {
-                var entity = await _context.GsdeanEvaluations
-                    .Include(g => g.Evaluation)
-                    .FirstOrDefaultAsync(g => g.EvaluationId == evaluationId);
+                var entities = await _context.GsdeanEvaluations
+                    .Include(g => g.EvaluationPeriod)  // CHANGED from Evaluation
+                    .Include(g => g.Status)            // NEW
+                    .Where(g => g.EvaluationPeriodId == evaluationPeriodId)
+                    .ToListAsync();
 
-                if (entity == null)
-                    return null;
-
-                return MapToDto(entity);
+                return entities.Select(MapToDto);
             }
             catch (Exception ex)
             {
-                throw new Exception("Error fetching GS dean evaluations by EvaluationId", ex);
+                throw new Exception("Error fetching GS dean evaluations by EvaluationPeriodId", ex);
+            }
+        }
+        public async Task<IEnumerable<GsdeanEvaluationDto>> GetByTAEmployeeIdAsync(int taEmployeeId)
+        {
+            if (taEmployeeId<=0)
+                throw new ArgumentException("Invalid TA employee Id");
+
+            try
+            {
+                var entities = await _context.GsdeanEvaluations
+                    .Include(g => g.EvaluationPeriod)
+                    .Include(g => g.Status)
+                    .Where(g => g.TaEmployeeId == taEmployeeId)
+                    .ToListAsync();
+
+                return entities.Select(MapToDto);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error fetching GS dean evaluations by TA employee Id", ex);
             }
         }
     }
