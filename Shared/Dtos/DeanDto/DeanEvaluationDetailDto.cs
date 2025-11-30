@@ -25,9 +25,9 @@ namespace Shared.Dtos.DeanDto
         public string? DeanReturnComment { get; set; }
         public string? FinalGrade { get; set; }
         public decimal? StudentSurveyScore { get; set; }
-        public DateOnly? DateSubmitted { get; set; }
-        public DateOnly? DateApproved { get; set; }
-        public List<HodEvaluationDto> HodEvaluations { get; set; } = new();
+        public DateTime? DateSubmitted { get; set; }
+        public DateTime? DateApproved { get; set; }
+        public HodEvaluationDto HodEvaluations { get; set; } = new();
         public TASubmissionResponseDto? TaSubmission { get; set; }
     }
 }

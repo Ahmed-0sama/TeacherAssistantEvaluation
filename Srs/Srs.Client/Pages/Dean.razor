@@ -1,10 +1,14 @@
-﻿@* @page "/dean"
+﻿@page "/dean"
+@using Shared.Dtos.TASubmissions
+@using Shared.Dtos.DeanDto
 @inject IJSRuntime JS
+@inject IDean DeanService
+@implements IAsyncDisposable
 
 <div class="max-w-6xl mx-auto">
     @if (IsLoading)
     {
-        <div class="text-center p-10">...جاري تحميل البيانات</div>
+        <div class="text-center p-10">جاري تحميل البيانات...</div>
     }
     else if (ViewState == ViewState.Detailed && SelectedData is not null)
     {
@@ -14,16 +18,25 @@
     else if (ViewState == ViewState.Brief && SelectedData is not null)
     {
         <div class="max-w-5xl mx-auto">
+            <!-- Toast Notification -->
             @if (!string.IsNullOrEmpty(ToastMessage))
             {
                 <div class="fixed top-20 left-1/2 -translate-x-1/2 z-50">
-                    <div class="bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2 space-x-reverse animate-fade-in-out">
-                        <CheckIcon class="h-6 w-6" />
+                    <div class="@ToastClass px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2 space-x-reverse animate-fade-in-out">
+                        @if (ToastType == "success")
+                        {
+                            <span>✓</span>
+                        }
+                        else if (ToastType == "error")
+                        {
+                            <span>✗</span>
+                        }
                         <span>@ToastMessage</span>
                     </div>
                 </div>
             }
 
+            <!-- Print Modal -->
             @if (IsPrintModalOpen)
             {
                 <div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 no-print">
@@ -58,7 +71,7 @@
 
             @if (SelectedData is not null)
             {
-                <!-- Summary report (same as EvaluationReportView in React) -->
+                <!-- Summary report -->
                 <EvaluationReportView ReportData="SelectedData.Summary" />
             }
 
@@ -73,7 +86,7 @@
                     <button 
                         @onclick="OpenPrintModal"
                         class="px-5 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 shadow font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed"
-                        disabled="@( !Permissions.CanPrintReports )">
+                        disabled="@(!Permissions.CanPrintReports)">
                         طباعة تقرير
                     </button>
 
@@ -83,12 +96,12 @@
                     {
                         <button 
                             @onclick="ReturnEvaluation"
-                            disabled="@( !Permissions.CanReturnFinalReport || IsReturning )"
+                            disabled="@(!Permissions.CanReturnFinalReport || IsReturning)"
                             class="px-5 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 shadow disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center min-w-[150px]">
                             @if (IsReturning)
                             {
                                 <span class="flex items-center">
-                                    <SpinnerIcon class="h-5 w-5 ml-2" />
+                                    <span class="animate-spin h-5 w-5 ml-2">⟳</span>
                                     <span>جاري الإرجاع...</span>
                                 </span>
                             }
@@ -100,12 +113,12 @@
 
                         <button 
                             @onclick="ApproveEvaluation"
-                            disabled="@( !Permissions.CanApproveFinalReport || IsApproving )"
+                            disabled="@(!Permissions.CanApproveFinalReport || IsApproving)"
                             class="px-5 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 shadow disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center min-w-[120px]">
                             @if (IsApproving)
                             {
                                 <span class="flex items-center">
-                                    <SpinnerIcon class="h-5 w-5 ml-2" />
+                                    <span class="animate-spin h-5 w-5 ml-2">⟳</span>
                                     <span>جاري الاعتماد...</span>
                                 </span>
                             }
@@ -138,15 +151,15 @@
                     placeholder="بحث بالاسم أو الرقم الوظيفي..."
                     @bind="SearchTerm"
                     @bind:event="oninput"
-                    class="w-full sm:flex-1 border-gray-300 rounded-md shadow-sm" />
+                    class="w-full sm:flex-1 border border-gray-300 rounded-md shadow-sm p-2" />
 
-                <select class="min-w-[150px] border-gray-300 rounded-md shadow-sm">
+                <select class="min-w-[150px] border border-gray-300 rounded-md shadow-sm p-2">
                     <option>فلترة حسب القسم</option>
                     <option>قسم علوم الحاسب</option>
                     <option>قسم نظم المعلومات</option>
                 </select>
 
-                <select class="min-w-[150px] border-gray-300 rounded-md shadow-sm">
+                <select class="min-w-[150px] border border-gray-300 rounded-md shadow-sm p-2">
                     <option>فلترة حسب الفترة الزمنية</option>
                     <option>الفصل الدراسي الأول 2024</option>
                     <option>الفصل الدراسي الثاني 2024</option>
@@ -171,12 +184,12 @@
                                 <td class="p-3 whitespace-nowrap">@e.Summary.Name</td>
                                 <td class="p-3 whitespace-nowrap">@e.Summary.Department</td>
                                 <td class="p-3 whitespace-nowrap">
-                                    <span class=@GetGradeBadgeClass(e.Summary.FinalGrade)>
+                                    <span class="@GetGradeBadgeClass(e.Summary.FinalGrade)">
                                         @e.Summary.FinalGrade
                                     </span>
                                 </td>
                                 <td class="p-3 whitespace-nowrap">
-                                    <span class=@GetStatusBadgeClass(e.Summary.DetailedStatus)>
+                                    <span class="@GetStatusBadgeClass(e.Summary.DetailedStatus)">
                                         @DetailedStatusMap[e.Summary.DetailedStatus]
                                     </span>
                                 </td>
@@ -204,7 +217,7 @@
 </div>
 
 @code {
-    // ----- State -----
+    // ===== State =====
     private List<FullEvaluationData> Evaluations { get; set; } = new();
     private bool IsLoading { get; set; } = true;
 
@@ -218,26 +231,30 @@
     private bool IsReturning { get; set; }
 
     private string? ToastMessage { get; set; }
+    private string ToastType { get; set; } = "success";
+    private string ToastClass => ToastType == "success" 
+        ? "bg-green-500 text-white" 
+        : "bg-red-500 text-white";
 
     private DeanPermissions Permissions { get; set; } = new();
 
-    // Map DetailedStatus => Arabic text (equivalent to DetailedStatusMap in TS)
-    private readonly Dictionary<DetailedStatus, string> DetailedStatusMap =
-        new()
-        {
-            { DetailedStatus.Approved, "تم الاعتماد النهائي" },
-            { DetailedStatus.PendingDeanApproval, "في انتظار اعتماد العميد" },
-            { DetailedStatus.ReturnedToHead, "تمت إعادته إلى رئيس القسم" }
-            // أضف باقي الحالات إن وجدت
-        };
+    private readonly Dictionary<DetailedStatus, string> DetailedStatusMap = new()
+    {
+        { DetailedStatus.Approved, "تم الاعتماد النهائي" },
+        { DetailedStatus.PendingDeanApproval, "في انتظار اعتماد العميد" },
+        { DetailedStatus.ReturnedToHead, "تمت إعادته إلى رئيس القسم" },
+        { DetailedStatus.Pending, "قيد المراجعة" }
+    };
 
-    // ----- Lifecycle -----
+    private CancellationTokenSource _toastCancellationTokenSource;
+
+    // ===== Lifecycle =====
     protected override async Task OnInitializedAsync()
     {
         await FetchDataAsync();
     }
 
-    // ----- Computed -----
+    // ===== Computed =====
     private IEnumerable<FullEvaluationData> FilteredEvaluations =>
         string.IsNullOrWhiteSpace(SearchTerm)
             ? Evaluations
@@ -247,14 +264,24 @@
                 || (!string.IsNullOrEmpty(e.Summary.EmployeeId) &&
                     e.Summary.EmployeeId.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)));
 
-    // ----- Methods -----
+    // ===== Methods =====
     private async Task FetchDataAsync()
     {
         IsLoading = true;
         StateHasChanged();
 
-        Evaluations = await DeanService.GetDeanEvaluationsAsync();
-        IsLoading = false;
+        try
+        {
+            Evaluations = await DeanService.GetDeanEvaluationsAsync();
+        }
+        catch (Exception ex)
+        {
+            ShowToast($"خطأ في تحميل البيانات: {ex.Message}", "error");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
     private void SelectEvaluation(FullEvaluationData data)
@@ -268,7 +295,6 @@
     {
         SelectedData = null;
         ViewState = ViewState.List;
-        UpdatePermissions();
     }
 
     private void BackToBrief()
@@ -294,10 +320,9 @@
     {
         IsPrintModalOpen = false;
         ViewState = ViewState.Detailed;
-        // Delay a bit to allow rendering
         await Task.Delay(100);
         await JS.InvokeVoidAsync("window.print");
-        ViewState = ViewState.Brief; // optional: go back to brief after printing
+        ViewState = ViewState.Brief;
     }
 
     private async Task ApproveEvaluation()
@@ -310,14 +335,24 @@
             return;
 
         IsApproving = true;
+        StateHasChanged();
 
-        var updated = await DeanService.ApproveDeanEvaluationAsync(SelectedData.Summary.EmployeeId);
-        UpdateEvaluationInList(updated);
-        SelectedData = updated;
-        UpdatePermissions();
-
-        ShowToast("تم اعتماد التقييم النهائي بنجاح.");
-        IsApproving = false;
+        try
+        {
+            var updated = await DeanService.ApproveDeanEvaluationAsync(SelectedData.Summary.EmployeeId);
+            UpdateEvaluationInList(updated);
+            SelectedData = updated;
+            UpdatePermissions();
+            ShowToast("تم اعتماد التقييم النهائي بنجاح.", "success");
+        }
+        catch (Exception ex)
+        {
+            ShowToast($"خطأ: {ex.Message}", "error");
+        }
+        finally
+        {
+            IsApproving = false;
+        }
     }
 
     private async Task ReturnEvaluation()
@@ -330,14 +365,24 @@
             return;
 
         IsReturning = true;
+        StateHasChanged();
 
-        var updated = await DeanService.ReturnDeanEvaluationAsync(SelectedData.Summary.EmployeeId, comment!);
-        UpdateEvaluationInList(updated);
-        SelectedData = updated;
-        UpdatePermissions();
-
-        ShowToast("تم إرجاع التقييم إلى رئيس القسم بنجاح.");
-        IsReturning = false;
+        try
+        {
+            var updated = await DeanService.ReturnDeanEvaluationAsync(SelectedData.Summary.EmployeeId, comment!);
+            UpdateEvaluationInList(updated);
+            SelectedData = updated;
+            UpdatePermissions();
+            ShowToast("تم إرجاع التقييم إلى رئيس القسم بنجاح.", "success");
+        }
+        catch (Exception ex)
+        {
+            ShowToast($"خطأ: {ex.Message}", "error");
+        }
+        finally
+        {
+            IsReturning = false;
+        }
     }
 
     private void UpdateEvaluationInList(FullEvaluationData updated)
@@ -345,22 +390,31 @@
         var index = Evaluations.FindIndex(ev => ev.Summary.EmployeeId == updated.Summary.EmployeeId);
         if (index >= 0)
             Evaluations[index] = updated;
+        else
+            Evaluations.Add(updated);
     }
 
-    private async void ShowToast(string message)
+    private void ShowToast(string message, string type = "success")
     {
+        _toastCancellationTokenSource?.Cancel();
+        _toastCancellationTokenSource = new CancellationTokenSource();
+
         ToastMessage = message;
+        ToastType = type;
         StateHasChanged();
 
-        await Task.Delay(4000);
-        ToastMessage = null;
-        StateHasChanged();
+        Task.Delay(4000, _toastCancellationTokenSource.Token).ContinueWith(_ =>
+        {
+            if (!_toastCancellationTokenSource.Token.IsCancellationRequested)
+            {
+                ToastMessage = null;
+                InvokeAsync(StateHasChanged);
+            }
+        });
     }
 
     private void UpdatePermissions()
     {
-        // هنا ترجم من usePermissions({ status: selectedData?.summary.detailedStatus })
-        // مؤقتاً: كل الصلاحيات متاحة لو الحالة PendingDeanApproval
         if (SelectedData?.Summary.DetailedStatus == DetailedStatus.PendingDeanApproval)
         {
             Permissions = new DeanPermissions
@@ -391,7 +445,7 @@
             ? "px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800"
             : "px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800";
 
-    // ----- Helpers / nested types -----
+    // ===== Nested Types =====
     private class DeanPermissions
     {
         public bool CanPrintReports { get; set; } = true;
@@ -405,4 +459,9 @@
         Brief,
         Detailed
     }
-} *@
+
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        _toastCancellationTokenSource?.Dispose();
+    }
+}

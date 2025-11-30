@@ -22,6 +22,7 @@ builder.Services.AddScoped<IProfessorEvaluation, ProfessorEvaluationServices>();
 builder.Services.AddScoped<IGSDean, GSDeanService>();
 builder.Services.AddScoped<IVPGSEvaluation, VPGSEvaluationService>();
 builder.Services.AddScoped<IHODEvaluation, HODEvaluationService>();
+builder.Services.AddScoped<IDean, DeanServices>();
 builder.Services.AddHttpClient();
 
 //allow  cors policy 

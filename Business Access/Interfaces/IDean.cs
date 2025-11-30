@@ -9,7 +9,6 @@ namespace Business_Access.Interfaces
 {
     public interface IDean
     {
-        Task<IEnumerable<DeanEvaluationListDto>> GetAllEvaluationsAsync(int? statusId = null,int? periodId = null);
         Task<DeanEvaluationDetailDto?> GetEvaluationDetailAsync(int evaluationId);
 
         Task<DeanActionResponseDto> AcceptEvaluationAsync(AcceptEvaluationDto dto);
