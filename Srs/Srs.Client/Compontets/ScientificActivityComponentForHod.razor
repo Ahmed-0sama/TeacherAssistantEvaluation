@@ -313,23 +313,16 @@
          </div>
         </div>
      </div>
-        <div class="card bg-primary bg-opacity-10 shadow-sm mx-auto mt-3 mb-4 w-75">
-            <div class="card-body text-center py-2">
-                <h5 class="text-primary fw-semibold mb-2">المجموع الكلي للنشاط التعليمي</h5>
-
-                <div class="d-flex justify-content-center align-items-center gap-3">
-                    <InputNumber @bind-Value="administrativeData.TotalAdministrativeActivityScore"
-                                 class="form-control text-center fs-2 fw-bold"
-                                 style="max-width: 120px;"
-                                 Min="0" Max="10" />
-
-                    <span class="fs-3 fw-bold text-primary">/ 10</span>
-                </div>
-
+     </div>
+        <div class="card bg-primary bg-opacity-10 shadow-sm mx-auto mt-3 mb-4" style="max-width: 800px;">
+            <div class="card-body text-center py-4">
+            <h5 class="text-primary fw-semibold mb-2">اتقييم المشاركة في اللجان</h5>
+                <p class="text-primary fw-bold fs-3 mb-0">
+                    @(administrativeData.TotalAdministrativeActivityScore) / 10
+                </p>
             </div>
         </div>
    </div>
-</div>
 @code {
     MastersDto mastersData = new MastersDto();
     private bool isLoading = true;
@@ -373,6 +366,11 @@
 
     [Parameter]
     public int EvaluationId { get; set; }
+    [Parameter]
+    public int EvaluationPeriodId { get; set; }
+    [Parameter]
+    public int TaEmployeeId { get; set; }
+
     // Modal state
     private bool showModal = false;
     private bool isEditMode = false;
@@ -398,7 +396,7 @@
                 return;
             }
 
-            var gsdeanResponse = await Http.GetAsync($"/api/GSDean/GetByEvaluation/{EvaluationId}");
+            var gsdeanResponse = await Http.GetAsync($"/api/GSDean/GetByEvaluationForGSDeanPeriodAndTAAsync/{EvaluationPeriodId}/{TaEmployeeId}");
 
             if (gsdeanResponse.IsSuccessStatusCode)
             {
@@ -558,7 +556,9 @@
                         IsQualityWorksCommittee = submissionData.IsInQualityAssuranceCommittee,
                         IsLaboratoryEquipmentCommittee = submissionData.IsInLabEquipmentCommittee,
                         IsExaminationsOrganizingCommittee = submissionData.IsInExamOrganizationCommittee,
-                        IsSocialOrSportsActivityCommittees = submissionData.IsInSocialOrSportsCommittee
+                        IsSocialOrSportsActivityCommittees = submissionData.IsInSocialOrSportsCommittee,
+                        TotalAdministrativeActivityScore = 5 // <-- add this
+
                     };
 
                     Console.WriteLine($"✅ Successfully loaded {researchPapers.Count} research papers");

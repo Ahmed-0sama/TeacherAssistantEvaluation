@@ -286,6 +286,7 @@
     private async Task OpenModal(UserDataDto ta)
     {
         selectedTA = ta;
+        selectedTA.Id = ta.EmployeeNumber;
         ModalVisable = true;
         isLoadingModalData = true;
 
@@ -298,31 +299,30 @@
         try
         {
             // Try to fetch existing GSDean evaluation data
-            var response = await Http.GetAsync($"/api/GSdean/GetByEvaluation/{ta.EvaluationId}");
+            var response = await Http.GetAsync($"/api/GSdean/GetByEvaluationForGSDeanPeriodAndTAAsync/{EvaluationPeriodId}/{ta.Id}");
 
             if (response.IsSuccessStatusCode)
             {
-                var existingData = await response.Content.ReadFromJsonAsync<List<GsdeanEvaluationDto>>();
+                var existingData = await response.Content.ReadFromJsonAsync<GsdeanEvaluationDto>();
 
                 // If data exists, populate the form
-                if (existingData != null && existingData.Any())
+                if (existingData != null)
                 {
-                    var data = existingData.First(); // Get the first evaluation
                     mastersDto = new MastersDto
                     {
-                        Major = data.ProgramName,
-                        HoursGained = data.CompletedHours,
-                        Grade = data.Gpa,
-                        EstimatedGraduationDate = data.ExpectedCompletionDate,
-                        GradeGivenbySupervisor = data.ProgressScore ?? 0,
-                        Status = data.EvaluationComments,
-                        ResearchPointsCompleted = data.TopicChosen,
-                        SearchInResources = data.LiteratureReview,
-                        SearchPlanning = data.ResearchPlan,
-                        CollectDataAndAnalyze = data.DataCollection,
-                        ResearchReportWriting = data.Writing,
-                        ScientificResearchReport = data.ThesisDefense,
-                        Notes = data.EvaluationComments
+                        Major = existingData.ProgramName,
+                        HoursGained = existingData.CompletedHours,
+                        Grade = existingData.Gpa,
+                        EstimatedGraduationDate = existingData.ExpectedCompletionDate,
+                        GradeGivenbySupervisor = existingData.ProgressScore ?? 0,
+                        Status = existingData.EvaluationComments,
+                        ResearchPointsCompleted = existingData.TopicChosen,
+                        SearchInResources = existingData.LiteratureReview,
+                        SearchPlanning = existingData.ResearchPlan,
+                        CollectDataAndAnalyze = existingData.DataCollection,
+                        ResearchReportWriting = existingData.Writing,
+                        ScientificResearchReport = existingData.ThesisDefense,
+                        Notes = existingData.EvaluationComments
                     };
                 }
             }
@@ -355,6 +355,8 @@
         {
             var createDto = new CreateGsdeanEvaluationDto
             {
+                GsSupervisorId = 1, // Should get from logged in user context
+                TaEmployeeId = selectedTA.Id,
                 EvaluationPeriodId = EvaluationPeriodId,
                 ProgramName = dto.Major,
                 CompletedHours = dto.HoursGained,

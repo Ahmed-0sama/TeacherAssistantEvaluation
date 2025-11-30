@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccess.Migrations
 {
     [DbContext(typeof(SrsDbContext))]
-    [Migration("20251129210005_databaseupdatestrcture")]
-    partial class databaseupdatestrcture
+    [Migration("20251130063119_initalupdate")]
+    partial class initalupdate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

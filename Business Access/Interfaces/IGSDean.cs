@@ -17,6 +17,7 @@ namespace Business_Access.Interfaces
         Task<GSDeanTAViewDto> GetByEvaluationPeriodAndTAAsync(int evaluationPeriodId, int taEmployeeId);
         Task<IEnumerable<GsdeanEvaluationDto>> GetByEvaluationPeriodIdAsync(int evaluationPeriodId);
         Task<IEnumerable<GsdeanEvaluationDto>> GetByTAEmployeeIdAsync(int taEmployeeId);
+        Task<GsdeanEvaluationDto> GetByEvaluationForGSDeanPeriodAndTAAsync(int evaluationPeriodId, int taEmployeeId);
 
 
     }

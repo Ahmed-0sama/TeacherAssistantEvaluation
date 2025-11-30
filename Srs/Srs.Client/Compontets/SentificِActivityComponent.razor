@@ -309,6 +309,8 @@
     MastersDto mastersData = new MastersDto();
     private bool isLoading = true;
     private List<ResearchPaperDto> researchPapers = new List<ResearchPaperDto>();
+    private readonly int evaluationPeriodId = 1; // Example static value
+    private readonly int taEmployeeId = 19; // Example static value
     private OtherActivitiesDto otherActivities = new OtherActivitiesDto();
     private string? errorMessage;
 
@@ -376,7 +378,7 @@
             }
 
             // Fetch data from API
-            var response = await Http.GetAsync($"/api/GSDean/GetEvaluationForTA/{EvaluationId}");
+            var response = await Http.GetAsync($"/api/GSDean/GetEvaluationForTA/{evaluationPeriodId}/{taEmployeeId}");
 
             if (response.IsSuccessStatusCode)
             {

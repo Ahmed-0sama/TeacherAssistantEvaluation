@@ -12,6 +12,8 @@ namespace Shared.Dtos.GSDean
         [Required]
         public int EvaluationPeriodId { get; set; }
         [Required]
+        public int GsSupervisorId { get; set; }
+        [Required]
         public int TaEmployeeId { get; set; }
         [Required]
         [StringLength(200)]

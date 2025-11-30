@@ -64,7 +64,7 @@ namespace Business_Access.Services
                     IsReturned = false,
                     HodReturnComment = null,
                     //to be added to get the status of the professor added to the ta
-                    //StatusId = evaluationDto.StatusId 
+                    StatusId = 2 
                 };
 
                 _db.ProfessorCourseEvaluations.Add(profEvaluation);
@@ -189,18 +189,17 @@ namespace Business_Access.Services
             return evaluations ?? new List<ProfessorCourseEvaluation>();
         }
 
-        public async Task<List<ProfessorCourseEvaluation>> GetByPeriodAndTAAsync(int evaluationPeriodId, int taEmployeeId)
+        public async Task <List<ProfessorEvaluationResponseDto>> GetByPeriodAndTAAsync(int evaluationPeriodId, int taEmployeeId)
         {
             if (evaluationPeriodId <= 0)
                 throw new ArgumentException("Invalid evaluationPeriodId", nameof(evaluationPeriodId));
 
-            var evaluations = await _db.ProfessorCourseEvaluations
+            var evaluation = await _db.ProfessorCourseEvaluations
                 .Include(p => p.EvaluationPeriod)
                 .Include(p => p.Status)
-                .Where(p => p.EvaluationPeriodId == evaluationPeriodId && p.TaEmployeeId == taEmployeeId)
-                .ToListAsync();
+                .Where(p => p.EvaluationPeriodId == evaluationPeriodId && p.TaEmployeeId == taEmployeeId).ToListAsync();
 
-            return evaluations ?? new List<ProfessorCourseEvaluation>();
+            return evaluation.Select(MapToResponseDto).ToList();
         }
 
         private ProfessorEvaluationResponseDto MapToResponseDto(ProfessorCourseEvaluation profEvaluation)

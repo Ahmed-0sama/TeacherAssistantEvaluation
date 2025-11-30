@@ -294,6 +294,7 @@
     private List<UserDataDto> taList = new();
     private bool ModalVisable = false;
     private UserDataDto? selectedTA;
+    private int evaluationperiodid = 1;// Hardcoded for now
     private MastersDto mastersDto = new();
     private bool isLoadingModalData = false;
     private bool isSaving = false;
@@ -348,6 +349,7 @@
     private async Task OpenModal(UserDataDto ta)
     {
         selectedTA = ta;
+        selectedTA.Id = ta.EmployeeNumber;
         ModalVisable = true;
         isLoadingModalData = true;
 
@@ -405,7 +407,7 @@
     {
         try
         {
-            var response = await Http.GetAsync($"/api/GSDean/GetEvaluationForTA/{evaluationId}");
+            var response = await Http.GetAsync($"/api/GSDean/GetByEvaluationForGSDeanPeriodAndTAAsync/{evaluationperiodid}/{selectedTA.Id}");
 
             if (response.IsSuccessStatusCode)
             {

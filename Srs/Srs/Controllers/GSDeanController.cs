@@ -119,5 +119,20 @@ namespace Srs.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
+        [HttpGet("GetByEvaluationForGSDeanPeriodAndTAAsync/{evaluationPeriodId}/{taEmployeeId}")]
+        public async Task<IActionResult> GetByEvaluationForGSDeanPeriodAndTAAsync(int evaluationPeriodId, int taEmployeeId)
+        {
+            try
+            {
+                var result = await _gsDeanService.GetByEvaluationForGSDeanPeriodAndTAAsync(evaluationPeriodId, taEmployeeId);
+                if (result == null)
+                    return NotFound("Evaluation not found");
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
     }
 }

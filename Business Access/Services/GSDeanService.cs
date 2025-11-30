@@ -96,7 +96,8 @@ namespace Business_Access.Services
                     ResearchPlan = dto.ResearchPlan,
                     DataCollection = dto.DataCollection,
                     Writing = dto.Writing,
-                    ThesisDefense = dto.ThesisDefense
+                    ThesisDefense = dto.ThesisDefense,
+                    StatusId = 2 // Assuming '1' is the default status for new evaluations
                 };
 
                 _context.GsdeanEvaluations.Add(entity);
@@ -183,6 +184,32 @@ namespace Business_Access.Services
                     Writing = entity.Writing,
                     ThesisDefense = entity.ThesisDefense
                 };
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error fetching GS dean evaluation for TA", ex);
+            }
+        }
+        public async Task<GsdeanEvaluationDto> GetByEvaluationForGSDeanPeriodAndTAAsync(int evaluationPeriodId, int taEmployeeId)
+        {
+            if (evaluationPeriodId <= 0)
+                throw new ArgumentException("Invalid evaluation period Id");
+
+            if (taEmployeeId<=0)
+                throw new ArgumentException("Invalid TA employee Id");
+
+            try
+            {
+                var entity = await _context.GsdeanEvaluations
+                    .Include(g => g.EvaluationPeriod)  
+                    .Include(g => g.Status)            
+                    .FirstOrDefaultAsync(g => g.EvaluationPeriodId == evaluationPeriodId
+                                           && g.TaEmployeeId == taEmployeeId);
+
+                if (entity == null)
+                    return null;
+
+               return MapToDto(entity);
             }
             catch (Exception ex)
             {

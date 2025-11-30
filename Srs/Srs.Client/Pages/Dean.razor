@@ -1,0 +1,408 @@
+﻿@* @page "/dean"
+@inject IJSRuntime JS
+
+<div class="max-w-6xl mx-auto">
+    @if (IsLoading)
+    {
+        <div class="text-center p-10">...جاري تحميل البيانات</div>
+    }
+    else if (ViewState == ViewState.Detailed && SelectedData is not null)
+    {
+        <!-- Detailed combined report -->
+        <CombinedReportView Data="SelectedData" OnBack="BackToBrief" BackButtonText="العودة للملخص" />
+    }
+    else if (ViewState == ViewState.Brief && SelectedData is not null)
+    {
+        <div class="max-w-5xl mx-auto">
+            @if (!string.IsNullOrEmpty(ToastMessage))
+            {
+                <div class="fixed top-20 left-1/2 -translate-x-1/2 z-50">
+                    <div class="bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2 space-x-reverse animate-fade-in-out">
+                        <CheckIcon class="h-6 w-6" />
+                        <span>@ToastMessage</span>
+                    </div>
+                </div>
+            }
+
+            @if (IsPrintModalOpen)
+            {
+                <div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 no-print">
+                    <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm">
+                        <div class="flex justify-between items-center border-b pb-3 mb-4">
+                            <h2 class="text-xl font-bold text-gray-800">اختر نوع الطباعة</h2>
+                            <button @onclick="ClosePrintModal" class="text-gray-400 hover:text-gray-600">
+                                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="space-y-3">
+                            <button 
+                                @onclick="PrintSummary"
+                                class="w-full text-center p-3 rounded-md hover:bg-gray-100 border text-gray-700 font-semibold">
+                                طباعة الملخص
+                            </button>
+                            <button 
+                                @onclick="PrintDetailed"
+                                class="w-full text-center p-3 rounded-md hover:bg-gray-100 border text-gray-700 font-semibold">
+                                عرض/طباعة التقرير المجمع
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <button @onclick="BackToList" class="text-blue-600 hover:underline mb-4 no-print">
+                &larr; العودة إلى القائمة
+            </button>
+
+            @if (SelectedData is not null)
+            {
+                <!-- Summary report (same as EvaluationReportView in React) -->
+                <EvaluationReportView ReportData="SelectedData.Summary" />
+            }
+
+            <div class="bg-white p-6 rounded-lg shadow-md mt-8 no-print">
+                <div class="flex flex-wrap items-center justify-end gap-3">
+                    <button 
+                        @onclick="ShowDetailed"
+                        class="px-5 py-2 bg-white border border-blue-600 text-blue-700 rounded-md hover:bg-blue-50 shadow-sm font-semibold">
+                        عرض التقرير التفصيلي
+                    </button>
+
+                    <button 
+                        @onclick="OpenPrintModal"
+                        class="px-5 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 shadow font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed"
+                        disabled="@( !Permissions.CanPrintReports )">
+                        طباعة تقرير
+                    </button>
+
+                    <div class="flex-grow"></div>
+
+                    @if (SelectedData?.Summary.DetailedStatus == DetailedStatus.PendingDeanApproval)
+                    {
+                        <button 
+                            @onclick="ReturnEvaluation"
+                            disabled="@( !Permissions.CanReturnFinalReport || IsReturning )"
+                            class="px-5 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 shadow disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center min-w-[150px]">
+                            @if (IsReturning)
+                            {
+                                <span class="flex items-center">
+                                    <SpinnerIcon class="h-5 w-5 ml-2" />
+                                    <span>جاري الإرجاع...</span>
+                                </span>
+                            }
+                            else
+                            {
+                                <span>إرجاع/رفض ✗</span>
+                            }
+                        </button>
+
+                        <button 
+                            @onclick="ApproveEvaluation"
+                            disabled="@( !Permissions.CanApproveFinalReport || IsApproving )"
+                            class="px-5 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 shadow disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center min-w-[120px]">
+                            @if (IsApproving)
+                            {
+                                <span class="flex items-center">
+                                    <SpinnerIcon class="h-5 w-5 ml-2" />
+                                    <span>جاري الاعتماد...</span>
+                                </span>
+                            }
+                            else
+                            {
+                                <span>اعتماد ✓</span>
+                            }
+                        </button>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- List view -->
+        <h1 class="text-3xl font-bold text-center mb-4 text-gray-800">
+            متابعة التقييمات - عميد الكلية
+        </h1>
+        <p class="text-center text-gray-600 mb-8 max-w-3xl mx-auto">
+            تظهر في هذه القائمة التقييمات التي تم استكمالها واعتمادها من قبل رئيس القسم، وهي الآن جاهزة للمراجعة والاعتماد النهائي.
+        </p>
+
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-xl font-bold mb-4 text-blue-800">قائمة التقييمات المرفوعة</h2>
+
+            <div class="flex flex-wrap gap-4 mb-4">
+                <input
+                    type="text"
+                    placeholder="بحث بالاسم أو الرقم الوظيفي..."
+                    @bind="SearchTerm"
+                    @bind:event="oninput"
+                    class="w-full sm:flex-1 border-gray-300 rounded-md shadow-sm" />
+
+                <select class="min-w-[150px] border-gray-300 rounded-md shadow-sm">
+                    <option>فلترة حسب القسم</option>
+                    <option>قسم علوم الحاسب</option>
+                    <option>قسم نظم المعلومات</option>
+                </select>
+
+                <select class="min-w-[150px] border-gray-300 rounded-md shadow-sm">
+                    <option>فلترة حسب الفترة الزمنية</option>
+                    <option>الفصل الدراسي الأول 2024</option>
+                    <option>الفصل الدراسي الثاني 2024</option>
+                </select>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-right">
+                    <thead class="bg-gray-100 text-sm font-semibold text-gray-600">
+                        <tr>
+                            <th class="p-3">اسم مساعد التدريس</th>
+                            <th class="p-3">القسم</th>
+                            <th class="p-3">التقدير العام</th>
+                            <th class="p-3">الحالة</th>
+                            <th class="p-3 text-left">إجراء</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-sm divide-y divide-gray-200">
+                        @foreach (var e in FilteredEvaluations)
+                        {
+                            <tr class="hover:bg-gray-50">
+                                <td class="p-3 whitespace-nowrap">@e.Summary.Name</td>
+                                <td class="p-3 whitespace-nowrap">@e.Summary.Department</td>
+                                <td class="p-3 whitespace-nowrap">
+                                    <span class=@GetGradeBadgeClass(e.Summary.FinalGrade)>
+                                        @e.Summary.FinalGrade
+                                    </span>
+                                </td>
+                                <td class="p-3 whitespace-nowrap">
+                                    <span class=@GetStatusBadgeClass(e.Summary.DetailedStatus)>
+                                        @DetailedStatusMap[e.Summary.DetailedStatus]
+                                    </span>
+                                </td>
+                                <td class="p-3 whitespace-nowrap text-left">
+                                    <button @onclick="() => SelectEvaluation(e)" class="text-blue-600 hover:underline">
+                                        عرض التفاصيل
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+
+                        @if (!FilteredEvaluations.Any())
+                        {
+                            <tr>
+                                <td colspan="5" class="p-4 text-center text-gray-500">
+                                    لا توجد تقييمات مطابقة لبحثك.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    // ----- State -----
+    private List<FullEvaluationData> Evaluations { get; set; } = new();
+    private bool IsLoading { get; set; } = true;
+
+    private ViewState ViewState { get; set; } = ViewState.List;
+    private FullEvaluationData? SelectedData { get; set; }
+
+    private bool IsPrintModalOpen { get; set; }
+    private string SearchTerm { get; set; } = string.Empty;
+
+    private bool IsApproving { get; set; }
+    private bool IsReturning { get; set; }
+
+    private string? ToastMessage { get; set; }
+
+    private DeanPermissions Permissions { get; set; } = new();
+
+    // Map DetailedStatus => Arabic text (equivalent to DetailedStatusMap in TS)
+    private readonly Dictionary<DetailedStatus, string> DetailedStatusMap =
+        new()
+        {
+            { DetailedStatus.Approved, "تم الاعتماد النهائي" },
+            { DetailedStatus.PendingDeanApproval, "في انتظار اعتماد العميد" },
+            { DetailedStatus.ReturnedToHead, "تمت إعادته إلى رئيس القسم" }
+            // أضف باقي الحالات إن وجدت
+        };
+
+    // ----- Lifecycle -----
+    protected override async Task OnInitializedAsync()
+    {
+        await FetchDataAsync();
+    }
+
+    // ----- Computed -----
+    private IEnumerable<FullEvaluationData> FilteredEvaluations =>
+        string.IsNullOrWhiteSpace(SearchTerm)
+            ? Evaluations
+            : Evaluations.Where(e =>
+                (!string.IsNullOrEmpty(e.Summary.Name) &&
+                 e.Summary.Name.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase))
+                || (!string.IsNullOrEmpty(e.Summary.EmployeeId) &&
+                    e.Summary.EmployeeId.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)));
+
+    // ----- Methods -----
+    private async Task FetchDataAsync()
+    {
+        IsLoading = true;
+        StateHasChanged();
+
+        Evaluations = await DeanService.GetDeanEvaluationsAsync();
+        IsLoading = false;
+    }
+
+    private void SelectEvaluation(FullEvaluationData data)
+    {
+        SelectedData = data;
+        ViewState = ViewState.Brief;
+        UpdatePermissions();
+    }
+
+    private void BackToList()
+    {
+        SelectedData = null;
+        ViewState = ViewState.List;
+        UpdatePermissions();
+    }
+
+    private void BackToBrief()
+    {
+        ViewState = ViewState.Brief;
+    }
+
+    private void ShowDetailed()
+    {
+        ViewState = ViewState.Detailed;
+    }
+
+    private void OpenPrintModal() => IsPrintModalOpen = true;
+    private void ClosePrintModal() => IsPrintModalOpen = false;
+
+    private async Task PrintSummary()
+    {
+        IsPrintModalOpen = false;
+        await JS.InvokeVoidAsync("window.print");
+    }
+
+    private async Task PrintDetailed()
+    {
+        IsPrintModalOpen = false;
+        ViewState = ViewState.Detailed;
+        // Delay a bit to allow rendering
+        await Task.Delay(100);
+        await JS.InvokeVoidAsync("window.print");
+        ViewState = ViewState.Brief; // optional: go back to brief after printing
+    }
+
+    private async Task ApproveEvaluation()
+    {
+        if (SelectedData is null || !Permissions.CanApproveFinalReport || IsApproving)
+            return;
+
+        var confirm = await JS.InvokeAsync<bool>("confirm", "هل أنت متأكد من اعتماد هذا التقييم بشكل نهائي؟");
+        if (!confirm)
+            return;
+
+        IsApproving = true;
+
+        var updated = await DeanService.ApproveDeanEvaluationAsync(SelectedData.Summary.EmployeeId);
+        UpdateEvaluationInList(updated);
+        SelectedData = updated;
+        UpdatePermissions();
+
+        ShowToast("تم اعتماد التقييم النهائي بنجاح.");
+        IsApproving = false;
+    }
+
+    private async Task ReturnEvaluation()
+    {
+        if (SelectedData is null || !Permissions.CanReturnFinalReport || IsReturning)
+            return;
+
+        var comment = await JS.InvokeAsync<string?>("prompt", "يرجى إدخال سبب الإرجاع/الرفض إلى رئيس القسم:");
+        if (string.IsNullOrWhiteSpace(comment))
+            return;
+
+        IsReturning = true;
+
+        var updated = await DeanService.ReturnDeanEvaluationAsync(SelectedData.Summary.EmployeeId, comment!);
+        UpdateEvaluationInList(updated);
+        SelectedData = updated;
+        UpdatePermissions();
+
+        ShowToast("تم إرجاع التقييم إلى رئيس القسم بنجاح.");
+        IsReturning = false;
+    }
+
+    private void UpdateEvaluationInList(FullEvaluationData updated)
+    {
+        var index = Evaluations.FindIndex(ev => ev.Summary.EmployeeId == updated.Summary.EmployeeId);
+        if (index >= 0)
+            Evaluations[index] = updated;
+    }
+
+    private async void ShowToast(string message)
+    {
+        ToastMessage = message;
+        StateHasChanged();
+
+        await Task.Delay(4000);
+        ToastMessage = null;
+        StateHasChanged();
+    }
+
+    private void UpdatePermissions()
+    {
+        // هنا ترجم من usePermissions({ status: selectedData?.summary.detailedStatus })
+        // مؤقتاً: كل الصلاحيات متاحة لو الحالة PendingDeanApproval
+        if (SelectedData?.Summary.DetailedStatus == DetailedStatus.PendingDeanApproval)
+        {
+            Permissions = new DeanPermissions
+            {
+                CanPrintReports = true,
+                CanApproveFinalReport = true,
+                CanReturnFinalReport = true
+            };
+        }
+        else
+        {
+            Permissions = new DeanPermissions
+            {
+                CanPrintReports = true,
+                CanApproveFinalReport = false,
+                CanReturnFinalReport = false
+            };
+        }
+    }
+
+    private string GetGradeBadgeClass(string? grade) =>
+        grade == "ممتاز"
+            ? "px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800"
+            : "px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800";
+
+    private string GetStatusBadgeClass(DetailedStatus status) =>
+        status == DetailedStatus.Approved
+            ? "px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800"
+            : "px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800";
+
+    // ----- Helpers / nested types -----
+    private class DeanPermissions
+    {
+        public bool CanPrintReports { get; set; } = true;
+        public bool CanApproveFinalReport { get; set; }
+        public bool CanReturnFinalReport { get; set; }
+    }
+
+    private enum ViewState
+    {
+        List,
+        Brief,
+        Detailed
+    }
+} *@

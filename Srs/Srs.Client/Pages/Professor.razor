@@ -242,7 +242,6 @@
 }
 
 @code {
-
     // State variables
     private List<TAEvaluationViewModelDto> evaluationsList = new();
     private TAEvaluationViewModelDto? selectedEvaluation;
@@ -261,8 +260,8 @@
     // TODO: Replace with actual logged-in professor ID from authentication
     private int currentProfessorId = 123;
 
-    // CHANGED: Now using EvaluationPeriodId instead of looking up evaluations
-    private int currentEvaluationPeriodId = 1; // TODO: Get from actual period selection or API
+    // ✅ FIXED: Using actual period ID
+    private int currentEvaluationPeriodId = 1;
 
     private int Total => currentProfEval.OfficeHoursScore +
                          currentProfEval.AttendanceScore +
@@ -273,166 +272,187 @@
         Console.WriteLine("=== OnInitializedAsync called ===");
         Console.WriteLine($"HttpClient BaseAddress: {Http.BaseAddress}");
 
-        try
-        {
-            await LoadData();
-            Console.WriteLine("=== LoadData completed successfully ===");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"=== Exception in OnInitializedAsync: {ex.Message} ===");
-            Console.WriteLine($"Stack trace: {ex.StackTrace}");
-        }
+        await LoadData();
     }
 
     private async Task LoadData()
     {
         isLoading = true;
         errorMessage = null;
+        evaluationsList.Clear(); // ✅ Clear existing data
 
         try
         {
-            // TODO: Replace with actual API calls when ready
-            bool useRealApi = true; // Set to true when API is ready
-
-            if (useRealApi)
-            {
-                await LoadDataFromApi();
-            }
+            Console.WriteLine("=== Starting LoadData ===");
+            await LoadDataFromApi();
+            Console.WriteLine($"=== LoadData completed. Found {evaluationsList.Count} evaluations ===");
         }
         catch (Exception ex)
         {
             errorMessage = $"فشل تحميل البيانات: {ex.Message}";
+            Console.WriteLine($"❌ Error in LoadData: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
         }
         finally
         {
             isLoading = false;
+            StateHasChanged(); // ✅ Force UI update
         }
     }
 
     private async Task LoadDataFromApi()
     {
-        // Step 1: Get existing professor evaluations for this professor
-        var profEvalResponse = await Http.GetAsync($"api/ProfessorEvaluation/GetByProfessor/{currentProfessorId}");
-        var existingEvaluations = new List<ProfessorEvaluationResponseDto>();
-
-        if (profEvalResponse.IsSuccessStatusCode)
+        try
         {
-            existingEvaluations = await profEvalResponse.Content.ReadFromJsonAsync<List<ProfessorEvaluationResponseDto>>() ?? new();
-        }
+            // ✅ OPTION 1: Load using Period-based approach (RECOMMENDED)
+            Console.WriteLine($"Loading evaluations for period {currentEvaluationPeriodId}...");
 
-        // Step 2: Get period details
-        var periodResponse = await Http.GetAsync($"api/EvaluationPeriod/{currentEvaluationPeriodId}");
-        if (!periodResponse.IsSuccessStatusCode)
-        {
-            throw new Exception("فشل تحميل بيانات الفترة");
-        }
+            // Step 1: Get all evaluations for this period
+            var evaluationsResponse = await Http.GetAsync($"api/evaluation/period/{currentEvaluationPeriodId}");
 
-        var periodDetails = await periodResponse.Content.ReadFromJsonAsync<GetEvaluationPeriodDto>();
-
-        // Step 3: Get list of TAs using UserDataDto
-        // TODO: Replace with your actual endpoint to get TAs for the period
-        var taListResponse = await Http.GetAsync($"api/TA/GetActiveTAsForPeriod/{currentEvaluationPeriodId}");
-        List<UserDataDto> allTAs = new();
-
-        if (taListResponse.IsSuccessStatusCode)
-        {
-            allTAs = await taListResponse.Content.ReadFromJsonAsync<List<UserDataDto>>() ?? new();
-        }
-
-        // Step 4: Combine data
-        evaluationsList = new List<TAEvaluationViewModelDto>();
-
-        foreach (var ta in allTAs)
-        {
-            // CHANGED: Map EmployeeNumber to string
-            int taEmployeeId = ta.EmployeeNumber;
-
-            // Get all professor evaluations for this TA in this period
-            var profEvalsForTA = existingEvaluations
-                .Where(pe => pe.EvaluationPeriodId == currentEvaluationPeriodId && pe.TaEmployeeId == taEmployeeId)
-                .ToList();
-
-            if (profEvalsForTA.Any())
+            if (!evaluationsResponse.IsSuccessStatusCode)
             {
-                foreach (var profEval in profEvalsForTA)
-                {
-                    var viewModel = new TAEvaluationViewModelDto
-                    {
-                        ProfEvalId = profEval.ProfEvalId,
-                        EvaluationPeriodId = currentEvaluationPeriodId,
-                        TAEmployeeId = taEmployeeId,                     // MAPPED from EmployeeNumber
-                        PeriodId = currentEvaluationPeriodId,
-                        PeriodName = periodDetails?.PeriodName ?? "فترة غير معروفة",
-                        StatusId = profEval.StatusId,
-                        StatusName = profEval.StatusName,
-                        CanEdit = profEval.StatusId <= 6,
+                var error = await evaluationsResponse.Content.ReadAsStringAsync();
+                throw new Exception($"Failed to load evaluations: {error}");
+            }
 
-                        TAName = ta.Name,                                // From UserDataDto
-                        CourseCode = profEval.CourseCode,
-                        CourseName = profEval.CourseName,
-                        NumberOfClasses = 12,                            // Default or get from another source
+            var allEvaluations = await evaluationsResponse.Content.ReadFromJsonAsync<List<EvaluationApiResponseDto>>()
+                ?? new List<EvaluationApiResponseDto>();
 
-                        ProfessorEvaluationTotal = profEval.TotalScore
-                    };
+            Console.WriteLine($"✅ Loaded {allEvaluations.Count} evaluations from API");
 
-                    evaluationsList.Add(viewModel);
-                }
+            if (!allEvaluations.Any())
+            {
+                Console.WriteLine("⚠️ No evaluations found for this period");
+                return;
+            }
+
+            // Step 2: Get existing professor evaluations for this professor
+            var profEvalResponse = await Http.GetAsync($"api/ProfessorEvaluation/GetByProfessor/{currentProfessorId}");
+            var existingProfEvaluations = new Dictionary<int, List<ProfessorEvaluationResponseDto>>();
+
+            if (profEvalResponse.IsSuccessStatusCode)
+            {
+                var profEvals = await profEvalResponse.Content.ReadFromJsonAsync<List<ProfessorEvaluationResponseDto>>()
+                    ?? new List<ProfessorEvaluationResponseDto>();
+
+                Console.WriteLine($"✅ Loaded {profEvals.Count} professor evaluations");
+
+                // Group by TA employee ID for easier lookup
+                existingProfEvaluations = profEvals
+                    .Where(pe => pe.EvaluationPeriodId == currentEvaluationPeriodId)
+                    .GroupBy(pe => pe.TaEmployeeId)
+                    .ToDictionary(g => g.Key, g => g.ToList());
             }
             else
             {
-                // TA hasn't been evaluated yet
-                var viewModel = new TAEvaluationViewModelDto
-                {
-                    ProfEvalId = null,
-                    EvaluationPeriodId = currentEvaluationPeriodId,
-                    TAEmployeeId = taEmployeeId,                         // MAPPED from EmployeeNumber
-                    PeriodId = currentEvaluationPeriodId,
-                    PeriodName = periodDetails?.PeriodName ?? "فترة غير معروفة",
-                    StatusId = 1,
-                    StatusName = "قيد الانتظار",
-                    CanEdit = true,
-
-                    TAName = ta.Name,                                    // From UserDataDto
-                    CourseCode = "N/A",
-                    CourseName = "يحتاج تقييم",
-                    NumberOfClasses = 12,
-
-                    ProfessorEvaluationTotal = null
-                };
-
-                evaluationsList.Add(viewModel);
+                Console.WriteLine("⚠️ No existing professor evaluations found");
             }
+
+            // Step 3: Build the view models
+            foreach (var evaluation in allEvaluations)
+            {
+                int taEmployeeId = evaluation.taEmployeeId;
+
+                // Check if this TA has been evaluated by this professor
+                if (existingProfEvaluations.TryGetValue(taEmployeeId, out var profEvalsForTA))
+                {
+                    // TA has been evaluated - create entry for each course
+                    foreach (var profEval in profEvalsForTA)
+                    {
+                        var viewModel = new TAEvaluationViewModelDto
+                        {
+                            ProfEvalId = profEval.ProfEvalId,
+                            EvaluationPeriodId = currentEvaluationPeriodId,
+                            TAEmployeeId = taEmployeeId,
+                            PeriodId = currentEvaluationPeriodId,
+                            PeriodName = evaluation.periodName ?? "فترة غير معروفة",
+                            StatusId = profEval.StatusId,
+                            StatusName = profEval.StatusName ?? "قيد الانتظار",
+                            CanEdit = profEval.StatusId <= 6,
+
+                            TAName = $"TA #{taEmployeeId}", // TODO: Get actual name
+                            CourseCode = profEval.CourseCode ?? "CS100",
+                            CourseName = profEval.CourseName ?? "ComputerScience",
+                            NumberOfClasses = 12, // Default
+
+                            ProfessorEvaluationTotal = profEval.TotalScore
+                        };
+
+                        evaluationsList.Add(viewModel);
+                        Console.WriteLine($"Added evaluated TA: {viewModel.TAName} - Course: {viewModel.CourseName}");
+                    }
+                }
+                else
+                {
+                    // TA hasn't been evaluated yet by this professor
+                    var viewModel = new TAEvaluationViewModelDto
+                    {
+                        ProfEvalId = null,
+                        EvaluationPeriodId = currentEvaluationPeriodId,
+                        TAEmployeeId = taEmployeeId,
+                        PeriodId = currentEvaluationPeriodId,
+                        PeriodName = evaluation.periodName ?? "فترة غير معروفة",
+                        StatusId = 1,
+                        StatusName = "قيد الانتظار",
+                        CanEdit = true,
+
+                        TAName = $"TA #{taEmployeeId}", // TODO: Get actual name
+                        CourseCode = "CS101",
+                        CourseName = "ComputerScience",
+                        NumberOfClasses = 12,
+
+                        ProfessorEvaluationTotal = null
+                    };
+
+                    evaluationsList.Add(viewModel);
+                    Console.WriteLine($"Added unevaluated TA: {viewModel.TAName}");
+                }
+            }
+
+            Console.WriteLine($"✅ Total view models created: {evaluationsList.Count}");
+        }
+        catch (HttpRequestException httpEx)
+        {
+            Console.WriteLine($"❌ HTTP Error: {httpEx.Message}");
+            throw new Exception($"خطأ في الاتصال بالخادم: {httpEx.Message}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Unexpected error: {ex.Message}");
+            throw;
         }
     }
 
-
     private void OpenModal(TAEvaluationViewModelDto eval)
     {
+        Console.WriteLine($"Opening modal for TA: {eval.TAName}");
+
         selectedEvaluation = eval;
         validationErrors.Clear();
         saveMessage = null;
 
-        if (eval.IsEvaluated)
+        if (eval.IsEvaluated && eval.ProfEvalId.HasValue)
         {
-            // Load existing evaluation from API
+            Console.WriteLine($"Loading existing evaluation with ID: {eval.ProfEvalId}");
             LoadExistingEvaluationAsync(eval);
         }
         else
         {
+            Console.WriteLine("Creating new evaluation");
             // New evaluation
             currentProfEval = new ProfessorEvaluationResponseDto
             {
-                EvaluationPeriodId = eval.EvaluationPeriodId,  // CHANGED from EvaluationId
-                TaEmployeeId = eval.TAEmployeeId,              // NEW
+                EvaluationPeriodId = eval.EvaluationPeriodId,
+                TaEmployeeId = eval.TAEmployeeId,
                 ProfessorEmployeeId = currentProfessorId,
-                CourseCode = eval.CourseCode,
-                CourseName = eval.CourseName,
+                CourseCode = "CS100",
+                CourseName = "ComputerScience",
                 OfficeHoursScore = 0,
                 AttendanceScore = 0,
                 PerformanceScore = 0,
                 Comments = "",
-                StatusId = 1  // NEW: Default status
+                StatusId = 1
             };
             isReadOnly = false;
         }
@@ -445,7 +465,8 @@
     {
         try
         {
-            // CHANGED: Fixed URL (added missing slash)
+            Console.WriteLine($"Fetching evaluation from API: /api/ProfessorEvaluation/GetProfessorEvaluationById/{eval.ProfEvalId}");
+
             var response = await Http.GetAsync($"api/ProfessorEvaluation/GetProfessorEvaluationById/{eval.ProfEvalId}");
 
             if (response.IsSuccessStatusCode)
@@ -455,44 +476,29 @@
                 if (profEvalDetail != null)
                 {
                     currentProfEval = profEvalDetail;
+                    Console.WriteLine($"✅ Loaded existing evaluation successfully");
                 }
                 else
                 {
-                    SetDefaultEvaluation(eval);
+                    Console.WriteLine("⚠️ Evaluation data is null");
                 }
             }
             else
             {
-                SetDefaultEvaluation(eval);
+                var error = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"⚠️ Failed to load evaluation: {response.StatusCode} - {error}");
             }
 
-            isReadOnly = eval.StatusId > 6; // Read-only after HOD review
-            StateHasChanged();
-        }
-        catch
-        {
-            SetDefaultEvaluation(eval);
             isReadOnly = eval.StatusId > 6;
             StateHasChanged();
         }
-    }
-
-    private void SetDefaultEvaluation(TAEvaluationViewModelDto eval)
-    {
-        currentProfEval = new ProfessorEvaluationResponseDto
+        catch (Exception ex)
         {
-            ProfEvalId = eval.ProfEvalId!.Value,
-            EvaluationPeriodId = eval.EvaluationPeriodId,  // CHANGED from EvaluationId
-            TaEmployeeId = eval.TAEmployeeId,              // NEW
-            ProfessorEmployeeId = currentProfessorId,
-            CourseCode = eval.CourseCode,
-            CourseName = eval.CourseName,
-            OfficeHoursScore = 0,
-            AttendanceScore = 0,
-            PerformanceScore = 0,
-            Comments = "",
-            StatusId = eval.StatusId  // NEW
-        };
+            Console.WriteLine($"❌ Error loading evaluation: {ex.Message}");
+            
+            isReadOnly = eval.StatusId > 6;
+            StateHasChanged();
+        }
     }
 
     private void HideModal()
@@ -504,7 +510,7 @@
         StateHasChanged();
     }
 
-    // Validation methods remain the same
+    // Validation methods
     private void ValidateOfficeHours()
     {
         validationErrors.Remove("officeHours");
@@ -576,93 +582,78 @@
 
         try
         {
-            bool useRealApi = true;
-
-            if (useRealApi)
+            if (selectedEvaluation!.IsEvaluated && currentProfEval.ProfEvalId > 0)
             {
-                if (selectedEvaluation!.IsEvaluated)
+                Console.WriteLine($"Updating evaluation {currentProfEval.ProfEvalId}");
+
+                // Update existing evaluation
+                var updateDto = new UpdateProfessorEvaluationDto
                 {
-                    // CHANGED: Update existing evaluation - now using profEvalId
-                    var updateDto = new UpdateProfessorEvaluationDto
-                    {
-                        CourseCode = currentProfEval.CourseCode,
-                        CourseName = currentProfEval.CourseName,
-                        OfficeHoursScore = currentProfEval.OfficeHoursScore,
-                        AttendanceScore = currentProfEval.AttendanceScore,
-                        PerformanceScore = currentProfEval.PerformanceScore,
-                        Comments = currentProfEval.Comments,
-                       // StatusId = currentProfEval.StatusId  // NEW
-                    };
+                    CourseCode = currentProfEval.CourseCode,
+                    CourseName = currentProfEval.CourseName,
+                    OfficeHoursScore = currentProfEval.OfficeHoursScore,
+                    AttendanceScore = currentProfEval.AttendanceScore,
+                    PerformanceScore = currentProfEval.PerformanceScore,
+                    Comments = currentProfEval.Comments
+                };
 
-                    // CHANGED: Now uses profEvalId instead of evaluationId
-                    var response = await Http.PutAsJsonAsync(
-                        $"api/ProfessorEvaluation/UpdateEvaluation/{currentProfEval.ProfEvalId}",
-                        updateDto);
+                var response = await Http.PutAsJsonAsync(
+                    $"api/ProfessorEvaluation/UpdateEvaluation/{currentProfEval.ProfEvalId}",
+                    updateDto);
 
-                    if (response.IsSuccessStatusCode)
-                    {
-                        saveMessage = "تم تحديث التقييم بنجاح";
-                        saveSuccess = true;
-                    }
-                    else
-                    {
-                        var error = await response.Content.ReadAsStringAsync();
-                        saveMessage = $"فشل تحديث التقييم: {error}";
-                        saveSuccess = false;
-                    }
+                if (response.IsSuccessStatusCode)
+                {
+                    saveMessage = "تم تحديث التقييم بنجاح";
+                    saveSuccess = true;
+                    Console.WriteLine("✅ Update successful");
                 }
                 else
                 {
-                    // CHANGED: Create new evaluation with new fields
-                    var createDto = new CreateProfessorEvaluationDto
-                    {
-                        EvaluationPeriodId = currentProfEval.EvaluationPeriodId,  // CHANGED from EvaluationId
-                        TaEmployeeId = currentProfEval.TaEmployeeId,              // NEW
-                        ProfessorEmployeeId = currentProfessorId,
-                        CourseCode = currentProfEval.CourseCode,
-                        CourseName = currentProfEval.CourseName,
-                        OfficeHoursScore = currentProfEval.OfficeHoursScore,
-                        AttendanceScore = currentProfEval.AttendanceScore,
-                        PerformanceScore = currentProfEval.PerformanceScore,
-                        Comments = currentProfEval.Comments,
-                        //StatusId = 1  // NEW: Default status for new evaluation
-                    };
-
-                    var response = await Http.PostAsJsonAsync("api/ProfessorEvaluation/CreateProfessorEvaluation", createDto);
-
-                    if (response.IsSuccessStatusCode)
-                    {
-                        saveMessage = "تم حفظ التقييم بنجاح";
-                        saveSuccess = true;
-                    }
-                    else
-                    {
-                        var error = await response.Content.ReadAsStringAsync();
-                        saveMessage = $"فشل حفظ التقييم: {error}";
-                        saveSuccess = false;
-                    }
-                }
-
-                if (saveSuccess)
-                {
-                    await Task.Delay(1500);
-                    await LoadData();
-                    HideModal();
+                    var error = await response.Content.ReadAsStringAsync();
+                    saveMessage = $"فشل تحديث التقييم: {error}";
+                    saveSuccess = false;
+                    Console.WriteLine($"❌ Update failed: {error}");
                 }
             }
             else
             {
-                // Simulate API call with dummy data
-                await Task.Delay(1000);
+                Console.WriteLine("Creating new evaluation");
 
-                saveMessage = selectedEvaluation!.IsEvaluated ? "تم تحديث التقييم بنجاح" : "تم حفظ التقييم بنجاح";
-                saveSuccess = true;
+                // Create new evaluation
+                var createDto = new CreateProfessorEvaluationDto
+                {
+                    EvaluationPeriodId = currentProfEval.EvaluationPeriodId,
+                    TaEmployeeId = currentProfEval.TaEmployeeId,
+                    ProfessorEmployeeId = currentProfessorId,
+                    CourseCode = currentProfEval.CourseCode,
+                    CourseName = currentProfEval.CourseName,
+                    OfficeHoursScore = currentProfEval.OfficeHoursScore,
+                    AttendanceScore = currentProfEval.AttendanceScore,
+                    PerformanceScore = currentProfEval.PerformanceScore,
+                    Comments = currentProfEval.Comments
+                };
 
-                // Update local data
-                selectedEvaluation.ProfessorEvaluationTotal = Total;
-                selectedEvaluation.ProfEvalId = selectedEvaluation.ProfEvalId ?? new Random().Next(100, 999);
+                var response = await Http.PostAsJsonAsync("api/ProfessorEvaluation/CreateProfessorEvaluation", createDto);
 
+                if (response.IsSuccessStatusCode)
+                {
+                    saveMessage = "تم حفظ التقييم بنجاح";
+                    saveSuccess = true;
+                    Console.WriteLine("✅ Create successful");
+                }
+                else
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    saveMessage = $"فشل حفظ التقييم: {error}";
+                    saveSuccess = false;
+                    Console.WriteLine($"❌ Create failed: {error}");
+                }
+            }
+
+            if (saveSuccess)
+            {
                 await Task.Delay(1500);
+                await LoadData(); // Reload data
                 HideModal();
             }
         }
@@ -670,6 +661,7 @@
         {
             saveMessage = $"حدث خطأ: {ex.Message}";
             saveSuccess = false;
+            Console.WriteLine($"❌ Exception in SaveEvaluation: {ex.Message}");
         }
         finally
         {

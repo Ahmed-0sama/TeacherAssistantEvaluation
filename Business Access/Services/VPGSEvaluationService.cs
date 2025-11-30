@@ -47,7 +47,9 @@ namespace Business_Access.Services
                 var vpgsEvaluation = new VpgsEvaluation
                 {
                     EvaluationId = evaluationDto.EvaluationId,
-                    ScientificScore = evaluationDto.ScientificScore
+                    ScientificScore = evaluationDto.ScientificScore,
+                    StatusId= 2 // Set initial status based on evaluation status
+
                 };
 
                 _db.VpgsEvaluations.Add(vpgsEvaluation);

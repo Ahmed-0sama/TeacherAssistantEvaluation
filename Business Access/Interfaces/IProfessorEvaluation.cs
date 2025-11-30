@@ -19,7 +19,7 @@ namespace Business_Access.Interfaces
 
         Task<IEnumerable<ProfessorEvaluationResponseDto>> GetEvaluationsByProfessorAsync(int professorEmployeeId);
         Task<List<ProfessorCourseEvaluation>> GetByEvaluationIdAsync(int evaluationId);
-        Task<List<ProfessorCourseEvaluation>> GetByPeriodAndTAAsync(int evaluationPeriodId, int taEmployeeId);
+        Task<List<ProfessorEvaluationResponseDto>> GetByPeriodAndTAAsync(int evaluationPeriodId, int taEmployeeId);
         Task<List<ProfessorCourseEvaluation>> GetByTAEmployeeIdAsync(int taEmployeeId);
 
 
