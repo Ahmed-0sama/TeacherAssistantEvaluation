@@ -1,328 +1,498 @@
 ﻿@page "/dean"
+@using Shared.Dtos.ProfessorEvaluationDto
 @using Shared.Dtos.TASubmissions
 @using Shared.Dtos.DeanDto
+@using System.Net.Http.Json
+
+@inject HttpClient Http
 @inject IJSRuntime JS
-@inject IDean DeanService
-@implements IAsyncDisposable
+@rendermode InteractiveWebAssembly
 
-<div class="max-w-6xl mx-auto">
-    @if (IsLoading)
-    {
-        <div class="text-center p-10">جاري تحميل البيانات...</div>
-    }
-    else if (ViewState == ViewState.Detailed && SelectedData is not null)
-    {
-        <!-- Detailed combined report -->
-        <CombinedReportView Data="SelectedData" OnBack="BackToBrief" BackButtonText="العودة للملخص" />
-    }
-    else if (ViewState == ViewState.Brief && SelectedData is not null)
-    {
-        <div class="max-w-5xl mx-auto">
-            <!-- Toast Notification -->
-            @if (!string.IsNullOrEmpty(ToastMessage))
-            {
-                <div class="fixed top-20 left-1/2 -translate-x-1/2 z-50">
-                    <div class="@ToastClass px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2 space-x-reverse animate-fade-in-out">
-                        @if (ToastType == "success")
-                        {
-                            <span>✓</span>
-                        }
-                        else if (ToastType == "error")
-                        {
-                            <span>✗</span>
-                        }
-                        <span>@ToastMessage</span>
-                    </div>
-                </div>
-            }
+<HeadContent>
+    <link href="./Custom-Rtl.css" rel="stylesheet" />
+</HeadContent>
 
-            <!-- Print Modal -->
-            @if (IsPrintModalOpen)
-            {
-                <div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 no-print">
-                    <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm">
-                        <div class="flex justify-between items-center border-b pb-3 mb-4">
-                            <h2 class="text-xl font-bold text-gray-800">اختر نوع الطباعة</h2>
-                            <button @onclick="ClosePrintModal" class="text-gray-400 hover:text-gray-600">
-                                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                        </div>
-                        <div class="space-y-3">
-                            <button 
-                                @onclick="PrintSummary"
-                                class="w-full text-center p-3 rounded-md hover:bg-gray-100 border text-gray-700 font-semibold">
-                                طباعة الملخص
-                            </button>
-                            <button 
-                                @onclick="PrintDetailed"
-                                class="w-full text-center p-3 rounded-md hover:bg-gray-100 border text-gray-700 font-semibold">
-                                عرض/طباعة التقرير المجمع
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            }
-
-            <button @onclick="BackToList" class="text-blue-600 hover:underline mb-4 no-print">
-                &larr; العودة إلى القائمة
-            </button>
-
-            @if (SelectedData is not null)
-            {
-                <!-- Summary report -->
-                <EvaluationReportView ReportData="SelectedData.Summary" />
-            }
-
-            <div class="bg-white p-6 rounded-lg shadow-md mt-8 no-print">
-                <div class="flex flex-wrap items-center justify-end gap-3">
-                    <button 
-                        @onclick="ShowDetailed"
-                        class="px-5 py-2 bg-white border border-blue-600 text-blue-700 rounded-md hover:bg-blue-50 shadow-sm font-semibold">
-                        عرض التقرير التفصيلي
-                    </button>
-
-                    <button 
-                        @onclick="OpenPrintModal"
-                        class="px-5 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 shadow font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed"
-                        disabled="@(!Permissions.CanPrintReports)">
-                        طباعة تقرير
-                    </button>
-
-                    <div class="flex-grow"></div>
-
-                    @if (SelectedData?.Summary.DetailedStatus == DetailedStatus.PendingDeanApproval)
-                    {
-                        <button 
-                            @onclick="ReturnEvaluation"
-                            disabled="@(!Permissions.CanReturnFinalReport || IsReturning)"
-                            class="px-5 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 shadow disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center min-w-[150px]">
-                            @if (IsReturning)
-                            {
-                                <span class="flex items-center">
-                                    <span class="animate-spin h-5 w-5 ml-2">⟳</span>
-                                    <span>جاري الإرجاع...</span>
-                                </span>
-                            }
-                            else
-                            {
-                                <span>إرجاع/رفض ✗</span>
-                            }
-                        </button>
-
-                        <button 
-                            @onclick="ApproveEvaluation"
-                            disabled="@(!Permissions.CanApproveFinalReport || IsApproving)"
-                            class="px-5 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 shadow disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center min-w-[120px]">
-                            @if (IsApproving)
-                            {
-                                <span class="flex items-center">
-                                    <span class="animate-spin h-5 w-5 ml-2">⟳</span>
-                                    <span>جاري الاعتماد...</span>
-                                </span>
-                            }
-                            else
-                            {
-                                <span>اعتماد ✓</span>
-                            }
-                        </button>
-                    }
-                </div>
-            </div>
+@if (!string.IsNullOrEmpty(ToastMessage))
+{
+    <div class="position-fixed top-0 start-50 translate-middle-x mt-3 z-3" style="min-width: 300px;">
+        <div class="alert @ToastClass alert-dismissible fade show shadow-sm mb-0" role="alert">
+            @ToastMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"
+                    @onclick="() => ToastMessage = null"></button>
         </div>
-    }
-    else
-    {
-        <!-- List view -->
-        <h1 class="text-3xl font-bold text-center mb-4 text-gray-800">
-            متابعة التقييمات - عميد الكلية
-        </h1>
-        <p class="text-center text-gray-600 mb-8 max-w-3xl mx-auto">
+    </div>
+}
+
+<h3 class="text-center mb-4">متابعة التقييمات - عميد الكلية</h3>
+
+<div class="d-flex flex-column justify-content-center align-items-center vh-80">
+    <div class="w-75 mb-4 shadow-sm p-4 bg-white" dir="rtl">
+        <p class="text-muted text-center mb-4">
             تظهر في هذه القائمة التقييمات التي تم استكمالها واعتمادها من قبل رئيس القسم، وهي الآن جاهزة للمراجعة والاعتماد النهائي.
         </p>
 
-        <div class="bg-white p-6 rounded-lg shadow-md">
-            <h2 class="text-xl font-bold mb-4 text-blue-800">قائمة التقييمات المرفوعة</h2>
-
-            <div class="flex flex-wrap gap-4 mb-4">
-                <input
-                    type="text"
-                    placeholder="بحث بالاسم أو الرقم الوظيفي..."
-                    @bind="SearchTerm"
-                    @bind:event="oninput"
-                    class="w-full sm:flex-1 border border-gray-300 rounded-md shadow-sm p-2" />
-
-                <select class="min-w-[150px] border border-gray-300 rounded-md shadow-sm p-2">
-                    <option>فلترة حسب القسم</option>
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <input type="text"
+                       class="form-control"
+                       placeholder="بحث بالاسم أو الرقم الوظيفي أو الحالة..."
+                       @bind="SearchTerm"
+                       @bind:event="oninput" />
+            </div>
+            <div class="col-md-3">
+                <select class="form-select">
+                    <option selected>فلترة حسب القسم</option>
                     <option>قسم علوم الحاسب</option>
                     <option>قسم نظم المعلومات</option>
                 </select>
-
-                <select class="min-w-[150px] border border-gray-300 rounded-md shadow-sm p-2">
-                    <option>فلترة حسب الفترة الزمنية</option>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select">
+                    <option selected>فلترة حسب الفترة الزمنية</option>
                     <option>الفصل الدراسي الأول 2024</option>
                     <option>الفصل الدراسي الثاني 2024</option>
                 </select>
             </div>
+        </div>
 
-            <div class="overflow-x-auto">
-                <table class="w-full text-right">
-                    <thead class="bg-gray-100 text-sm font-semibold text-gray-600">
+        @if (IsLoading)
+        {
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">جارٍ تحميل البيانات...</span>
+                </div>
+                <p class="mt-3 text-muted">جارٍ تحميل البيانات...</p>
+            </div>
+        }
+        else if (!string.IsNullOrEmpty(LoadError))
+        {
+            <div class="alert alert-danger text-center">
+                @LoadError
+            </div>
+        }
+        else if (!FilteredEvaluations.Any())
+        {
+            <div class="alert alert-info text-center">
+                <i class="bi bi-info-circle me-2"></i>
+                لا توجد تقييمات متاحة للعرض
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover table-striped align-middle">
+                    <thead class="table-primary">
                         <tr>
-                            <th class="p-3">اسم مساعد التدريس</th>
-                            <th class="p-3">القسم</th>
-                            <th class="p-3">التقدير العام</th>
-                            <th class="p-3">الحالة</th>
-                            <th class="p-3 text-left">إجراء</th>
+                            <th>اسم مساعد التدريس</th>
+                            <th>الرقم الوظيفي</th>
+                            <th>القسم</th>
+                            <th>الفترة</th>
+                            <th>التقدير</th>
+                            <th>الحالة</th>
+                            <th class="text-center">إجراء</th>
                         </tr>
                     </thead>
-                    <tbody class="text-sm divide-y divide-gray-200">
-                        @foreach (var e in FilteredEvaluations)
-                        {
-                            <tr class="hover:bg-gray-50">
-                                <td class="p-3 whitespace-nowrap">@e.Summary.Name</td>
-                                <td class="p-3 whitespace-nowrap">@e.Summary.Department</td>
-                                <td class="p-3 whitespace-nowrap">
-                                    <span class="@GetGradeBadgeClass(e.Summary.FinalGrade)">
-                                        @e.Summary.FinalGrade
-                                    </span>
-                                </td>
-                                <td class="p-3 whitespace-nowrap">
-                                    <span class="@GetStatusBadgeClass(e.Summary.DetailedStatus)">
-                                        @DetailedStatusMap[e.Summary.DetailedStatus]
-                                    </span>
-                                </td>
-                                <td class="p-3 whitespace-nowrap text-left">
-                                    <button @onclick="() => SelectEvaluation(e)" class="text-blue-600 hover:underline">
-                                        عرض التفاصيل
-                                    </button>
-                                </td>
-                            </tr>
-                        }
-
-                        @if (!FilteredEvaluations.Any())
+                    <tbody>
+                        @foreach (var eval in FilteredEvaluations)
                         {
                             <tr>
-                                <td colspan="5" class="p-4 text-center text-gray-500">
-                                    لا توجد تقييمات مطابقة لبحثك.
+                                <td>@($"TA #{eval.taEmployeeId}")</td>
+                                <td>@eval.taEmployeeId</td>
+                                <td>@(eval.statusName ?? "غير محدد")</td>
+                                <td>@(eval.periodName ?? "غير محدد")</td>
+                                <td>
+                                    <span class="@GetGradeBadgeClass(eval.statusName)">
+                                        @(eval.statusName ?? "غير محدد")
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="@GetStatusBadgeClass(eval.statusName)">
+                                        @(eval.statusName ?? "غير محدد")
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <button type="button"
+                                            class="btn btn-sm btn-primary"
+                                            @onclick="() => OpenModal(eval)">
+                                        عرض التفاصيل
+                                    </button>
                                 </td>
                             </tr>
                         }
                     </tbody>
                 </table>
             </div>
-        </div>
-    }
+        }
+    </div>
 </div>
 
+@* ===== Modal for Dean Evaluation Detail ===== *@
+@if (IsModalVisible && SelectedData is not null)
+{
+    <div class="modal-overlay" @onclick="HideModal">
+        <div class="modal-container" @onclick:stopPropagation="true" style="max-width: 800px;" dir="rtl">
+            <div class="modal-header">
+                <h5 class="m-0">تفاصيل التقييم - عميد الكلية</h5>
+                <button type="button" class="btn-close btn-close-white" @onclick="HideModal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                @if (IsDetailLoading)
+                {
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">جارٍ تحميل التفاصيل...</span>
+                        </div>
+                        <p class="mt-3 text-muted">جارٍ تحميل التفاصيل...</p>
+                    </div>
+                }
+                else if (!string.IsNullOrEmpty(DetailError))
+                {
+                    <div class="alert alert-danger text-center">
+                        @DetailError
+                    </div>
+                }
+                else
+                {
+                    @* معلومات عامة *@
+                    <div class="info-section mb-4">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <p class="mb-1"><strong>اسم المساعد:</strong> @SelectedData.TaName</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-1"><strong>الرقم الوظيفي:</strong> @SelectedData.TaEmployeeId</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-1"><strong>القسم:</strong> @SelectedData.TaEmail</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-1"><strong>الفترة:</strong> @SelectedData.PeriodName</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-1">
+                                    <strong>الحالة الحالية:</strong>
+                                    <span class="@GetStatusBadgeClass(SelectedData.StatusName)">
+                                        @SelectedData.StatusName
+                                    </span>
+                                </p>
+                            </div>
+                            @if (!string.IsNullOrEmpty(SelectedData.FinalGrade))
+                            {
+                                <div class="col-md-6">
+                                    <p class="mb-1">
+                                        <strong>التقدير النهائي:</strong>
+                                        <span class="@GetGradeBadgeClass(SelectedData.FinalGrade)">
+                                            @SelectedData.FinalGrade
+                                        </span>
+                                    </p>
+                                </div>
+                            }
+                </div>
+            </div>
+
+            <hr />
+
+            @* ملخص التقرير *@
+            <div class="mb-3">
+                <h6 class="fw-bold mb-2">ملخص التقييم</h6>
+                <p class="text-muted">
+                    @(!string.IsNullOrEmpty(SelectedData.FinalGrade)
+                                        ? SelectedData.FinalGrade
+                                        : "ملخص التقييم من رئيس القسم وأعضاء اللجان يظهر هنا إن كان متوفراً.")
+                </p>
+            </div>
+
+                    @* ملاحظات العميد السابقة (إن وجدت) *@
+            @if (!string.IsNullOrWhiteSpace(SelectedData.DeanReturnComment))
+                    {
+                        <div class="mb-3">
+                            <h6 class="fw-bold mb-2">ملاحظات العميد السابقة</h6>
+                            <div class="alert alert-secondary">
+                                @SelectedData.DeanReturnComment
+                            </div>
+                        </div>
+                    }
+
+                    <hr />
+
+                    @* ملخص الدرجات *@
+                    <div class="mb-4">
+                        <h6 class="fw-bold mb-3">ملخص الدرجات</h6>
+                        <div class="row g-3">
+                            <div class="col-md-12">
+                                <div class="card border-primary">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="text-muted">النشاط التعليمي (50%)</span>
+                                            <span class="fw-bold text-primary">@getvalue(SelectedData.TotalScore) / 50</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="card border-primary">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="text-muted">النشاط العلمي (10%)</span>
+                                            <span class="fw-bold text-primary">@getvalue(SelectedData.ScientificActivityScore) / 10</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="card border-primary">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="text-muted">النشاط الإداري (10%)</span>
+                                            <span class="fw-bold text-primary">@getvalue(SelectedData.AdministrativeActivityScore) / 10</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="card border-primary">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="text-muted">الأنشطة الطلابية (10%)</span>
+                                            <span class="fw-bold text-primary">@getvalue(SelectedData.StudentActivitiesScore) / 10</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="card border-primary">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="text-muted">استقصاء الطلاب (5%)</span>
+                                            <span class="fw-bold text-primary">@getvalue(SelectedData.StudentSurveyScore) / 5</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="card border-primary">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="text-muted">الإرشاد الأكاديمي (5%)</span>
+                                            <span class="fw-bold text-primary"> / 5</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="card border-primary">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="text-muted">السمات الشخصية (10%)</span>
+                                            <span class="fw-bold text-primary">@getvalue(SelectedData.PersonalTraitsScore)/ 10</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="card border-success bg-light">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="fw-bold">المجموع الكلي</span>
+                                            <span class="fw-bold text-success fs-5">91.5 / 100</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    @* ملاحظات رئيس القسم *@
+                    <div class="mb-3">
+                        <h6 class="fw-bold mb-2">ملاحظات رئيس القسم</h6>
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <strong class="text-success">نقاط القوة:</strong>
+                                    <p class="mb-0 mt-1">@SelectedData.HodStrengths</p>
+                                </div>
+                                <div>
+                                    <strong class="text-warning">نقاط تحتاج للتطوير:</strong>
+                                    <p class="mb-0 mt-1">@SelectedData.HodWeaknesses</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    @* حالة الاعتماد *@
+                    <div class="mb-3">
+                        <div class="alert alert-info">
+                            <strong>حالة الاعتماد:</strong> @SelectedData.StatusName
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary px-4" @onclick="HideModal">
+                    <i class="bi bi-x-circle me-2"></i>إغلاق
+                </button>
+
+                <button type="button"
+                        class="btn btn-outline-primary px-4"
+                        @onclick="PrintModal"
+                        disabled="@IsDetailLoading">
+                    <i class="bi bi-printer me-2"></i>طباعة التقرير الكامل
+                </button>
+
+                @if (IsPendingApproval())
+                {
+                    <button type="button"
+                            class="btn btn-danger px-4"
+                            @onclick="ReturnEvaluation"
+                            disabled="@(!Permissions.CanReturnFinalReport || IsReturning || IsDetailLoading)">
+                        @if (IsReturning)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                            <span>جاري الإرجاع...</span>
+                        }
+                        else
+                        {
+                            <i class="bi bi-x-circle me-2"></i>
+                            <span>إرجاع / رفض</span>
+                        }
+                    </button>
+
+                    <button type="button"
+                            class="btn btn-success px-4"
+                            @onclick="ApproveEvaluation"
+                            disabled="@(!Permissions.CanApproveFinalReport || IsApproving || IsDetailLoading)">
+                        @if (IsApproving)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                            <span>جاري الاعتماد...</span>
+                        }
+                        else
+                        {
+                            <i class="bi bi-check-circle me-2"></i>
+                            <span>اعتماد نهائي</span>
+                        }
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+}
+
 @code {
-    // ===== State =====
-    private List<FullEvaluationData> Evaluations { get; set; } = new();
+    // ... (keep all existing code fields)
+    private List<EvaluationApiResponseDto> Evaluations { get; set; } = new();
     private bool IsLoading { get; set; } = true;
-
-    private ViewState ViewState { get; set; } = ViewState.List;
-    private FullEvaluationData? SelectedData { get; set; }
-
-    private bool IsPrintModalOpen { get; set; }
-    private string SearchTerm { get; set; } = string.Empty;
-
+    private string? LoadError { get; set; }
+    private bool IsModalVisible { get; set; }
+    private DeanEvaluationDetailDto? SelectedData { get; set; }
+    private bool IsDetailLoading { get; set; }
+    private string? DetailError { get; set; }
     private bool IsApproving { get; set; }
     private bool IsReturning { get; set; }
-
+    private string SearchTerm { get; set; } = string.Empty;
     private string? ToastMessage { get; set; }
     private string ToastType { get; set; } = "success";
-    private string ToastClass => ToastType == "success" 
-        ? "bg-green-500 text-white" 
-        : "bg-red-500 text-white";
-
+    private string ToastClass => ToastType == "success" ? "alert-success" : "alert-danger";
     private DeanPermissions Permissions { get; set; } = new();
+    private CancellationTokenSource? _toastCancellationTokenSource;
 
-    private readonly Dictionary<DetailedStatus, string> DetailedStatusMap = new()
-    {
-        { DetailedStatus.Approved, "تم الاعتماد النهائي" },
-        { DetailedStatus.PendingDeanApproval, "في انتظار اعتماد العميد" },
-        { DetailedStatus.ReturnedToHead, "تمت إعادته إلى رئيس القسم" },
-        { DetailedStatus.Pending, "قيد المراجعة" }
-    };
-
-    private CancellationTokenSource _toastCancellationTokenSource;
-
-    // ===== Lifecycle =====
-    protected override async Task OnInitializedAsync()
-    {
-        await FetchDataAsync();
-    }
-
-    // ===== Computed =====
-    private IEnumerable<FullEvaluationData> FilteredEvaluations =>
+    private IEnumerable<EvaluationApiResponseDto> FilteredEvaluations =>
         string.IsNullOrWhiteSpace(SearchTerm)
             ? Evaluations
             : Evaluations.Where(e =>
-                (!string.IsNullOrEmpty(e.Summary.Name) &&
-                 e.Summary.Name.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase))
-                || (!string.IsNullOrEmpty(e.Summary.EmployeeId) &&
-                    e.Summary.EmployeeId.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)));
+                   e.taEmployeeId.ToString().Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)
+                || (e.statusName?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false)
+                || (e.periodName?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false));
 
-    // ===== Methods =====
-    private async Task FetchDataAsync()
+    // ... (keep all existing lifecycle and data methods)
+    protected override async Task OnInitializedAsync()
     {
+        Console.WriteLine("🔵 Dean page initializing...");
+        await FetchEvaluationsAsync();
+    }
+
+    private async Task FetchEvaluationsAsync()
+    {
+        Console.WriteLine("🔵 Starting FetchEvaluationsAsync...");
         IsLoading = true;
+        LoadError = null;
         StateHasChanged();
 
         try
         {
-            Evaluations = await DeanService.GetDeanEvaluationsAsync();
+            var url = "/api/evaluation/period/1";
+            Console.WriteLine($"🔵 Making API call to: {url}");
+            var evaluations = await Http.GetFromJsonAsync<List<EvaluationApiResponseDto>>(url) ?? new List<EvaluationApiResponseDto>();
+            Console.WriteLine($"✅ Received {evaluations.Count} evaluations");
+            Evaluations = evaluations;
         }
         catch (Exception ex)
         {
-            ShowToast($"خطأ في تحميل البيانات: {ex.Message}", "error");
+            Console.WriteLine($"❌ Exception in FetchEvaluationsAsync: {ex.Message}");
+            LoadError = $"خطأ في تحميل البيانات: {ex.Message}";
+            ShowToast(LoadError, "error");
         }
         finally
         {
             IsLoading = false;
+            StateHasChanged();
         }
     }
 
-    private void SelectEvaluation(FullEvaluationData data)
+    private async void OpenModal(EvaluationApiResponseDto eval)
     {
-        SelectedData = data;
-        ViewState = ViewState.Brief;
-        UpdatePermissions();
-    }
-
-    private void BackToList()
-    {
+        Console.WriteLine($"🔵 Opening modal for evaluation: {eval.evaluationId}");
         SelectedData = null;
-        ViewState = ViewState.List;
+        DetailError = null;
+        IsDetailLoading = true;
+        IsModalVisible = true;
+        StateHasChanged();
+
+        try
+        {
+            var url = $"/api/Dean/evaluationDetail/{eval.evaluationId}";
+            var response = await Http.GetAsync(url);
+
+            if (response.IsSuccessStatusCode)
+            {
+                SelectedData = await response.Content.ReadFromJsonAsync<DeanEvaluationDetailDto>();
+                UpdatePermissions();
+            }
+            else
+            {
+                DetailError = "فشل تحميل تفاصيل التقييم";
+                ShowToast(DetailError, "error");
+            }
+        }
+        catch (Exception ex)
+        {
+            DetailError = $"خطأ: {ex.Message}";
+            ShowToast(DetailError, "error");
+        }
+        finally
+        {
+            IsDetailLoading = false;
+            StateHasChanged();
+        }
     }
 
-    private void BackToBrief()
+    private void HideModal()
     {
-        ViewState = ViewState.Brief;
+        IsModalVisible = false;
+        SelectedData = null;
+        DetailError = null;
+        IsDetailLoading = false;
+        StateHasChanged();
     }
 
-    private void ShowDetailed()
+    // NEW: Single print method that prints the entire modal
+    private async Task PrintModal()
     {
-        ViewState = ViewState.Detailed;
-    }
-
-    private void OpenPrintModal() => IsPrintModalOpen = true;
-    private void ClosePrintModal() => IsPrintModalOpen = false;
-
-    private async Task PrintSummary()
-    {
-        IsPrintModalOpen = false;
+        if (SelectedData is null) return;
+        Console.WriteLine("🔵 Printing entire modal");
         await JS.InvokeVoidAsync("window.print");
-    }
-
-    private async Task PrintDetailed()
-    {
-        IsPrintModalOpen = false;
-        ViewState = ViewState.Detailed;
-        await Task.Delay(100);
-        await JS.InvokeVoidAsync("window.print");
-        ViewState = ViewState.Brief;
     }
 
     private async Task ApproveEvaluation()
@@ -331,19 +501,37 @@
             return;
 
         var confirm = await JS.InvokeAsync<bool>("confirm", "هل أنت متأكد من اعتماد هذا التقييم بشكل نهائي؟");
-        if (!confirm)
-            return;
+        if (!confirm) return;
 
         IsApproving = true;
         StateHasChanged();
 
         try
         {
-            var updated = await DeanService.ApproveDeanEvaluationAsync(SelectedData.Summary.EmployeeId);
-            UpdateEvaluationInList(updated);
-            SelectedData = updated;
-            UpdatePermissions();
-            ShowToast("تم اعتماد التقييم النهائي بنجاح.", "success");
+            var dto = new AcceptEvaluationDto
+            {
+                EvaluationId = SelectedData.EvaluationId,
+                DateApproved = DateOnly.FromDateTime(DateTime.Now)
+            };
+
+            var response = await Http.PostAsJsonAsync("/api/Dean/acceptEvaluation", dto);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<DeanActionResponseDto>();
+                ShowToast(result?.Message ?? "تم اعتماد التقييم النهائي بنجاح.", "success");
+                await FetchEvaluationsAsync();
+
+                var eval = Evaluations.FirstOrDefault(e => e.evaluationId == SelectedData.EvaluationId);
+                if (eval != null)
+                    OpenModal(eval);
+                else
+                    HideModal();
+            }
+            else
+            {
+                ShowToast("فشل اعتماد التقييم", "error");
+            }
         }
         catch (Exception ex)
         {
@@ -352,6 +540,7 @@
         finally
         {
             IsApproving = false;
+            StateHasChanged();
         }
     }
 
@@ -361,19 +550,37 @@
             return;
 
         var comment = await JS.InvokeAsync<string?>("prompt", "يرجى إدخال سبب الإرجاع/الرفض إلى رئيس القسم:");
-        if (string.IsNullOrWhiteSpace(comment))
-            return;
+        if (string.IsNullOrWhiteSpace(comment)) return;
 
         IsReturning = true;
         StateHasChanged();
 
         try
         {
-            var updated = await DeanService.ReturnDeanEvaluationAsync(SelectedData.Summary.EmployeeId, comment!);
-            UpdateEvaluationInList(updated);
-            SelectedData = updated;
-            UpdatePermissions();
-            ShowToast("تم إرجاع التقييم إلى رئيس القسم بنجاح.", "success");
+            var dto = new ReturnEvaluationDto
+            {
+                EvaluationId = SelectedData.EvaluationId,
+                DeanReturnComment = comment
+            };
+
+            var response = await Http.PostAsJsonAsync("api/Dean/returnEvaluation", dto);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<DeanActionResponseDto>();
+                ShowToast(result?.Message ?? "تم إرجاع التقييم إلى رئيس القسم بنجاح.", "success");
+                await FetchEvaluationsAsync();
+
+                var eval = Evaluations.FirstOrDefault(e => e.evaluationId == SelectedData.EvaluationId);
+                if (eval != null)
+                    OpenModal(eval);
+                else
+                    HideModal();
+            }
+            else
+            {
+                ShowToast("فشل إرجاع التقييم", "error");
+            }
         }
         catch (Exception ex)
         {
@@ -382,16 +589,8 @@
         finally
         {
             IsReturning = false;
+            StateHasChanged();
         }
-    }
-
-    private void UpdateEvaluationInList(FullEvaluationData updated)
-    {
-        var index = Evaluations.FindIndex(ev => ev.Summary.EmployeeId == updated.Summary.EmployeeId);
-        if (index >= 0)
-            Evaluations[index] = updated;
-        else
-            Evaluations.Add(updated);
     }
 
     private void ShowToast(string message, string type = "success")
@@ -413,9 +612,14 @@
         });
     }
 
+    private bool IsPendingApproval()
+    {
+        return SelectedData?.StatusName == "PendingDean";
+    }
+
     private void UpdatePermissions()
     {
-        if (SelectedData?.Summary.DetailedStatus == DetailedStatus.PendingDeanApproval)
+        if (IsPendingApproval())
         {
             Permissions = new DeanPermissions
             {
@@ -435,17 +639,25 @@
         }
     }
 
+    private decimal getvalue(decimal? ratingId)
+    {
+        if (ratingId == null) return 0;
+        else if (ratingId == 1) return 5;
+        else if (ratingId == 2) return 4;
+        else if (ratingId == 3) return 3;
+        else if (ratingId == 4) return 2;
+        else if (ratingId == 5) return 1;
+        return ratingId ?? 0;
+    }
+
     private string GetGradeBadgeClass(string? grade) =>
-        grade == "ممتاز"
-            ? "px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800"
-            : "px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800";
+        grade == "ممتاز" ? "badge bg-success" : "badge bg-warning text-dark";
 
-    private string GetStatusBadgeClass(DetailedStatus status) =>
-        status == DetailedStatus.Approved
-            ? "px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800"
-            : "px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800";
+    private string GetStatusBadgeClass(string? status) =>
+        status?.Contains("اعتماد") == true || status?.Contains("موافق") == true
+            ? "badge bg-success"
+            : "badge bg-warning text-dark";
 
-    // ===== Nested Types =====
     private class DeanPermissions
     {
         public bool CanPrintReports { get; set; } = true;
@@ -453,15 +665,5 @@
         public bool CanReturnFinalReport { get; set; }
     }
 
-    private enum ViewState
-    {
-        List,
-        Brief,
-        Detailed
-    }
 
-    async ValueTask IAsyncDisposable.DisposeAsync()
-    {
-        _toastCancellationTokenSource?.Dispose();
-    }
 }

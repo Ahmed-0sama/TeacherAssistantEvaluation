@@ -28,6 +28,13 @@ namespace Shared.Dtos.DeanDto
         public DateTime? DateSubmitted { get; set; }
         public DateTime? DateApproved { get; set; }
         public HodEvaluationDto HodEvaluations { get; set; } = new();
+        public decimal EducationalActivityScore { get; set; }        // 50%
+        public decimal ScientificActivityScore { get; set; }          // 10%
+        public decimal AdministrativeActivityScore { get; set; }      // 10%
+        public decimal StudentActivitiesScore { get; set; }           // 10%
+        public decimal AcademicAdvisingScore { get; set; }            // 5%
+        public decimal PersonalTraitsScore { get; set; }              // 10%
+        public decimal TotalScore { get; set; }
         public TASubmissionResponseDto? TaSubmission { get; set; }
     }
 }

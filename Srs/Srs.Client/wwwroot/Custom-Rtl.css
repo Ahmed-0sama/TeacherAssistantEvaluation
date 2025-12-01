@@ -240,3 +240,39 @@ hr {
     font-size: 0.9rem;
     display: inline-block;
 }
+@media print {
+    body * {
+        visibility: hidden !important;
+    }
+
+    .modal-container, .modal-container * {
+        visibility: visible !important;
+    }
+
+    .modal-container {
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: white !important;
+        overflow: visible !important; /* allow full expansion */
+        height: auto !important; /* remove the fixed modal height */
+    }
+
+    .modal-content {
+        height: auto !important;
+        overflow: visible !important; /* remove scrollbars */
+    }
+
+    .modal-body {
+        overflow: visible !important;
+        max-height: none !important; /* allow all content to print */
+    }
+
+    .modal-footer {
+        display: none !important; /* optional */
+    }
+}
