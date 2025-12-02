@@ -326,6 +326,7 @@
                             <strong>حالة الاعتماد:</strong> @SelectedData.StatusName
                         </div>
                     </div>
+
                 }
             </div>
 
@@ -340,6 +341,18 @@
                         disabled="@IsDetailLoading">
                     <i class="bi bi-printer me-2"></i>طباعة التقرير الكامل
                 </button>
+                <button class="btn btn-primary" @onclick="ShowDetailsModal">
+                    عرض التفاصيل
+                </button>
+
+                @if (IsHodModalVisible && SelectedData != null)
+                {
+                    <Srs.Client.Compontets.HODComponent SelectedTA="@userData"
+                                                        EvaluationPeriodId="@EvaluationPeriodId"
+                                                        IsViewMode="@isViewMode"
+                                                        OnClose="@hidehodmodal"
+                                                        OnSaveSuccess="@HandleSaveSuccess" />
+                }
 
                 @if (IsPendingApproval())
                 {
@@ -386,6 +399,7 @@
     private bool IsLoading { get; set; } = true;
     private string? LoadError { get; set; }
     private bool IsModalVisible { get; set; }
+    private bool IsHodModalVisible { get; set; }
     private DeanEvaluationDetailDto? SelectedData { get; set; }
     private bool IsDetailLoading { get; set; }
     private string? DetailError { get; set; }
@@ -397,7 +411,9 @@
     private string ToastClass => ToastType == "success" ? "alert-success" : "alert-danger";
     private DeanPermissions Permissions { get; set; } = new();
     private CancellationTokenSource? _toastCancellationTokenSource;
-
+    private UserDataDto userData = new UserDataDto();
+    private int EvaluationPeriodId = 1;
+    private bool isViewMode = true;
     private IEnumerable<EvaluationApiResponseDto> FilteredEvaluations =>
         string.IsNullOrWhiteSpace(SearchTerm)
             ? Evaluations
@@ -422,7 +438,7 @@
 
         try
         {
-            var url = "/api/evaluation/period/1";
+            var url = $"/api/evaluation/period/{EvaluationPeriodId}";
             Console.WriteLine($"🔵 Making API call to: {url}");
             var evaluations = await Http.GetFromJsonAsync<List<EvaluationApiResponseDto>>(url) ?? new List<EvaluationApiResponseDto>();
             Console.WriteLine($"✅ Received {evaluations.Count} evaluations");
@@ -441,6 +457,18 @@
         }
     }
 
+    private async void ShowDetailsModal()
+    {
+        if (SelectedData is null || userData is null)
+        {
+            Console.WriteLine("❌ Cannot show HOD modal - SelectedData or userData is null");
+            return;
+        }
+
+        Console.WriteLine($"🔵 Opening HOD modal for Evaluation ID: {userData.EvaluationId}");
+        IsHodModalVisible = true;
+        StateHasChanged();
+    }
     private async void OpenModal(EvaluationApiResponseDto eval)
     {
         Console.WriteLine($"🔵 Opening modal for evaluation: {eval.evaluationId}");
@@ -448,6 +476,8 @@
         DetailError = null;
         IsDetailLoading = true;
         IsModalVisible = true;
+        IsHodModalVisible = false;
+
         StateHasChanged();
 
         try
@@ -459,6 +489,13 @@
             {
                 SelectedData = await response.Content.ReadFromJsonAsync<DeanEvaluationDetailDto>();
                 UpdatePermissions();
+
+                userData.Id = SelectedData.TaEmployeeId;
+                userData.Name = $"TA #{SelectedData?.TaName}";
+                userData.EmployeeNumber = SelectedData.TaEmployeeId;
+                userData.Department = SelectedData.TaEmail;
+                userData.EvaluationId = SelectedData.EvaluationId;
+
             }
             else
             {
@@ -477,7 +514,11 @@
             StateHasChanged();
         }
     }
-
+    private void hidehodmodal()
+    {
+        IsHodModalVisible = false;
+        StateHasChanged();
+    }
     private void HideModal()
     {
         IsModalVisible = false;
@@ -664,6 +705,14 @@
         public bool CanApproveFinalReport { get; set; }
         public bool CanReturnFinalReport { get; set; }
     }
-
+    private async Task HandleSaveSuccess()
+    {
+        SelectedData = null;
+        DetailError = null;
+        IsDetailLoading = true;
+        IsModalVisible = true;
+        StateHasChanged();
+        
+    }
 
 }

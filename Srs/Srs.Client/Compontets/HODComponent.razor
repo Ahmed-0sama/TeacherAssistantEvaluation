@@ -1,0 +1,577 @@
+﻿@using Shared.Dtos.HODEvaluation
+@using Shared.Dtos.ProfessorEvaluationDto
+@inject HttpClient Http
+@inject IJSRuntime JS
+
+<HeadContent>
+ <link href="./Custom-Rtl.css" rel="stylesheet" />
+</HeadContent>
+
+<div class="modal d-block hod-evaluation-modal @(isPrinting ? "printing" : "")" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5);">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content hod-modal-content" dir="rtl">
+            <div class="modal-header" dir="rtl">
+                <button type="button" class="btn-close ms-0 me-auto" @onclick="HandleClose"></button>
+                <h5 class="modal-title">تفاصيل مساعد التدريس</h5>
+            </div>
+            <div class="modal-body">
+                @if (isLoadingModal)
+                {
+                    <div class="text-center p-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">جارٍ التحميل...</span>
+                        </div>
+                        <p class="mt-2">جارٍ تحميل البيانات...</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="border rounded p-3 bg-light mb-3">
+                        <h5 class="mb-3 text-primary">البيانات الأساسية</h5>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">اسم مساعد التدريس</label>
+                                <input type="text" class="form-control" disabled value="@SelectedTA?.Name" />
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">الرقم الوظيفي:</label>
+                                <input type="text" class="form-control" disabled value="@SelectedTA?.EmployeeNumber" />
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">القسم</label>
+                                <input type="text" class="form-control" disabled value="@SelectedTA?.Department" />
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">القسم</label>
+                                <input type="text" class="form-control" disabled value="@SelectedTA?.College" />
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">الكلية</label>
+                                <input type="text" class="form-control" disabled value="@SelectedTA?.College" />
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">العبئ الدراسي</label>
+                                <input type="text" class="form-control" disabled value="@SelectedTA?.EmployeeNumber" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Professor Evaluations -->
+                    <div class="border rounded p-3 bg-light mb-3">
+                        <h5 class="mb-3 text-primary">تقييم النشاط العلمي</h5>
+                        <div class="border rounded p-3 bg-light mb-3">
+                            <h5 class="mb-3 text-primary">
+                                <i class="bi bi-person-check-fill me-2"></i>
+                                تقييمات أساتذة المقررات
+                            </h5>
+
+                            @if (profdto == null || !profdto.Any())
+                            {
+                                <div class="alert alert-warning text-center" role="alert">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>
+                                    لا توجد تقييمات من أساتذة المقررات حتى الآن
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-hover align-middle">
+                                        <thead class="table-secondary">
+                                            <tr>
+                                                <th class="text-center">المقرر</th>
+                                                <th class="text-center">أستاذ المقرر</th>
+                                                <th class="text-center">الساعات المكتبية</th>
+                                                <th class="text-center">الحضور</th>
+                                                <th class="text-center">الأداء</th>
+                                                <th class="text-center">المجموع</th>
+                                                <th class="text-center">الحالة</th>
+                                                <th class="text-center">الملاحظات</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var eval in profdto)
+                                            {
+                                                <tr>
+                                                    <td>
+                                                        <div class="fw-bold">@eval.CourseName</div>
+                                                        <small class="text-muted">@eval.CourseCode</small>
+                                                    </td>
+                                                    <td>@eval.ProfessorName</td>
+                                                    <td class="text-center">
+                                                        <span class="badge bg-info">@eval.OfficeHoursScore / 10</span>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <span class="badge bg-info">@eval.AttendanceScore / 5</span>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <span class="badge bg-info">@eval.PerformanceScore / 15</span>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <span class="badge bg-primary fs-6">@eval.TotalScore / 30</span>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        @if (eval.IsReturned)
+                                                        {
+                                                            <span class="badge bg-warning text-dark">
+                                                                <i class="bi bi-arrow-return-right me-1"></i> تم الإرجاع
+                                                            </span>
+                                                        }
+                                                        else if (eval.IsSubmitted)
+                                                        {
+                                                            <span class="badge bg-success">
+                                                                <i class="bi bi-check-circle me-1"></i> مقدم
+                                                            </span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="badge bg-secondary">
+                                                                <i class="bi bi-clock me-1"></i> قيد الانتظار
+                                                            </span>
+                                                        }
+                                                    </td>
+                                                    <td class="text-center">
+                                                        @eval.Comments
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                        <tfoot class="table-light">
+                                            <tr>
+                                                <th colspan="5" class="text-end">المتوسط الإجمالي:</th>
+                                                <th class="text-center">
+                                                    <span class="badge bg-success fs-5">@CalculateAverageScore() / 30</span>
+                                                </th>
+                                                <th colspan="2"></th>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+
+                                <div class="mt-3 p-3 bg-light rounded shadow-sm">
+                                    <h6 class="fw-bold mb-3 text-primary">
+                                        <i class="bi bi-book-half me-1"></i>اكتمال ساعات النصاب (10)
+                                    </h6>
+
+                                    <div class="row text-center">
+                                        <div class="col">
+                                            <div class="p-2 bg-white rounded border">
+                                                <i class="bi bi-clock-history fs-4 d-block text-secondary"></i>
+                                                <span class="fw-bold">التدريس المتوقع</span>
+                                                <div>@teachingdto.ExpectedTeachingLoad</div>
+                                            </div>
+                                        </div>
+                                        <div class="col">
+                                            <div class="p-2 bg-white rounded border">
+                                                <i class="bi bi-check-circle fs-4 d-block text-success"></i>
+                                                <span class="fw-bold">التدريس الفعلي</span>
+                                                <div>@teachingdto.ActualTeachingLoad</div>
+                                            </div>
+                                        </div>
+                                        <div class="col">
+                                            <div class="p-2 bg-white rounded border">
+                                                <i class="bi bi-star-fill fs-4 d-block text-warning"></i>
+                                                <span class="fw-bold">التقييم</span>
+                                                <div>@(teachingdto.gradegiven)/10</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="card bg-primary bg-opacity-10 shadow-sm mx-auto mt-4" style="max-width: 600px; border-radius: 12px;">
+                                    <div class="card-body text-center py-4">
+                                        <h3 class="text-primary fw-semibold mb-2" style="direction: rtl; font-size: 18px;">المجموع الكلي للعبء التدريسي</h3>
+                                        <p class="text-primary fw-bold fs-4 mb-0" style="direction: ltr;">@(teachingLoadScore) / 40</p>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Child Components -->
+                    <Srs.Client.Compontets.TeachingActivitiesEvaluation TeachingLoadScore="@teachingLoadScore"
+                                                                        OnRatingsChanged="OnTeachingActivitiesRatingsChanged"
+                                                                        IsViewMode="@IsViewMode"
+                                                                        ExistingRatings="@GetExistingRatings("DirectTeaching")" />
+
+                    <Srs.Client.Compontets.ScientificActivityComponentForHod EvaluationId="@(SelectedTA?.EvaluationId ?? 0)"
+                                                                             EvaluationPeriodId="EvaluationPeriodId"
+                                                                             TaEmployeeId="SelectedTA.Id"
+                                                                             OnRatingsChanged="OnScientificActivityRatingsChanged"
+                                                                             IsViewMode="@IsViewMode"
+                                                                             ExistingRatings="@GetExistingRatings("Administrative")" />
+
+                    <Srs.Client.Compontets.GradesComponent OnPersonalTraitsChanged="OnPersonalTraitsRatingsChanged"
+                                                           OnStudentActivitiesChanged="OnStudentActivitiesRatingsChanged"
+                                                           IsViewMode="@IsViewMode"
+                                                           ExistingPersonalTraits="@GetExistingRatings("PersonalTraits")"
+                                                           ExistingStudentActivities="@GetExistingRatings("StudentActivities")" />
+
+                    <!-- Comments Section -->
+                    <div class="border rounded p-3 bg-light mb-3">
+                        <h5 class="mb-3 text-primary">الملاحظات والتعليقات</h5>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">نقاط القوة</label>
+                            <textarea class="form-control"
+                                      rows="3"
+                                      @bind="hodStrengths"
+                                      disabled="@IsViewMode"
+                                      placeholder="اذكر نقاط القوة لمساعد التدريس..."></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">نقاط الضعف</label>
+                            <textarea class="form-control"
+                                      rows="3"
+                                      @bind="hodWeaknesses"
+                                      disabled="@IsViewMode"
+                                      placeholder="اذكر نقاط الضعف ومجالات التحسين..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Score Summary -->
+                    @if (IsViewMode && hodEvaluationData != null)
+                    {
+                        <div class="alert alert-info">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fs-5 fw-bold">المجموع الكلي:</span>
+                                <span class="fs-3 fw-bold text-primary">@hodEvaluationData.TotalScore / @hodEvaluationData.MaxScore</span>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+            <div class="modal-footer">
+                @if (IsViewMode)
+                {
+                    <button type="button" class="btn btn-secondary" @onclick="HandleClose">إغلاق</button>
+                    <button type="button"
+                            class="btn btn-outline-primary px-4"
+                            @onclick="PrintModal"
+                            disabled="@isLoadingModal">
+                        <i class="bi bi-printer me-2"></i>طباعة التقرير الكامل
+                    </button>
+                }
+                else if (!isLoadingModal)
+                {
+                    <button type="button" class="btn btn-secondary" @onclick="HandleClose">إلغاء</button>
+                    <button type="button" class="btn btn-primary"
+                            @onclick="HandleSave"
+                            disabled="@isSaving">
+                        @(isSaving ? "جارٍ الحفظ..." : "حفظ التقييم")
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    // Parameters passed from parent component
+    [Parameter] public UserDataDto? SelectedTA { get; set; }
+    [Parameter] public int EvaluationPeriodId { get; set; }
+    [Parameter] public bool IsViewMode { get; set; } = false;
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback OnSaveSuccess { get; set; }
+
+    // Internal state
+    private bool isLoadingModal = true;
+    private bool isSaving = false;
+    private bool isPrinting = false;
+    private TeachingDataDto teachingdto = new TeachingDataDto();
+    private List<ProfessorEvaluationResponseDto> profdto = new List<ProfessorEvaluationResponseDto>();
+    private HodEvaluationResponseDto? hodEvaluationData;
+
+    // Ratings dictionaries
+    private Dictionary<int, int> teachingActivitiesRatings = new();
+    private Dictionary<int, int> scientificActivityRatings = new();
+    private Dictionary<int, int> personalTraitsRatings = new();
+    private Dictionary<int, int> studentActivitiesRatings = new();
+
+    // Comments
+    private string hodStrengths = string.Empty;
+    private string hodWeaknesses = string.Empty;
+
+    // Computed properties
+    double teachingLoadScore => (CalculateAverageScore()) + (teachingdto.gradegiven ?? 0);
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (SelectedTA != null)
+        {
+            await LoadData();
+        }
+    }
+
+    private async Task LoadData()
+    {
+        isLoadingModal = true;
+
+        // Reset data
+        profdto = new List<ProfessorEvaluationResponseDto>();
+        hodEvaluationData = null;
+        teachingActivitiesRatings.Clear();
+        scientificActivityRatings.Clear();
+        personalTraitsRatings.Clear();
+        studentActivitiesRatings.Clear();
+        hodStrengths = string.Empty;
+        hodWeaknesses = string.Empty;
+
+        try
+        {
+            // Load professor evaluations
+            try
+            {
+                var profEvaluations = await Http.GetFromJsonAsync<List<ProfessorEvaluationResponseDto>>(
+                    $"api/ProfessorEvaluation/GetByPeriodAndTA/{EvaluationPeriodId}/{SelectedTA.Id}");
+
+                if (profEvaluations != null)
+                {
+                    profdto = profEvaluations;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading professor evaluations: {ex.Message}");
+            }
+
+            // Load teaching data
+            if (SelectedTA.EvaluationId != 0)
+            {
+                // TODO: Replace with actual API call
+                teachingdto = new TeachingDataDto
+                {
+                    ActualTeachingLoad = 12,
+                    ExpectedTeachingLoad = 10,
+                    ClassCount = 3,
+                    gradegiven = 8
+                };
+            }
+
+            // Try to load existing HOD evaluation
+            try
+            {
+                var response = await Http.GetAsync($"api/HodEvaluation/HodEvaluationByEvaluationId/{SelectedTA.EvaluationId}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    hodEvaluationData = await response.Content.ReadFromJsonAsync<HodEvaluationResponseDto>();
+
+                    if (hodEvaluationData != null && hodEvaluationData.Evaluations?.Any() == true)
+                    {
+                        hodStrengths = hodEvaluationData.HodStrengths ?? string.Empty;
+                        hodWeaknesses = hodEvaluationData.HodWeaknesses ?? string.Empty;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading HOD evaluation: {ex.Message}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error in LoadData: {ex}");
+            await JS.InvokeVoidAsync("alert", $"حدث خطأ: {ex.Message}");
+        }
+        finally
+        {
+            isLoadingModal = false;
+        }
+    }
+
+    private void OnTeachingActivitiesRatingsChanged(Dictionary<int, int> ratings)
+    {
+        teachingActivitiesRatings = ratings;
+    }
+
+    private void OnScientificActivityRatingsChanged(Dictionary<int, int> ratings)
+    {
+        scientificActivityRatings = ratings;
+    }
+
+    private void OnPersonalTraitsRatingsChanged(Dictionary<int, int> ratings)
+    {
+        personalTraitsRatings = ratings;
+    }
+
+    private void OnStudentActivitiesRatingsChanged(Dictionary<int, int> ratings)
+    {
+        studentActivitiesRatings = ratings;
+    }
+
+    private Dictionary<int, int> GetExistingRatings(string criterionType)
+    {
+        if (hodEvaluationData?.Evaluations == null)
+            return new Dictionary<int, int>();
+
+        return hodEvaluationData.Evaluations
+            .Where(e => e.CriterionType == criterionType)
+            .ToDictionary(e => e.CriterionId, e => e.RatingId);
+    }
+
+    private int CalculateAverageScore()
+    {
+        if (profdto == null || !profdto.Any())
+            return 0;
+
+        var average = profdto.Average(e => e.TotalScore);
+        return (int)Math.Round(average);
+    }
+
+    private async Task HandleClose()
+    {
+        await OnClose.InvokeAsync();
+    }
+
+    private async Task HandleSave()
+    {
+        if (SelectedTA == null) return;
+
+        isSaving = true;
+
+        try
+        {
+            // Combine all ratings from different sections
+            var allRatings = new Dictionary<int, int>();
+
+            foreach (var rating in teachingActivitiesRatings)
+                allRatings[rating.Key] = rating.Value;
+
+            foreach (var rating in scientificActivityRatings)
+                allRatings[rating.Key] = rating.Value;
+
+            foreach (var rating in personalTraitsRatings)
+                allRatings[rating.Key] = rating.Value;
+
+            foreach (var rating in studentActivitiesRatings)
+                allRatings[rating.Key] = rating.Value;
+
+            if (allRatings.Count == 0)
+            {
+                await JS.InvokeVoidAsync("alert", "الرجاء تقييم المعايير المطلوبة");
+                return;
+            }
+
+            var criterionRatings = allRatings.Select(kvp => new CriterionRatingDto
+            {
+                CriterionId = kvp.Key,
+                RatingId = kvp.Value
+            }).ToList();
+
+            if (IsViewMode && hodEvaluationData != null)
+            {
+                // Update existing evaluation
+                var updateDto = new UpdateHodEvaluationDto
+                {
+                    CriterionRatings = criterionRatings,
+                    HodStrengths = hodStrengths,
+                    HodWeaknesses = hodWeaknesses
+                };
+
+                var response = await Http.PutAsJsonAsync(
+                    $"api/HodEvaluation/UpdateHodEvaluation/{SelectedTA.EvaluationId}",
+                    updateDto);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    await JS.InvokeVoidAsync("alert", "تم تحديث التقييم بنجاح");
+                    await OnSaveSuccess.InvokeAsync();
+                }
+                else
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    await JS.InvokeVoidAsync("alert", $"فشل تحديث التقييم: {error}");
+                }
+            }
+            else
+            {
+                // Create new evaluation
+                var createDto = new CreateHodEvaluationDto
+                {
+                    EvaluationId = SelectedTA.EvaluationId,
+                    CriterionRatings = criterionRatings,
+                    HodStrengths = hodStrengths,
+                    HodWeaknesses = hodWeaknesses
+                };
+
+                var response = await Http.PostAsJsonAsync("api/HodEvaluation/create", createDto);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    await JS.InvokeVoidAsync("alert", "تم حفظ التقييم بنجاح");
+                    await OnSaveSuccess.InvokeAsync();
+                }
+                else
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    await JS.InvokeVoidAsync("alert", $"فشل حفظ التقييم: {error}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving evaluation: {ex}");
+            await JS.InvokeVoidAsync("alert", $"حدث خطأ أثناء الحفظ: {ex.Message}");
+        }
+        finally
+        {
+            isSaving = false;
+        }
+
+    }
+    private async Task PrintModal()
+    {
+        try
+        {
+            Console.WriteLine("🔵 Starting HOD print process");
+            
+            // Add class to BODY element
+await JS.InvokeVoidAsync("eval", @"
+   console.log('Adding hod-printing class to body');
+       document.body.classList.add('hod-printing');
+    console.log('Body classes:', document.body.className);
+         ");
+            
+     // Set printing state
+      isPrinting = true;
+   StateHasChanged();
+            
+   // Wait for DOM to update
+       await Task.Delay(200);
+            
+ // Trigger print
+  Console.WriteLine("🔵 Triggering print dialog");
+         await JS.InvokeVoidAsync("window.print");
+            
+        // Wait for print dialog
+     await Task.Delay(300);
+            
+     // Remove class from BODY
+   await JS.InvokeVoidAsync("eval", @"
+        console.log('Removing hod-printing class from body');
+  document.body.classList.remove('hod-printing');
+            ");
+       
+            // Reset printing state
+       isPrinting = false;
+            StateHasChanged();
+    
+            Console.WriteLine("✅ Print process completed");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error printing: {ex.Message}");
+            await JS.InvokeVoidAsync("alert", $"خطأ في الطباعة: {ex.Message}");
+     
+            // Ensure cleanup
+ await JS.InvokeVoidAsync("eval", "document.body.classList.remove('hod-printing');");
+            isPrinting = false;
+   StateHasChanged();
+        }
+    }
+}
