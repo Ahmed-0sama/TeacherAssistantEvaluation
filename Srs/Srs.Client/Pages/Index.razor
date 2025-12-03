@@ -6,6 +6,10 @@
 @using System.Text.Json
 @inject HttpClient http
 
+<HeadContent>
+    <link href="./Custom-Rtl.css" rel="stylesheet" />
+</HeadContent>
+
 <div class="d-flex flex-column justify-content-center align-items-center vh-80">
     <h3 class="text-center mb-4">تقييم مساعد التدريس</h3>
 
@@ -33,7 +37,19 @@
     }
     else
     {
-        @* --- MAIN CONTENT (Only shows when loading is false) --- *@
+
+        @* View-Only Notice *@
+        @if (viewonly)
+        {
+            <div class="w-75 mb-4">
+                <div class="alert alert-info shadow-sm" role="alert">
+                    <h5 class="alert-heading">
+                        <i class="bi bi-lock-fill"></i> وضع العرض فقط
+                    </h5>
+                    <p class="mb-0">تم إرسال هذا التقييم ولا يمكن تعديله. يمكنك فقط عرض البيانات.</p>
+                </div>
+            </div>
+        }
 
         @* 1. Personal Data Card *@
         <div class="w-75 mb-4 shadow-sm">
@@ -81,30 +97,35 @@
         </div>
 
         <div class="w-75 mb-4 shadow-sm">
-            <Srs.Client.Compontets.EducationalActivityComponent OnActivityLoaded="HandleEducationalData" />
+            <Srs.Client.Compontets.EducationalActivityComponent OnActivityLoaded="HandleEducationalData"
+                                                                 />
         </div>
 
-        @* FIXED: Pass evaluationId to the component *@
+        @* FIXED: Pass evaluationId and IsReadOnly to the component *@
         <div class="w-75 mb-4 shadow-sm">
             <Srs.Client.Compontets.SentificِActivityComponent EvaluationId="@evaluationId"
                                                               InitialResearchPapers="@researchPapers"
                                                               InitialOtherActivities="@otherActivities"
+                                                              TAEmployeeId="@userData.Id"
                                                               OnResearchPapersLoaded="@HandleResearchPapersLoaded"
-                                                              OnOtherActivitiesLoaded="@HandleOtherActivitiesLoaded" />
+                                                              OnOtherActivitiesLoaded="@HandleOtherActivitiesLoaded"
+                                                              IsReadOnly="@viewonly" />
         </div>
 
         <div class="w-75 mb-4 shadow-sm">
             <Srs.Client.Compontets.AdministrativeِِActivityComponent InitialData="administrativeData"
-                                                                     OnActivityLoaded="HandleAdministrativeData" />
+                                                                     OnActivityLoaded="HandleAdministrativeData"
+                                                                     IsReadOnly="@viewonly" />
         </div>
 
         <div class="w-75 mb-4 shadow-sm">
             <Srs.Client.Compontets.StudentActivityComponent InitialData="studentActivityData"
-                                                            OnActivityLoaded="HandleStudentActivityData" />
+                                                            OnActivityLoaded="HandleStudentActivityData"
+                                                            IsReadOnly="@viewonly" />
         </div>
 
         <div class="w-75 mb-4 shadow-sm">
-            <Srs.Client.Compontets._ِAcademicAdvisingComponent />
+            <Srs.Client.Compontets._ِAcademicAdvisingComponent IsReadOnly="@viewonly" />
         </div>
 
         @if (!string.IsNullOrEmpty(successMessage))
@@ -127,29 +148,37 @@
             </div>
         }
 
-        <div class="w-75 mb-4">
-            <button class="btn btn-primary btn-lg w-100" @onclick="SubmitAllData">
-                @if (isExistingSubmission)
-                {
-                    <text>تحديث البيانات</text>
-                }
-                else
-                {
-                    <text>حفظ جميع البيانات</text>
-                }
-            </button>
-        </div>
+        @* Only show buttons if NOT in view-only mode *@
+        @if (!viewonly)
+        {
+            <div class="w-75 mb-4 d-flex gap-3">
+                <button class="btn btn-outline-primary btn-lg flex-fill" @onclick="SaveDraft">
+                    @if (isExistingSubmission)
+                    {
+                        <text>تحديث البيانات</text>
+                    }
+                    else
+                    {
+                        <text>حفظ جميع البيانات كمسودة</text>
+                    }
+                </button>
+                <button class="btn btn-primary btn-lg flex-fill" @onclick="SubmitAllData">
+                    ارسال التقييم
+                </button>
+            </div>
+        }
     }
 </div>
 
 @code {
     private UserDataDto userData = new UserDataDto();
     private bool isLoading = true;
-    private int evaluationId; // This will be set after CreateEvaluation
+    private int evaluationId;
     private int? submissionId;
     private bool isExistingSubmission = false;
     private string? errorMessage;
     private string? successMessage;
+    private bool viewonly = false;
 
     private List<ResearchPaperDto> researchPapers = new List<ResearchPaperDto>();
     private OtherActivitiesDto otherActivities = new OtherActivitiesDto();
@@ -201,7 +230,7 @@
         {
             userData = new Shared.Dtos.UserDataDto
             {
-                Id = 19,
+                Id = 7,
                 Name = "علياء احمد",
                 EmployeeNumber = 12323,
                 Qualification = "ماجستير في علوم الحاسب",
@@ -211,8 +240,7 @@
 
             Console.WriteLine("User data loaded successfully");
 
-            // Create or get evaluation
-            await CreateEvaluation();
+            await GetOrCreateEvaluation();
         }
         catch (Exception ex)
         {
@@ -222,72 +250,53 @@
         finally
         {
             isLoading = false;
-            StateHasChanged(); // Force UI update after evaluationId is set
+            StateHasChanged();
         }
     }
 
-    private async Task CreateEvaluation()
+    private async Task GetOrCreateEvaluation()
     {
         try
         {
-            var response = await http.PostAsync($"/api/Evaluation/CreateEvaluation?TaEmployeeId={userData.Id}&PeriodId=1", null);
+            var response = await http.PostAsync($"/api/Evaluation/getorcreate?taEmployeeId={userData.Id}&periodId=1", null);
 
             if (response.IsSuccessStatusCode)
             {
-                var result = await response.Content.ReadFromJsonAsync<EvaluationResponseDto>();
-                evaluationId = result.id;
-                Console.WriteLine($"✅ Evaluation created with ID: {evaluationId}");
+                var result = await response.Content.ReadFromJsonAsync<GetEvaluationDto>();
+                evaluationId = result.EvaluationId;
+                Console.WriteLine($"✅ Evaluation retrieved/created with ID: {evaluationId}");
 
-                // Force state change to update child components
+                var submissionResponse = await http.GetAsync($"/api/Evaluation/GetTASubmission/{evaluationId}");
+                if (submissionResponse.IsSuccessStatusCode)
+                {
+                    await LoadExistingTAData();
+                    isExistingSubmission = true;
+                    Console.WriteLine("✅ Existing submission loaded");
+                }
+                else
+                {
+                    Console.WriteLine("ℹ️ No existing submission found - new evaluation");
+                }
+
+                if (result.StatusId >= 2)
+                {
+                    viewonly = true;
+                    Console.WriteLine($"🔒 View-only mode enabled (StatusId: {result.StatusId})");
+                }
+
                 StateHasChanged();
             }
             else
             {
                 var error = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"Failed to create evaluation: {error}");
-
-                if (error.Contains("Evaluation already exists", StringComparison.OrdinalIgnoreCase))
-                {
-                    Console.WriteLine("Evaluation already exists, fetching existing...");
-                    await GetExistingEvaluationId();
-                }
+                Console.WriteLine($"❌ Failed to get or create evaluation: {error}");
+                errorMessage = $"فشل في تحميل التقييم: {error}";
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error creating evaluation: {ex.Message}");
-        }
-    }
-
-    private async Task GetExistingEvaluationId()
-    {
-        try
-        {
-            var response = await http.GetAsync($"/api/Evaluation/CanEdit/{userData.Id}");
-
-            if (response.IsSuccessStatusCode)
-            {
-                var json = await response.Content.ReadAsStringAsync();
-
-                if (!string.IsNullOrWhiteSpace(json))
-                {
-                    using var doc = JsonDocument.Parse(json);
-                    if (doc.RootElement.TryGetProperty("evaluationId", out var idElement))
-                    {
-                        evaluationId = idElement.GetInt32();
-                        Console.WriteLine($"✅ Existing evaluation found, ID = {evaluationId}");
-
-                        // Force state change
-                        StateHasChanged();
-
-                        await LoadExistingTAData();
-                    }
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error getting existing evaluation: {ex.Message}");
+            Console.WriteLine($"❌ Error getting or creating evaluation: {ex.Message}");
+            errorMessage = $"حدث خطأ: {ex.Message}";
         }
     }
 
@@ -303,11 +312,9 @@
 
                 if (existingData != null)
                 {
-                    isExistingSubmission = true;
-
-                    // Map research activities
-                    researchPapers = existingData.ResearchActivities?.Select(r => new ResearchPaperDto
+                    researchPapers = existingData.ResearchActivities?.Select((r, index) => new ResearchPaperDto
                     {
+                        Id = index + 1,
                         Title = r.Title,
                         ConferenceOrJournal = r.Journal,
                         Location = r.Location,
@@ -317,7 +324,6 @@
                         Url = r.Url
                     }).ToList() ?? new List<ResearchPaperDto>();
 
-                    // Map other activities
                     otherActivities = new OtherActivitiesDto
                     {
                         HasTechnicalReportsOrArticles = existingData.HasTechnicalReports,
@@ -325,7 +331,6 @@
                         HasAttendedScientificSeminars = existingData.HasAttendingSeminars
                     };
 
-                    // Map administrative data - CREATE NEW INSTANCE
                     administrativeData = new AdminstrativeActivityDto
                     {
                         IsAcademicGuidanceCommittee = existingData.IsInAcademicAdvisingCommittee,
@@ -336,7 +341,6 @@
                         IsSocialOrSportsActivityCommittees = existingData.IsInSocialOrSportsCommittee
                     };
 
-                    // Map student activity data - CREATE NEW INSTANCE
                     studentActivityData = new StudentActivityDto
                     {
                         IsCompletedStudentActivity = existingData.ParticipatedInSports,
@@ -344,17 +348,7 @@
                         IsCompletedCulturalActivity = existingData.ParticipatedInCultural
                     };
 
-                    Console.WriteLine($"✅ Loaded existing data: {researchPapers.Count} research papers");
-                    Console.WriteLine("✅ Administrative data loaded:");
-                    Console.WriteLine($"   IsAcademicGuidanceCommittee = {administrativeData.IsAcademicGuidanceCommittee}");
-                    Console.WriteLine($"   ISchedulingCommittee = {administrativeData.ISchedulingCommittee}");
-                    Console.WriteLine($"   IsQualityWorksCommittee = {administrativeData.IsQualityWorksCommittee}");
-                    Console.WriteLine($"   IsLaboratoryEquipmentCommittee = {administrativeData.IsLaboratoryEquipmentCommittee}");
-                    Console.WriteLine($"   IsExaminationsOrganizingCommittee = {administrativeData.IsExaminationsOrganizingCommittee}");
-                    Console.WriteLine($"   IsSocialOrSportsActivityCommittees = {administrativeData.IsSocialOrSportsActivityCommittees}");
-                    Console.WriteLine($"✅ Student Activity: Sport={studentActivityData.IsCompletedStudentActivity}, Social={studentActivityData.IsCompletedSocialActivity}, Cultural={studentActivityData.IsCompletedCulturalActivity}");
-
-                    // Force UI update to pass data to child components
+                    Console.WriteLine("✅ All existing data mapped successfully");
                     await InvokeAsync(StateHasChanged);
                 }
             }
@@ -365,11 +359,10 @@
         }
     }
 
-    private async Task SubmitAllData()
+    private async Task SaveDraft()
     {
-        Console.WriteLine("=== Starting SubmitAllData ===");
+        Console.WriteLine("=== Starting SaveDraft ===");
 
-        // Validate all required data
         if (educationalData == null)
         {
             errorMessage = "بيانات النشاط التعليمي مفقودة";
@@ -398,9 +391,8 @@
             return;
         }
 
-        Console.WriteLine("✅ All data present, proceeding with submission...");
+        Console.WriteLine("✅ All data present, proceeding with saving draft...");
 
-        // Map ResearchPapers -> CreateResearchActivityDto
         var researchActivities = researchPapers.Select(p => new CreateResearchActivityDto
         {
             Title = p.Title,
@@ -461,6 +453,99 @@
         }
     }
 
+    private async Task SubmitAllData()
+    {
+        Console.WriteLine("=== Starting SubmitAllData (Final Submission) ===");
+
+        if (educationalData == null)
+        {
+            errorMessage = "بيانات النشاط التعليمي مفقودة";
+            StateHasChanged();
+            return;
+        }
+
+        if (administrativeData == null)
+        {
+            errorMessage = "بيانات النشاط الإداري مفقودة";
+            StateHasChanged();
+            return;
+        }
+
+        if (studentActivityData == null)
+        {
+            errorMessage = "بيانات النشاط الطلابي مفقودة";
+            StateHasChanged();
+            return;
+        }
+
+        if (educationalData.TeachingData == null)
+        {
+            errorMessage = "بيانات التدريس مفقودة";
+            StateHasChanged();
+            return;
+        }
+
+        Console.WriteLine("✅ All data present, proceeding with final submission...");
+
+        var researchActivities = researchPapers.Select(p => new CreateResearchActivityDto
+        {
+            Title = p.Title,
+            Journal = p.ConferenceOrJournal,
+            Location = p.Location,
+            PageCount = p.PageCount,
+            ActivityDate = p.Date,
+            StatusId = p.Status,
+            Url = p.Url
+        }).ToList();
+
+        var updateData = new UpdateTASubmissionsDto
+        {
+            ActualTeachingLoad = educationalData.TeachingData.ActualTeachingLoad,
+            ExpectedTeachingLoad = educationalData.TeachingData.ExpectedTeachingLoad,
+            HasTechnicalReports = otherActivities.HasTechnicalReportsOrArticles,
+            HasSeminarLectures = otherActivities.HasGivenLecturesOrSeminars,
+            HasAttendingSeminars = otherActivities.HasAttendedScientificSeminars,
+            AdvisedStudentCount = 2,
+            ResearchActivities = researchActivities,
+            IsInAcademicAdvisingCommittee = administrativeData.IsAcademicGuidanceCommittee,
+            IsInSchedulingCommittee = administrativeData.ISchedulingCommittee,
+            IsInQualityAssuranceCommittee = administrativeData.IsQualityWorksCommittee,
+            IsInLabEquipmentCommittee = administrativeData.IsLaboratoryEquipmentCommittee,
+            IsInExamOrganizationCommittee = administrativeData.IsExaminationsOrganizingCommittee,
+            IsInSocialOrSportsCommittee = administrativeData.IsSocialOrSportsActivityCommittees,
+            ParticipatedInSports = studentActivityData.IsCompletedStudentActivity,
+            ParticipatedInSocial = studentActivityData.IsCompletedSocialActivity,
+            ParticipatedInCultural = studentActivityData.IsCompletedCulturalActivity
+        };
+
+        try
+        {
+            var response = await http.PutAsJsonAsync($"/api/Evaluation/Submit/{evaluationId}", updateData);
+
+            if (response.IsSuccessStatusCode)
+            {
+                Console.WriteLine("✅ Evaluation submitted successfully!");
+                successMessage = "تم إرسال التقييم بنجاح!";
+                errorMessage = null;
+                viewonly = true;
+                StateHasChanged();
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"❌ Submit failed: {error}");
+                errorMessage = $"فشل في إرسال التقييم: {error}";
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Exception during submit: {ex.Message}");
+            errorMessage = $"حدث خطأ أثناء الإرسال: {ex.Message}";
+            StateHasChanged();
+        }
+    }
+
     private async Task CreateSubmission(CreateTASubmissionDto data)
     {
         try
@@ -494,6 +579,7 @@
 
                 successMessage = "تم حفظ البيانات بنجاح!";
                 errorMessage = null;
+                isExistingSubmission = true;
                 StateHasChanged();
             }
             else
@@ -516,7 +602,7 @@
     {
         try
         {
-            Console.WriteLine($"🔄 Updating submission ID: {evaluationId}");
+            Console.WriteLine($"🔄 Updating submission for evaluation ID: {evaluationId}");
             var response = await http.PutAsJsonAsync($"/api/Evaluation/UpdateTASubmission/{evaluationId}", data);
 
             if (response.IsSuccessStatusCode)

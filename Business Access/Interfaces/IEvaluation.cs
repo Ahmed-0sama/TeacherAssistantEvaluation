@@ -9,7 +9,6 @@ namespace Business_Access.Interfaces
 {
     public interface IEvaluation
     {
-        Task<int> CreateEvaluationAsync(int taEmployeeId, int periodId);
         Task<int> SubmitTAFilesAsync(int evaluationId, CreateTASubmissionDto submissionDto);
 
         Task UpdateTASubmissionAsync(int evalautionid, UpdateTASubmissionsDto submissionDto);
@@ -25,6 +24,8 @@ namespace Business_Access.Interfaces
 
         Task<IEnumerable<GetEvaluationDto>> GetEvaluationsByPeriodAsync(int periodId);
 
-        Task<int?> CanTAEditEvaluationAsync(int taEmployeeId);
+        Task<GetEvaluationDto> GetOrCreateEvaluationAsync(int taEmployeeId, int periodId);
+
+        Task<GetEvaluationDto> SubmitEvaluation(int evaluationId, UpdateTASubmissionsDto submissionDto);
     }
 }

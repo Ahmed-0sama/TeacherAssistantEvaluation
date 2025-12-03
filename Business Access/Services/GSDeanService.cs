@@ -83,6 +83,7 @@ namespace Business_Access.Services
             {
                 var entity = new GsdeanEvaluation
                 {
+                    GsdeanEmloyeeId = dto.GsSupervisorId,
                     EvaluationPeriodId = dto.EvaluationPeriodId,
                     TaEmployeeId= dto.TaEmployeeId,
                     ProgramName = dto.ProgramName,

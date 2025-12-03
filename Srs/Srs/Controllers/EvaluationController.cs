@@ -1,4 +1,5 @@
 ﻿using Business_Access.Interfaces;
+using Business_Access.Services;
 using DataAccess.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -15,20 +16,13 @@ namespace Srs.Controllers
         {
             _evaluationService = evaluationService;
         }
-        [HttpPost("CreateEvaluation")]
-        public async Task<IActionResult> CreateEvaluation(int TaEmployeeId,int PeriodId)
+        [HttpPost("getorcreate")]
+        public async Task<IActionResult> GetOrCreateEvaluation(int taEmployeeId, int periodId)
         {
             try
             {
-                if (!ModelState.IsValid)
-                    return BadRequest(ModelState);
-
-                var evaluationId = await _evaluationService.CreateEvaluationAsync(TaEmployeeId, PeriodId);
-                return Ok(new { id = evaluationId });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return Conflict(new { message = ex.Message });
+                var evaluation = await _evaluationService.GetOrCreateEvaluationAsync(taEmployeeId, periodId);
+                return Ok(evaluation);
             }
             catch (KeyNotFoundException ex)
             {
@@ -36,7 +30,7 @@ namespace Srs.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "An error occurred while creating the evaluation.", details = ex.Message });
+                return StatusCode(500, new { message = ex.Message });
             }
         }
         [HttpPost("{evaluationId}/SubmitTAFiles")]
@@ -125,22 +119,20 @@ namespace Srs.Controllers
                 return StatusCode(500, new { message = "An error occurred while retrieving the evaluation.", details = ex.Message });
             }
         }
-        [HttpGet("CanEdit/{taEmployeeId}")]
-
-        public async Task<IActionResult> CanTAEditEvaluation(int taEmployeeId)
+        [HttpPut("Submit/{Evaluationid}")]
+        public async Task<IActionResult> SubmitEvaluation(int Evaluationid,[FromBody] UpdateTASubmissionsDto evaluation)
         {
             try
             {
-                if (taEmployeeId <= 0)
-                    return BadRequest("Invalid TA employee ID");
-
-                var evaluationId = await _evaluationService.CanTAEditEvaluationAsync(taEmployeeId);
-
-                return Ok(new { evaluationId });
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+                var submittedEvaluation = await _evaluationService.SubmitEvaluation(Evaluationid, evaluation);
+                return Ok(submittedEvaluation);
             }
+
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "An error occurred while checking edit permissions.", details = ex.Message });
+                return StatusCode(500, new { message = "An error occurred while submitting the evaluation.", details = ex.Message });
             }
         }
         [HttpGet("period/{periodId}")]

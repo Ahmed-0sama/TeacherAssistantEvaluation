@@ -16,6 +16,7 @@
                            class="form-check-input"
                            id="IsAcademicGuidanceCommittee"
                            checked="@AdminstrativeActivityDto.IsAcademicGuidanceCommittee"
+                           disabled="@IsReadOnly"
                            @onchange="@((e) => UpdateCheckbox(nameof(AdminstrativeActivityDto.IsAcademicGuidanceCommittee), e))" />
                     <label class="form-check-label" for="IsAcademicGuidanceCommittee">
                         لجنة الارشاد الاكاديمي
@@ -28,6 +29,7 @@
                            class="form-check-input"
                            id="ISchedulingCommittee"
                            checked="@AdminstrativeActivityDto.ISchedulingCommittee"
+                           disabled="@IsReadOnly"
                            @onchange="@((e) => UpdateCheckbox(nameof(AdminstrativeActivityDto.ISchedulingCommittee), e))" />
                     <label class="form-check-label" for="ISchedulingCommittee">
                         لجنة الجدولة
@@ -40,6 +42,7 @@
                            class="form-check-input"
                            id="IsQualityWorksCommittee"
                            checked="@AdminstrativeActivityDto.IsQualityWorksCommittee"
+                           disabled="@IsReadOnly"
                            @onchange="@((e) => UpdateCheckbox(nameof(AdminstrativeActivityDto.IsQualityWorksCommittee), e))" />
                     <label class="form-check-label" for="IsQualityWorksCommittee">
                         لجنة اعمال الجودة
@@ -52,6 +55,7 @@
                            class="form-check-input"
                            id="IsLaboratoryEquipmentCommittee"
                            checked="@AdminstrativeActivityDto.IsLaboratoryEquipmentCommittee"
+                           disabled="@IsReadOnly"
                            @onchange="@((e) => UpdateCheckbox(nameof(AdminstrativeActivityDto.IsLaboratoryEquipmentCommittee), e))" />
                     <label class="form-check-label" for="IsLaboratoryEquipmentCommittee">
                         لجنة التجهيزات المعملية
@@ -64,6 +68,7 @@
                            class="form-check-input"
                            id="IsExaminationsOrganizingCommittee"
                            checked="@AdminstrativeActivityDto.IsExaminationsOrganizingCommittee"
+                           disabled="@IsReadOnly"
                            @onchange="@((e) => UpdateCheckbox(nameof(AdminstrativeActivityDto.IsExaminationsOrganizingCommittee), e))" />
                     <label class="form-check-label" for="IsExaminationsOrganizingCommittee">
                         لجنة تنظيم الامتحانات
@@ -76,6 +81,7 @@
                            class="form-check-input"
                            id="IsSocialOrSportsActivityCommittees"
                            checked="@AdminstrativeActivityDto.IsSocialOrSportsActivityCommittees"
+                           disabled="@IsReadOnly"
                            @onchange="@((e) => UpdateCheckbox(nameof(AdminstrativeActivityDto.IsSocialOrSportsActivityCommittees), e))" />
                     <label class="form-check-label" for="IsSocialOrSportsActivityCommittees">
                         لجان النشاط الاجتماعي او الرياضي
@@ -92,6 +98,8 @@
 
     [Parameter]
     public AdminstrativeActivityDto? InitialData { get; set; }
+    [Parameter]
+    public bool IsReadOnly { get; set; } 
 
     [Parameter]
     public EventCallback<AdminstrativeActivityDto> OnActivityLoaded { get; set; }

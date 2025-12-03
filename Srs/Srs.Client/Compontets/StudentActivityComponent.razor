@@ -14,6 +14,7 @@
                 <div class="form-check form-check-rtl">
                     <InputCheckbox class="form-check-input"
                                    id="sportActivity"
+                                   disabled="@IsReadOnly"
                                    @bind-Value="studentActivity.IsCompletedStudentActivity"
                                    @bind-Value:after="SendDataToParent" />
                     <label class="form-check-label" for="sportActivity">
@@ -25,6 +26,7 @@
                 <div class="form-check form-check-rtl">
                     <InputCheckbox class="form-check-input"
                                    id="socialActivity"
+                                   disabled="@IsReadOnly"
                                    @bind-Value="studentActivity.IsCompletedSocialActivity"
                                    @bind-Value:after="SendDataToParent" />
                     <label class="form-check-label" for="socialActivity">
@@ -36,6 +38,7 @@
                 <div class="form-check form-check-rtl">
                     <InputCheckbox class="form-check-input"
                                    id="culturalActivity"
+                                   disabled="@IsReadOnly"
                                    @bind-Value="studentActivity.IsCompletedCulturalActivity"
                                    @bind-Value:after="SendDataToParent" />
                     <label class="form-check-label" for="culturalActivity">
@@ -53,7 +56,8 @@
 
     [Parameter]
     public StudentActivityDto? InitialData { get; set; }
-
+    [Parameter]
+    public bool IsReadOnly { get; set; }
     [Parameter]
     public EventCallback<StudentActivityDto> OnActivityLoaded { get; set; }
 

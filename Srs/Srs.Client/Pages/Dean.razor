@@ -1,4 +1,4 @@
-ï»¿@page "/dean"
+@page "/dean"
 @using Shared.Dtos.ProfessorEvaluationDto
 @using Shared.Dtos.TASubmissions
 @using Shared.Dtos.DeanDto
@@ -23,34 +23,34 @@
     </div>
 }
 
-<h3 class="text-center mb-4">Ù…ØªØ§Ø¨Ø¹Ø© Ø§Ù„ØªÙ‚ÙŠÙŠÙ…Ø§Øª - Ø¹Ù…ÙŠØ¯ Ø§Ù„ÙƒÙ„ÙŠØ©</h3>
+<h3 class="text-center mb-4">ãÊÇÈÚÉ ÇáÊŞííãÇÊ - ÚãíÏ ÇáßáíÉ</h3>
 
 <div class="d-flex flex-column justify-content-center align-items-center vh-80">
     <div class="w-75 mb-4 shadow-sm p-4 bg-white" dir="rtl">
         <p class="text-muted text-center mb-4">
-            ØªØ¸Ù‡Ø± ÙÙŠ Ù‡Ø°Ù‡ Ø§Ù„Ù‚Ø§Ø¦Ù…Ø© Ø§Ù„ØªÙ‚ÙŠÙŠÙ…Ø§Øª Ø§Ù„ØªÙŠ ØªÙ… Ø§Ø³ØªÙƒÙ…Ø§Ù„Ù‡Ø§ ÙˆØ§Ø¹ØªÙ…Ø§Ø¯Ù‡Ø§ Ù…Ù† Ù‚Ø¨Ù„ Ø±Ø¦ÙŠØ³ Ø§Ù„Ù‚Ø³Ù…ØŒ ÙˆÙ‡ÙŠ Ø§Ù„Ø¢Ù† Ø¬Ø§Ù‡Ø²Ø© Ù„Ù„Ù…Ø±Ø§Ø¬Ø¹Ø© ÙˆØ§Ù„Ø§Ø¹ØªÙ…Ø§Ø¯ Ø§Ù„Ù†Ù‡Ø§Ø¦ÙŠ.
+            ÊÙåÑ İí åĞå ÇáŞÇÆãÉ ÇáÊŞííãÇÊ ÇáÊí Êã ÇÓÊßãÇáåÇ æÇÚÊãÇÏåÇ ãä ŞÈá ÑÆíÓ ÇáŞÓã¡ æåí ÇáÂä ÌÇåÒÉ ááãÑÇÌÚÉ æÇáÇÚÊãÇÏ ÇáäåÇÆí.
         </p>
 
         <div class="row g-3 mb-4">
             <div class="col-md-6">
                 <input type="text"
                        class="form-control"
-                       placeholder="Ø¨Ø­Ø« Ø¨Ø§Ù„Ø§Ø³Ù… Ø£Ùˆ Ø§Ù„Ø±Ù‚Ù… Ø§Ù„ÙˆØ¸ÙŠÙÙŠ Ø£Ùˆ Ø§Ù„Ø­Ø§Ù„Ø©..."
+                       placeholder="ÈÍË ÈÇáÇÓã Ãæ ÇáÑŞã ÇáæÙíİí Ãæ ÇáÍÇáÉ..."
                        @bind="SearchTerm"
                        @bind:event="oninput" />
             </div>
             <div class="col-md-3">
                 <select class="form-select">
-                    <option selected>ÙÙ„ØªØ±Ø© Ø­Ø³Ø¨ Ø§Ù„Ù‚Ø³Ù…</option>
-                    <option>Ù‚Ø³Ù… Ø¹Ù„ÙˆÙ… Ø§Ù„Ø­Ø§Ø³Ø¨</option>
-                    <option>Ù‚Ø³Ù… Ù†Ø¸Ù… Ø§Ù„Ù…Ø¹Ù„ÙˆÙ…Ø§Øª</option>
+                    <option selected>İáÊÑÉ ÍÓÈ ÇáŞÓã</option>
+                    <option>ŞÓã Úáæã ÇáÍÇÓÈ</option>
+                    <option>ŞÓã äÙã ÇáãÚáæãÇÊ</option>
                 </select>
             </div>
             <div class="col-md-3">
                 <select class="form-select">
-                    <option selected>ÙÙ„ØªØ±Ø© Ø­Ø³Ø¨ Ø§Ù„ÙØªØ±Ø© Ø§Ù„Ø²Ù…Ù†ÙŠØ©</option>
-                    <option>Ø§Ù„ÙØµÙ„ Ø§Ù„Ø¯Ø±Ø§Ø³ÙŠ Ø§Ù„Ø£ÙˆÙ„ 2024</option>
-                    <option>Ø§Ù„ÙØµÙ„ Ø§Ù„Ø¯Ø±Ø§Ø³ÙŠ Ø§Ù„Ø«Ø§Ù†ÙŠ 2024</option>
+                    <option selected>İáÊÑÉ ÍÓÈ ÇáİÊÑÉ ÇáÒãäíÉ</option>
+                    <option>ÇáİÕá ÇáÏÑÇÓí ÇáÃæá 2024</option>
+                    <option>ÇáİÕá ÇáÏÑÇÓí ÇáËÇäí 2024</option>
                 </select>
             </div>
         </div>
@@ -59,9 +59,9 @@
         {
             <div class="text-center py-5">
                 <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Ø¬Ø§Ø±Ù ØªØ­Ù…ÙŠÙ„ Ø§Ù„Ø¨ÙŠØ§Ù†Ø§Øª...</span>
+                    <span class="visually-hidden">ÌÇÑò ÊÍãíá ÇáÈíÇäÇÊ...</span>
                 </div>
-                <p class="mt-3 text-muted">Ø¬Ø§Ø±Ù ØªØ­Ù…ÙŠÙ„ Ø§Ù„Ø¨ÙŠØ§Ù†Ø§Øª...</p>
+                <p class="mt-3 text-muted">ÌÇÑò ÊÍãíá ÇáÈíÇäÇÊ...</p>
             </div>
         }
         else if (!string.IsNullOrEmpty(LoadError))
@@ -74,7 +74,7 @@
         {
             <div class="alert alert-info text-center">
                 <i class="bi bi-info-circle me-2"></i>
-                Ù„Ø§ ØªÙˆØ¬Ø¯ ØªÙ‚ÙŠÙŠÙ…Ø§Øª Ù…ØªØ§Ø­Ø© Ù„Ù„Ø¹Ø±Ø¶
+                áÇ ÊæÌÏ ÊŞííãÇÊ ãÊÇÍÉ ááÚÑÖ
             </div>
         }
         else
@@ -83,13 +83,13 @@
                 <table class="table table-hover table-striped align-middle">
                     <thead class="table-primary">
                         <tr>
-                            <th>Ø§Ø³Ù… Ù…Ø³Ø§Ø¹Ø¯ Ø§Ù„ØªØ¯Ø±ÙŠØ³</th>
-                            <th>Ø§Ù„Ø±Ù‚Ù… Ø§Ù„ÙˆØ¸ÙŠÙÙŠ</th>
-                            <th>Ø§Ù„Ù‚Ø³Ù…</th>
-                            <th>Ø§Ù„ÙØªØ±Ø©</th>
-                            <th>Ø§Ù„ØªÙ‚Ø¯ÙŠØ±</th>
-                            <th>Ø§Ù„Ø­Ø§Ù„Ø©</th>
-                            <th class="text-center">Ø¥Ø¬Ø±Ø§Ø¡</th>
+                            <th>ÇÓã ãÓÇÚÏ ÇáÊÏÑíÓ</th>
+                            <th>ÇáÑŞã ÇáæÙíİí</th>
+                            <th>ÇáŞÓã</th>
+                            <th>ÇáİÊÑÉ</th>
+                            <th>ÇáÊŞÏíÑ</th>
+                            <th>ÇáÍÇáÉ</th>
+                            <th class="text-center">ÅÌÑÇÁ</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -98,23 +98,23 @@
                             <tr>
                                 <td>@($"TA #{eval.taEmployeeId}")</td>
                                 <td>@eval.taEmployeeId</td>
-                                <td>@(eval.statusName ?? "ØºÙŠØ± Ù…Ø­Ø¯Ø¯")</td>
-                                <td>@(eval.periodName ?? "ØºÙŠØ± Ù…Ø­Ø¯Ø¯")</td>
+                                <td>@(eval.statusName ?? "ÛíÑ ãÍÏÏ")</td>
+                                <td>@(eval.periodName ?? "ÛíÑ ãÍÏÏ")</td>
                                 <td>
                                     <span class="@GetGradeBadgeClass(eval.statusName)">
-                                        @(eval.statusName ?? "ØºÙŠØ± Ù…Ø­Ø¯Ø¯")
+                                        @(eval.statusName ?? "ÛíÑ ãÍÏÏ")
                                     </span>
                                 </td>
                                 <td>
                                     <span class="@GetStatusBadgeClass(eval.statusName)">
-                                        @(eval.statusName ?? "ØºÙŠØ± Ù…Ø­Ø¯Ø¯")
+                                        @(eval.statusName ?? "ÛíÑ ãÍÏÏ")
                                     </span>
                                 </td>
                                 <td class="text-center">
                                     <button type="button"
                                             class="btn btn-sm btn-primary"
                                             @onclick="() => OpenModal(eval)">
-                                        Ø¹Ø±Ø¶ Ø§Ù„ØªÙØ§ØµÙŠÙ„
+                                        ÚÑÖ ÇáÊİÇÕíá
                                     </button>
                                 </td>
                             </tr>
@@ -127,12 +127,12 @@
 </div>
 
 @* ===== Modal for Dean Evaluation Detail ===== *@
-@if (IsModalVisible && SelectedData is not null)
+@if (IsModalVisible && SelectedData is not null && !IsHodModalVisible)
 {
     <div class="modal-overlay" @onclick="HideModal">
-        <div class="modal-container" @onclick:stopPropagation="true" style="max-width: 800px;" dir="rtl">
+        <div class="modal-container modal-container-lg" @onclick:stopPropagation="true" dir="rtl">
             <div class="modal-header">
-                <h5 class="m-0">ØªÙØ§ØµÙŠÙ„ Ø§Ù„ØªÙ‚ÙŠÙŠÙ… - Ø¹Ù…ÙŠØ¯ Ø§Ù„ÙƒÙ„ÙŠØ©</h5>
+                <h5 class="m-0">ÊİÇÕíá ÇáÊŞííã - ÚãíÏ ÇáßáíÉ</h5>
                 <button type="button" class="btn-close btn-close-white" @onclick="HideModal" aria-label="Close"></button>
             </div>
 
@@ -141,9 +141,9 @@
                 {
                     <div class="text-center py-4">
                         <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Ø¬Ø§Ø±Ù ØªØ­Ù…ÙŠÙ„ Ø§Ù„ØªÙØ§ØµÙŠÙ„...</span>
+                            <span class="visually-hidden">ÌÇÑò ÊÍãíá ÇáÊİÇÕíá...</span>
                         </div>
-                        <p class="mt-3 text-muted">Ø¬Ø§Ø±Ù ØªØ­Ù…ÙŠÙ„ Ø§Ù„ØªÙØ§ØµÙŠÙ„...</p>
+                        <p class="mt-3 text-muted">ÌÇÑò ÊÍãíá ÇáÊİÇÕíá...</p>
                     </div>
                 }
                 else if (!string.IsNullOrEmpty(DetailError))
@@ -154,24 +154,24 @@
                 }
                 else
                 {
-                    @* Ù…Ø¹Ù„ÙˆÙ…Ø§Øª Ø¹Ø§Ù…Ø© *@
+                    @* ãÚáæãÇÊ ÚÇãÉ *@
                     <div class="info-section mb-4">
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <p class="mb-1"><strong>Ø§Ø³Ù… Ø§Ù„Ù…Ø³Ø§Ø¹Ø¯:</strong> @SelectedData.TaName</p>
+                                <p class="mb-1"><strong>ÇÓã ÇáãÓÇÚÏ:</strong> @SelectedData.TaName</p>
                             </div>
                             <div class="col-md-6">
-                                <p class="mb-1"><strong>Ø§Ù„Ø±Ù‚Ù… Ø§Ù„ÙˆØ¸ÙŠÙÙŠ:</strong> @SelectedData.TaEmployeeId</p>
+                                <p class="mb-1"><strong>ÇáÑŞã ÇáæÙíİí:</strong> @SelectedData.TaEmployeeId</p>
                             </div>
                             <div class="col-md-6">
-                                <p class="mb-1"><strong>Ø§Ù„Ù‚Ø³Ù…:</strong> @SelectedData.TaEmail</p>
+                                <p class="mb-1"><strong>ÇáŞÓã:</strong> @SelectedData.TaEmail</p>
                             </div>
                             <div class="col-md-6">
-                                <p class="mb-1"><strong>Ø§Ù„ÙØªØ±Ø©:</strong> @SelectedData.PeriodName</p>
+                                <p class="mb-1"><strong>ÇáİÊÑÉ:</strong> @SelectedData.PeriodName</p>
                             </div>
                             <div class="col-md-6">
                                 <p class="mb-1">
-                                    <strong>Ø§Ù„Ø­Ø§Ù„Ø© Ø§Ù„Ø­Ø§Ù„ÙŠØ©:</strong>
+                                    <strong>ÇáÍÇáÉ ÇáÍÇáíÉ:</strong>
                                     <span class="@GetStatusBadgeClass(SelectedData.StatusName)">
                                         @SelectedData.StatusName
                                     </span>
@@ -181,7 +181,7 @@
                             {
                                 <div class="col-md-6">
                                     <p class="mb-1">
-                                        <strong>Ø§Ù„ØªÙ‚Ø¯ÙŠØ± Ø§Ù„Ù†Ù‡Ø§Ø¦ÙŠ:</strong>
+                                        <strong>ÇáÊŞÏíÑ ÇáäåÇÆí:</strong>
                                         <span class="@GetGradeBadgeClass(SelectedData.FinalGrade)">
                                             @SelectedData.FinalGrade
                                         </span>
@@ -193,21 +193,21 @@
 
             <hr />
 
-            @* Ù…Ù„Ø®Øµ Ø§Ù„ØªÙ‚Ø±ÙŠØ± *@
+            @* ãáÎÕ ÇáÊŞÑíÑ *@
             <div class="mb-3">
-                <h6 class="fw-bold mb-2">Ù…Ù„Ø®Øµ Ø§Ù„ØªÙ‚ÙŠÙŠÙ…</h6>
+                <h6 class="fw-bold mb-2">ãáÎÕ ÇáÊŞííã</h6>
                 <p class="text-muted">
                     @(!string.IsNullOrEmpty(SelectedData.FinalGrade)
                                         ? SelectedData.FinalGrade
-                                        : "Ù…Ù„Ø®Øµ Ø§Ù„ØªÙ‚ÙŠÙŠÙ… Ù…Ù† Ø±Ø¦ÙŠØ³ Ø§Ù„Ù‚Ø³Ù… ÙˆØ£Ø¹Ø¶Ø§Ø¡ Ø§Ù„Ù„Ø¬Ø§Ù† ÙŠØ¸Ù‡Ø± Ù‡Ù†Ø§ Ø¥Ù† ÙƒØ§Ù† Ù…ØªÙˆÙØ±Ø§Ù‹.")
+                                        : "ãáÎÕ ÇáÊŞííã ãä ÑÆíÓ ÇáŞÓã æÃÚÖÇÁ ÇááÌÇä íÙåÑ åäÇ Åä ßÇä ãÊæİÑÇğ.")
                 </p>
             </div>
 
-                    @* Ù…Ù„Ø§Ø­Ø¸Ø§Øª Ø§Ù„Ø¹Ù…ÙŠØ¯ Ø§Ù„Ø³Ø§Ø¨Ù‚Ø© (Ø¥Ù† ÙˆØ¬Ø¯Øª) *@
+                    @* ãáÇÍÙÇÊ ÇáÚãíÏ ÇáÓÇÈŞÉ (Åä æÌÏÊ) *@
             @if (!string.IsNullOrWhiteSpace(SelectedData.DeanReturnComment))
                     {
                         <div class="mb-3">
-                            <h6 class="fw-bold mb-2">Ù…Ù„Ø§Ø­Ø¸Ø§Øª Ø§Ù„Ø¹Ù…ÙŠØ¯ Ø§Ù„Ø³Ø§Ø¨Ù‚Ø©</h6>
+                            <h6 class="fw-bold mb-2">ãáÇÍÙÇÊ ÇáÚãíÏ ÇáÓÇÈŞÉ</h6>
                             <div class="alert alert-secondary">
                                 @SelectedData.DeanReturnComment
                             </div>
@@ -216,15 +216,15 @@
 
                     <hr />
 
-                    @* Ù…Ù„Ø®Øµ Ø§Ù„Ø¯Ø±Ø¬Ø§Øª *@
+                    @* ãáÎÕ ÇáÏÑÌÇÊ *@
                     <div class="mb-4">
-                        <h6 class="fw-bold mb-3">Ù…Ù„Ø®Øµ Ø§Ù„Ø¯Ø±Ø¬Ø§Øª</h6>
+                        <h6 class="fw-bold mb-3">ãáÎÕ ÇáÏÑÌÇÊ</h6>
                         <div class="row g-3">
                             <div class="col-md-12">
                                 <div class="card border-primary">
                                     <div class="card-body">
                                         <div class="d-flex justify-content-between align-items-center">
-                                            <span class="text-muted">Ø§Ù„Ù†Ø´Ø§Ø· Ø§Ù„ØªØ¹Ù„ÙŠÙ…ÙŠ (50%)</span>
+                                            <span class="text-muted">ÇáäÔÇØ ÇáÊÚáíãí (50%)</span>
                                             <span class="fw-bold text-primary">@getvalue(SelectedData.TotalScore) / 50</span>
                                         </div>
                                     </div>
@@ -234,7 +234,7 @@
                                 <div class="card border-primary">
                                     <div class="card-body">
                                         <div class="d-flex justify-content-between align-items-center">
-                                            <span class="text-muted">Ø§Ù„Ù†Ø´Ø§Ø· Ø§Ù„Ø¹Ù„Ù…ÙŠ (10%)</span>
+                                            <span class="text-muted">ÇáäÔÇØ ÇáÚáãí (10%)</span>
                                             <span class="fw-bold text-primary">@getvalue(SelectedData.ScientificActivityScore) / 10</span>
                                         </div>
                                     </div>
@@ -244,7 +244,7 @@
                                 <div class="card border-primary">
                                     <div class="card-body">
                                         <div class="d-flex justify-content-between align-items-center">
-                                            <span class="text-muted">Ø§Ù„Ù†Ø´Ø§Ø· Ø§Ù„Ø¥Ø¯Ø§Ø±ÙŠ (10%)</span>
+                                            <span class="text-muted">ÇáäÔÇØ ÇáÅÏÇÑí (10%)</span>
                                             <span class="fw-bold text-primary">@getvalue(SelectedData.AdministrativeActivityScore) / 10</span>
                                         </div>
                                     </div>
@@ -254,7 +254,7 @@
                                 <div class="card border-primary">
                                     <div class="card-body">
                                         <div class="d-flex justify-content-between align-items-center">
-                                            <span class="text-muted">Ø§Ù„Ø£Ù†Ø´Ø·Ø© Ø§Ù„Ø·Ù„Ø§Ø¨ÙŠØ© (10%)</span>
+                                            <span class="text-muted">ÇáÃäÔØÉ ÇáØáÇÈíÉ (10%)</span>
                                             <span class="fw-bold text-primary">@getvalue(SelectedData.StudentActivitiesScore) / 10</span>
                                         </div>
                                     </div>
@@ -264,7 +264,7 @@
                                 <div class="card border-primary">
                                     <div class="card-body">
                                         <div class="d-flex justify-content-between align-items-center">
-                                            <span class="text-muted">Ø§Ø³ØªÙ‚ØµØ§Ø¡ Ø§Ù„Ø·Ù„Ø§Ø¨ (5%)</span>
+                                            <span class="text-muted">ÇÓÊŞÕÇÁ ÇáØáÇÈ (5%)</span>
                                             <span class="fw-bold text-primary">@getvalue(SelectedData.StudentSurveyScore) / 5</span>
                                         </div>
                                     </div>
@@ -274,7 +274,7 @@
                                 <div class="card border-primary">
                                     <div class="card-body">
                                         <div class="d-flex justify-content-between align-items-center">
-                                            <span class="text-muted">Ø§Ù„Ø¥Ø±Ø´Ø§Ø¯ Ø§Ù„Ø£ÙƒØ§Ø¯ÙŠÙ…ÙŠ (5%)</span>
+                                            <span class="text-muted">ÇáÅÑÔÇÏ ÇáÃßÇÏíãí (5%)</span>
                                             <span class="fw-bold text-primary"> / 5</span>
                                         </div>
                                     </div>
@@ -284,7 +284,7 @@
                                 <div class="card border-primary">
                                     <div class="card-body">
                                         <div class="d-flex justify-content-between align-items-center">
-                                            <span class="text-muted">Ø§Ù„Ø³Ù…Ø§Øª Ø§Ù„Ø´Ø®ØµÙŠØ© (10%)</span>
+                                            <span class="text-muted">ÇáÓãÇÊ ÇáÔÎÕíÉ (10%)</span>
                                             <span class="fw-bold text-primary">@getvalue(SelectedData.PersonalTraitsScore)/ 10</span>
                                         </div>
                                     </div>
@@ -294,7 +294,7 @@
                                 <div class="card border-success bg-light">
                                     <div class="card-body">
                                         <div class="d-flex justify-content-between align-items-center">
-                                            <span class="fw-bold">Ø§Ù„Ù…Ø¬Ù…ÙˆØ¹ Ø§Ù„ÙƒÙ„ÙŠ</span>
+                                            <span class="fw-bold">ÇáãÌãæÚ Çáßáí</span>
                                             <span class="fw-bold text-success fs-5">91.5 / 100</span>
                                         </div>
                                     </div>
@@ -303,27 +303,27 @@
                         </div>
                     </div>
 
-                    @* Ù…Ù„Ø§Ø­Ø¸Ø§Øª Ø±Ø¦ÙŠØ³ Ø§Ù„Ù‚Ø³Ù… *@
+                    @* ãáÇÍÙÇÊ ÑÆíÓ ÇáŞÓã *@
                     <div class="mb-3">
-                        <h6 class="fw-bold mb-2">Ù…Ù„Ø§Ø­Ø¸Ø§Øª Ø±Ø¦ÙŠØ³ Ø§Ù„Ù‚Ø³Ù…</h6>
+                        <h6 class="fw-bold mb-2">ãáÇÍÙÇÊ ÑÆíÓ ÇáŞÓã</h6>
                         <div class="card">
                             <div class="card-body">
                                 <div class="mb-3">
-                                    <strong class="text-success">Ù†Ù‚Ø§Ø· Ø§Ù„Ù‚ÙˆØ©:</strong>
+                                    <strong class="text-success">äŞÇØ ÇáŞæÉ:</strong>
                                     <p class="mb-0 mt-1">@SelectedData.HodStrengths</p>
                                 </div>
                                 <div>
-                                    <strong class="text-warning">Ù†Ù‚Ø§Ø· ØªØ­ØªØ§Ø¬ Ù„Ù„ØªØ·ÙˆÙŠØ±:</strong>
+                                    <strong class="text-warning">äŞÇØ ÊÍÊÇÌ ááÊØæíÑ:</strong>
                                     <p class="mb-0 mt-1">@SelectedData.HodWeaknesses</p>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    @* Ø­Ø§Ù„Ø© Ø§Ù„Ø§Ø¹ØªÙ…Ø§Ø¯ *@
+                    @* ÍÇáÉ ÇáÇÚÊãÇÏ *@
                     <div class="mb-3">
                         <div class="alert alert-info">
-                            <strong>Ø­Ø§Ù„Ø© Ø§Ù„Ø§Ø¹ØªÙ…Ø§Ø¯:</strong> @SelectedData.StatusName
+                            <strong>ÍÇáÉ ÇáÇÚÊãÇÏ:</strong> @SelectedData.StatusName
                         </div>
                     </div>
 
@@ -332,27 +332,22 @@
 
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary px-4" @onclick="HideModal">
-                    <i class="bi bi-x-circle me-2"></i>Ø¥ØºÙ„Ø§Ù‚
+                    <i class="bi bi-x-circle me-2"></i>ÅÛáÇŞ
                 </button>
 
                 <button type="button"
                         class="btn btn-outline-primary px-4"
-                        @onclick="PrintModal"
+                        @onclick="PrintDeanModal"
                         disabled="@IsDetailLoading">
-                    <i class="bi bi-printer me-2"></i>Ø·Ø¨Ø§Ø¹Ø© Ø§Ù„ØªÙ‚Ø±ÙŠØ± Ø§Ù„ÙƒØ§Ù…Ù„
-                </button>
-                <button class="btn btn-primary" @onclick="ShowDetailsModal">
-                    Ø¹Ø±Ø¶ Ø§Ù„ØªÙØ§ØµÙŠÙ„
+                    <i class="bi bi-printer me-2"></i>ØÈÇÚÉ ÊŞÑíÑ ÇáÚãíÏ
                 </button>
 
-                @if (IsHodModalVisible && SelectedData != null)
-                {
-                    <Srs.Client.Compontets.HODComponent SelectedTA="@userData"
-                                                        EvaluationPeriodId="@EvaluationPeriodId"
-                                                        IsViewMode="@isViewMode"
-                                                        OnClose="@hidehodmodal"
-                                                        OnSaveSuccess="@HandleSaveSuccess" />
-                }
+                <button type="button"
+                        class="btn btn-primary px-4"
+                        @onclick="ShowDetailsModal"
+                        disabled="@IsDetailLoading">
+                    <i class="bi bi-eye me-2"></i>ÚÑÖ ÊŞííã ÑÆíÓ ÇáŞÓã
+                </button>
 
                 @if (IsPendingApproval())
                 {
@@ -363,12 +358,12 @@
                         @if (IsReturning)
                         {
                             <span class="spinner-border spinner-border-sm me-2"></span>
-                            <span>Ø¬Ø§Ø±ÙŠ Ø§Ù„Ø¥Ø±Ø¬Ø§Ø¹...</span>
+                            <span>ÌÇÑí ÇáÅÑÌÇÚ...</span>
                         }
                         else
                         {
                             <i class="bi bi-x-circle me-2"></i>
-                            <span>Ø¥Ø±Ø¬Ø§Ø¹ / Ø±ÙØ¶</span>
+                            <span>ÅÑÌÇÚ / ÑİÖ</span>
                         }
                     </button>
 
@@ -379,12 +374,12 @@
                         @if (IsApproving)
                         {
                             <span class="spinner-border spinner-border-sm me-2"></span>
-                            <span>Ø¬Ø§Ø±ÙŠ Ø§Ù„Ø§Ø¹ØªÙ…Ø§Ø¯...</span>
+                            <span>ÌÇÑí ÇáÇÚÊãÇÏ...</span>
                         }
                         else
                         {
                             <i class="bi bi-check-circle me-2"></i>
-                            <span>Ø§Ø¹ØªÙ…Ø§Ø¯ Ù†Ù‡Ø§Ø¦ÙŠ</span>
+                            <span>ÇÚÊãÇÏ äåÇÆí</span>
                         }
                     </button>
                 }
@@ -393,8 +388,17 @@
     </div>
 }
 
+@* ===== HOD Component Modal (Full Screen) ===== *@
+@if (IsHodModalVisible && SelectedData != null)
+{
+    <Srs.Client.Compontets.HODComponent SelectedTA="@userData"
+                                        EvaluationPeriodId="@EvaluationPeriodId"
+                                        IsViewMode="@isViewMode"
+                                        OnClose="@HideHodModal"
+                                        OnSaveSuccess="@HandleSaveSuccess" />
+}
+
 @code {
-    // ... (keep all existing code fields)
     private List<EvaluationApiResponseDto> Evaluations { get; set; } = new();
     private bool IsLoading { get; set; } = true;
     private string? LoadError { get; set; }
@@ -414,24 +418,24 @@
     private UserDataDto userData = new UserDataDto();
     private int EvaluationPeriodId = 1;
     private bool isViewMode = true;
+
     private IEnumerable<EvaluationApiResponseDto> FilteredEvaluations =>
         string.IsNullOrWhiteSpace(SearchTerm)
-            ? Evaluations
+   ? Evaluations
             : Evaluations.Where(e =>
-                   e.taEmployeeId.ToString().Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)
-                || (e.statusName?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false)
-                || (e.periodName?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false));
+ e.taEmployeeId.ToString().Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)
+      || (e.statusName?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false)
+             || (e.periodName?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false));
 
-    // ... (keep all existing lifecycle and data methods)
     protected override async Task OnInitializedAsync()
     {
-        Console.WriteLine("ğŸ”µ Dean page initializing...");
+        Console.WriteLine("?? Dean page initializing...");
         await FetchEvaluationsAsync();
     }
 
     private async Task FetchEvaluationsAsync()
     {
-        Console.WriteLine("ğŸ”µ Starting FetchEvaluationsAsync...");
+        Console.WriteLine("?? Starting FetchEvaluationsAsync...");
         IsLoading = true;
         LoadError = null;
         StateHasChanged();
@@ -439,15 +443,15 @@
         try
         {
             var url = $"/api/evaluation/period/{EvaluationPeriodId}";
-            Console.WriteLine($"ğŸ”µ Making API call to: {url}");
+            Console.WriteLine($"?? Making API call to: {url}");
             var evaluations = await Http.GetFromJsonAsync<List<EvaluationApiResponseDto>>(url) ?? new List<EvaluationApiResponseDto>();
-            Console.WriteLine($"âœ… Received {evaluations.Count} evaluations");
+            Console.WriteLine($"? Received {evaluations.Count} evaluations");
             Evaluations = evaluations;
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"âŒ Exception in FetchEvaluationsAsync: {ex.Message}");
-            LoadError = $"Ø®Ø·Ø£ ÙÙŠ ØªØ­Ù…ÙŠÙ„ Ø§Ù„Ø¨ÙŠØ§Ù†Ø§Øª: {ex.Message}";
+            Console.WriteLine($"? Exception in FetchEvaluationsAsync: {ex.Message}");
+            LoadError = $"ÎØÃ İí ÊÍãíá ÇáÈíÇäÇÊ: {ex.Message}";
             ShowToast(LoadError, "error");
         }
         finally
@@ -461,17 +465,31 @@
     {
         if (SelectedData is null || userData is null)
         {
-            Console.WriteLine("âŒ Cannot show HOD modal - SelectedData or userData is null");
+            Console.WriteLine("? Cannot show HOD modal - SelectedData or userData is null");
             return;
         }
 
-        Console.WriteLine($"ğŸ”µ Opening HOD modal for Evaluation ID: {userData.EvaluationId}");
+        Console.WriteLine($"?? Opening HOD modal for Evaluation ID: {userData.EvaluationId}");
+
+        // Hide Dean modal when showing HOD modal for proper printing
+        IsModalVisible = false;
         IsHodModalVisible = true;
         StateHasChanged();
     }
+
+    private void HideHodModal()
+    {
+        Console.WriteLine("?? Closing HOD modal, reopening Dean modal");
+
+        // Close HOD modal and reopen Dean modal
+        IsHodModalVisible = false;
+        IsModalVisible = true;
+        StateHasChanged();
+    }
+
     private async void OpenModal(EvaluationApiResponseDto eval)
     {
-        Console.WriteLine($"ğŸ”µ Opening modal for evaluation: {eval.evaluationId}");
+        Console.WriteLine($"?? Opening modal for evaluation: {eval.evaluationId}");
         SelectedData = null;
         DetailError = null;
         IsDetailLoading = true;
@@ -495,17 +513,16 @@
                 userData.EmployeeNumber = SelectedData.TaEmployeeId;
                 userData.Department = SelectedData.TaEmail;
                 userData.EvaluationId = SelectedData.EvaluationId;
-
             }
             else
             {
-                DetailError = "ÙØ´Ù„ ØªØ­Ù…ÙŠÙ„ ØªÙØ§ØµÙŠÙ„ Ø§Ù„ØªÙ‚ÙŠÙŠÙ…";
+                DetailError = "İÔá ÊÍãíá ÊİÇÕíá ÇáÊŞííã";
                 ShowToast(DetailError, "error");
             }
         }
         catch (Exception ex)
         {
-            DetailError = $"Ø®Ø·Ø£: {ex.Message}";
+            DetailError = $"ÎØÃ: {ex.Message}";
             ShowToast(DetailError, "error");
         }
         finally
@@ -514,25 +531,22 @@
             StateHasChanged();
         }
     }
-    private void hidehodmodal()
-    {
-        IsHodModalVisible = false;
-        StateHasChanged();
-    }
+
     private void HideModal()
     {
         IsModalVisible = false;
+        IsHodModalVisible = false;
         SelectedData = null;
         DetailError = null;
         IsDetailLoading = false;
         StateHasChanged();
     }
 
-    // NEW: Single print method that prints the entire modal
-    private async Task PrintModal()
+    // Print method for Dean modal only
+    private async Task PrintDeanModal()
     {
         if (SelectedData is null) return;
-        Console.WriteLine("ğŸ”µ Printing entire modal");
+        Console.WriteLine("?? Printing Dean modal");
         await JS.InvokeVoidAsync("window.print");
     }
 
@@ -541,7 +555,7 @@
         if (SelectedData is null || !Permissions.CanApproveFinalReport || IsApproving)
             return;
 
-        var confirm = await JS.InvokeAsync<bool>("confirm", "Ù‡Ù„ Ø£Ù†Øª Ù…ØªØ£ÙƒØ¯ Ù…Ù† Ø§Ø¹ØªÙ…Ø§Ø¯ Ù‡Ø°Ø§ Ø§Ù„ØªÙ‚ÙŠÙŠÙ… Ø¨Ø´ÙƒÙ„ Ù†Ù‡Ø§Ø¦ÙŠØŸ");
+        var confirm = await JS.InvokeAsync<bool>("confirm", "åá ÃäÊ ãÊÃßÏ ãä ÇÚÊãÇÏ åĞÇ ÇáÊŞííã ÈÔßá äåÇÆí¿");
         if (!confirm) return;
 
         IsApproving = true;
@@ -560,7 +574,7 @@
             if (response.IsSuccessStatusCode)
             {
                 var result = await response.Content.ReadFromJsonAsync<DeanActionResponseDto>();
-                ShowToast(result?.Message ?? "ØªÙ… Ø§Ø¹ØªÙ…Ø§Ø¯ Ø§Ù„ØªÙ‚ÙŠÙŠÙ… Ø§Ù„Ù†Ù‡Ø§Ø¦ÙŠ Ø¨Ù†Ø¬Ø§Ø­.", "success");
+                ShowToast(result?.Message ?? "Êã ÇÚÊãÇÏ ÇáÊŞííã ÇáäåÇÆí ÈäÌÇÍ.", "success");
                 await FetchEvaluationsAsync();
 
                 var eval = Evaluations.FirstOrDefault(e => e.evaluationId == SelectedData.EvaluationId);
@@ -571,12 +585,12 @@
             }
             else
             {
-                ShowToast("ÙØ´Ù„ Ø§Ø¹ØªÙ…Ø§Ø¯ Ø§Ù„ØªÙ‚ÙŠÙŠÙ…", "error");
+                ShowToast("İÔá ÇÚÊãÇÏ ÇáÊŞííã", "error");
             }
         }
         catch (Exception ex)
         {
-            ShowToast($"Ø®Ø·Ø£: {ex.Message}", "error");
+            ShowToast($"ÎØÃ: {ex.Message}", "error");
         }
         finally
         {
@@ -590,7 +604,7 @@
         if (SelectedData is null || !Permissions.CanReturnFinalReport || IsReturning)
             return;
 
-        var comment = await JS.InvokeAsync<string?>("prompt", "ÙŠØ±Ø¬Ù‰ Ø¥Ø¯Ø®Ø§Ù„ Ø³Ø¨Ø¨ Ø§Ù„Ø¥Ø±Ø¬Ø§Ø¹/Ø§Ù„Ø±ÙØ¶ Ø¥Ù„Ù‰ Ø±Ø¦ÙŠØ³ Ø§Ù„Ù‚Ø³Ù…:");
+        var comment = await JS.InvokeAsync<string?>("prompt", "íÑÌì ÅÏÎÇá ÓÈÈ ÇáÅÑÌÇÚ/ÇáÑİÖ Åáì ÑÆíÓ ÇáŞÓã:");
         if (string.IsNullOrWhiteSpace(comment)) return;
 
         IsReturning = true;
@@ -609,7 +623,7 @@
             if (response.IsSuccessStatusCode)
             {
                 var result = await response.Content.ReadFromJsonAsync<DeanActionResponseDto>();
-                ShowToast(result?.Message ?? "ØªÙ… Ø¥Ø±Ø¬Ø§Ø¹ Ø§Ù„ØªÙ‚ÙŠÙŠÙ… Ø¥Ù„Ù‰ Ø±Ø¦ÙŠØ³ Ø§Ù„Ù‚Ø³Ù… Ø¨Ù†Ø¬Ø§Ø­.", "success");
+                ShowToast(result?.Message ?? "Êã ÅÑÌÇÚ ÇáÊŞííã Åáì ÑÆíÓ ÇáŞÓã ÈäÌÇÍ.", "success");
                 await FetchEvaluationsAsync();
 
                 var eval = Evaluations.FirstOrDefault(e => e.evaluationId == SelectedData.EvaluationId);
@@ -620,12 +634,12 @@
             }
             else
             {
-                ShowToast("ÙØ´Ù„ Ø¥Ø±Ø¬Ø§Ø¹ Ø§Ù„ØªÙ‚ÙŠÙŠÙ…", "error");
+                ShowToast("İÔá ÅÑÌÇÚ ÇáÊŞííã", "error");
             }
         }
         catch (Exception ex)
         {
-            ShowToast($"Ø®Ø·Ø£: {ex.Message}", "error");
+            ShowToast($"ÎØÃ: {ex.Message}", "error");
         }
         finally
         {
@@ -692,11 +706,11 @@
     }
 
     private string GetGradeBadgeClass(string? grade) =>
-        grade == "Ù…Ù…ØªØ§Ø²" ? "badge bg-success" : "badge bg-warning text-dark";
+        grade == "ããÊÇÒ" ? "badge bg-success" : "badge bg-warning text-dark";
 
     private string GetStatusBadgeClass(string? status) =>
-        status?.Contains("Ø§Ø¹ØªÙ…Ø§Ø¯") == true || status?.Contains("Ù…ÙˆØ§ÙÙ‚") == true
-            ? "badge bg-success"
+      status?.Contains("ÇÚÊãÇÏ") == true || status?.Contains("ãæÇİŞ") == true
+  ? "badge bg-success"
             : "badge bg-warning text-dark";
 
     private class DeanPermissions
@@ -705,14 +719,19 @@
         public bool CanApproveFinalReport { get; set; }
         public bool CanReturnFinalReport { get; set; }
     }
+
     private async Task HandleSaveSuccess()
     {
-        SelectedData = null;
-        DetailError = null;
-        IsDetailLoading = true;
-        IsModalVisible = true;
-        StateHasChanged();
-        
+        // Reload the evaluation data after save
+        if (SelectedData != null)
+        {
+            var eval = Evaluations.FirstOrDefault(e => e.evaluationId == SelectedData.EvaluationId);
+            if (eval != null)
+            {
+                IsHodModalVisible = false;
+                IsModalVisible = false;
+                OpenModal(eval);
+            }
+        }
     }
-
 }

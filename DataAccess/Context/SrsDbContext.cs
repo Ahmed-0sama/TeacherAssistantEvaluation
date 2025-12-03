@@ -106,34 +106,32 @@ public partial class SrsDbContext : DbContext
 
         modelBuilder.Entity<GsdeanEvaluation>(entity =>
         {
-            entity.HasKey(e => e.GsevalId).HasName("PK__GSDean_E__C8B1293995D5C787");
+            entity.HasKey(e => e.GsevalId);
 
             entity.ToTable("GSDean_Evaluations", "taEvaluation");
 
-            entity.HasIndex(e => e.EvaluationPeriodId, "UQ__GSDean_E__EvaluationPeriodID").IsUnique();
+            // Composite unique index to allow one TA per period
+            entity.HasIndex(e => new { e.EvaluationPeriodId, e.TaEmployeeId })
+                  .IsUnique()
+                  .HasDatabaseName("UQ_GSDean_Period_TA");
 
             entity.Property(e => e.GsevalId).HasColumnName("GSEvalID");
             entity.Property(e => e.EvaluationPeriodId).HasColumnName("EvaluationPeriodID");
-            entity.Property(e => e.GsdeanEmloyeeId).HasColumnName("GSDean_EmloyeeID");
             entity.Property(e => e.TaEmployeeId).HasColumnName("TA_EmployeeID");
-            entity.Property(e => e.Gpa)
-                .HasColumnType("decimal(3, 2)")
-                .HasColumnName("GPA");
-            entity.Property(e => e.ProgramName).HasMaxLength(255);
-            entity.Property(e => e.ProgressScore).HasColumnType("decimal(3, 1)");
             entity.Property(e => e.StatusId).HasColumnName("StatusID");
 
-            entity.HasOne(d => d.EvaluationPeriod).WithOne(p => p.GsdeanEvaluation)
-                .HasForeignKey<GsdeanEvaluation>(d => d.EvaluationPeriodId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_GSDean_Evaluations_EvaluationPeriodID");
+            entity.HasOne(d => d.EvaluationPeriod)
+                  .WithMany(p => p.GsdeanEvaluations)  // <- plural collection
+                  .HasForeignKey(d => d.EvaluationPeriodId)
+                  .OnDelete(DeleteBehavior.ClientSetNull)
+                  .HasConstraintName("FK_GSDean_Evaluations_EvaluationPeriodID");
 
-            entity.HasOne(d => d.Status).WithMany(p => p.GsdeanEvaluations)
-                .HasForeignKey(d => d.StatusId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_GSDean_Evaluations_StatusID");
+            entity.HasOne(d => d.Status)
+                  .WithMany(p => p.GsdeanEvaluations)
+                  .HasForeignKey(d => d.StatusId)
+                  .OnDelete(DeleteBehavior.ClientSetNull)
+                  .HasConstraintName("FK_GSDean_Evaluations_StatusID");
         });
-
         modelBuilder.Entity<Hodevaluation>(entity =>
         {
             entity.HasKey(e => e.HodevalId).HasName("PK__HODEvalu__6A4AF4FAEBE6B771");

@@ -476,7 +476,7 @@
                         Location = activity.Location,
                         PageCount = activity.PageCount,
                         Date = activity.ActivityDate,
-                        Status = GetStatusCode(activity.StatusName)
+                        Status = activity.StatusId  // Fixed: Changed from StatusName to StatusId
                     }).ToList();
 
                     Console.WriteLine($"✅ Successfully loaded {researchPapers.Count} research papers");
@@ -608,16 +608,14 @@
         currentPaper = new();
     }
 
-    private int GetStatusCode(string statusName)
+    private string GetStatusCode(int statusName)
     {
-        return statusName?.ToLower() switch
+        return statusName switch
         {
-            "published" => 1,
-            "under review" => 2,
-            "accepted" => 3,
-            "rejected" => 4,
-            "submitted" => 2,
-            _ => 0
+            1 => "published",
+            2 => "under review",
+            3 => "accepted",
+            4 => "rejected",
         };
     }
 }
