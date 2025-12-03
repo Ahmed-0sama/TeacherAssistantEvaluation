@@ -3,265 +3,263 @@
 @inject HttpClient Http
 @inject IJSRuntime JS
 
-<div class="modal d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5);">
-    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content" dir="rtl">
-            <div class="modal-header" dir="rtl">
-                <button type="button" class="btn-close ms-0 me-auto" @onclick="HandleClose"></button>
-                <h5 class="modal-title">تفاصيل مساعد التدريس</h5>
+<div class="modal-overlay" @onclick="HandleClose">
+    <div class="modal-container modal-container-xl" @onclick:stopPropagation="true">
+        <div class="modal-header" dir="rtl">
+            <h5 class="modal-title">تفاصيل مساعد التدريس</h5>
+            <button type="button" class="btn-close btn-close-white ms-0 me-auto" @onclick="HandleClose"></button>
+   </div>
+        <div class="modal-body">
+   @if (isLoadingModal)
+      {
+     <div class="text-center p-5">
+  <div class="spinner-border text-primary" role="status">
+         <span class="visually-hidden">جارٍ التحميل...</span>
+        </div>
+      <p class="mt-2">جارٍ تحميل البيانات...</p>
+</div>
+      }
+   else
+            {
+     <div class="border rounded p-3 bg-light mb-3">
+            <h5 class="mb-3 text-primary">البيانات الأساسية</h5>
+
+                <div class="row">
+            <div class="col-md-4 mb-3">
+   <label class="form-label fw-bold">اسم مساعد التدريس</label>
+   <input type="text" class="form-control" disabled value="@SelectedTA?.Name" />
+              </div>
+      <div class="col-md-4 mb-3">
+         <label class="form-label fw-bold">الرقم الوظيفي:</label>
+     <input type="text" class="form-control" disabled value="@SelectedTA?.EmployeeNumber" />
+         </div>
+       <div class="col-md-4 mb-3">
+                <label class="form-label fw-bold">القسم</label>
+      <input type="text" class="form-control" disabled value="@SelectedTA?.Department" />
+     </div>
+         </div>
+
+            <div class="row">
+          <div class="col-md-4 mb-3">
+       <label class="form-label fw-bold">القسم</label>
+               <input type="text" class="form-control" disabled value="@SelectedTA?.College" />
+       </div>
+      <div class="col-md-4 mb-3">
+          <label class="form-label fw-bold">الكلية</label>
+      <input type="text" class="form-control" disabled value="@SelectedTA?.College" />
+         </div>
+          <div class="col-md-4 mb-3">
+        <label class="form-label fw-bold">العبئ الدراسي</label>
+               <input type="text" class="form-control" disabled value="@SelectedTA?.EmployeeNumber" />
+          </div>
+    </div>
+     </div>
+
+     <!-- Professor Evaluations -->
+     <div class="border rounded p-3 bg-light mb-3">
+ <h5 class="mb-3 text-primary">تقييم النشاط العلمي</h5>
+         <div class="border rounded p-3 bg-light mb-3">
+            <h5 class="mb-3 text-primary">
+      <i class="bi bi-person-check-fill me-2"></i>
+                تقييمات أساتذة المقررات
+          </h5>
+
+         @if (profdto == null || !profdto.Any())
+   {
+ <div class="alert alert-warning text-center" role="alert">
+           <i class="bi bi-exclamation-triangle me-2"></i>
+        لا توجد تقييمات من أساتذة المقررات حتى الآن
+               </div>
+  }
+         else
+                {
+         <div class="table-responsive">
+           <table class="table table-bordered table-hover align-middle">
+               <thead class="table-secondary">
+      <tr>
+ <th class="text-center">المقرر</th>
+          <th class="text-center">أستاذ المقرر</th>
+               <th class="text-center">الساعات المكتبية</th>
+            <th class="text-center">الحضور</th>
+    <th class="text-center">الأداء</th>
+      <th class="text-center">المجموع</th>
+        <th class="text-center">الحالة</th>
+  <th class="text-center">الملاحظات</th>
+           </tr>
+               </thead>
+       <tbody>
+           @foreach (var eval in profdto)
+{
+   <tr>
+ <td>
+          <div class="fw-bold">@eval.CourseName</div>
+       <small class="text-muted">@eval.CourseCode</small>
+     </td>
+         <td>@eval.ProfessorName</td>
+  <td class="text-center">
+         <span class="badge bg-info">@eval.OfficeHoursScore / 10</span>
+          </td>
+<td class="text-center">
+        <span class="badge bg-info">@eval.AttendanceScore / 5</span>
+    </td>
+            <td class="text-center">
+       <span class="badge bg-info">@eval.PerformanceScore / 15</span>
+        </td>
+     <td class="text-center">
+        <span class="badge bg-primary fs-6">@eval.TotalScore / 30</span>
+                 </td>
+         <td class="text-center">
+    @if (eval.IsReturned)
+   {
+         <span class="badge bg-warning text-dark">
+                 <i class="bi bi-arrow-return-right me-1"></i> تم الإرجاع
+   </span>
+          }
+ else if (eval.IsSubmitted)
+    {
+  <span class="badge bg-success">
+             <i class="bi bi-check-circle me-1"></i> مقدم
+         </span>
+        }
+   else
+                 {
+          <span class="badge bg-secondary">
+     <i class="bi bi-clock me-1"></i> قيد الانتظار
+     </span>
+                  }
+         </td>
+      <td class="text-center">
+         @eval.Comments
+     </td>
+        </tr>
+       }
+        </tbody>
+         <tfoot class="table-light">
+     <tr>
+    <th colspan="5" class="text-end">المتوسط الإجمالي:</th>
+                     <th class="text-center">
+     <span class="badge bg-success fs-5">@CalculateAverageScore() / 30</span>
+  </th>
+  <th colspan="2"></th>
+     </tr>
+ </tfoot>
+       </table>
+     </div>
+
+        <div class="mt-3 p-3 bg-light rounded shadow-sm">
+                   <h6 class="fw-bold mb-3 text-primary">
+    <i class="bi bi-book-half me-1"></i>اكتمال ساعات النصاب (10)
+        </h6>
+
+   <div class="row text-center">
+    <div class="col">
+ <div class="p-2 bg-white rounded border">
+         <i class="bi bi-clock-history fs-4 d-block text-secondary"></i>
+      <span class="fw-bold">التدريس المتوقع</span>
+          <div>@teachingdto.ExpectedTeachingLoad</div>
+  </div>
+       </div>
+     <div class="col">
+          <div class="p-2 bg-white rounded border">
+          <i class="bi bi-check-circle fs-4 d-block text-success"></i>
+             <span class="fw-bold">التدريس الفعلي</span>
+       <div>@teachingdto.ActualTeachingLoad</div>
+               </div>
+    </div>
+  <div class="col">
+              <div class="p-2 bg-white rounded border">
+           <i class="bi bi-star-fill fs-4 d-block text-warning"></i>
+      <span class="fw-bold">التقييم</span>
+<div>@(teachingdto.gradegiven)/10</div>
+    </div>
+        </div>
+         </div>
+                 </div>
+
+<div class="card bg-primary bg-opacity-10 shadow-sm mx-auto mt-4" style="max-width: 600px; border-radius: 12px;">
+         <div class="card-body text-center py-4">
+         <h3 class="text-primary fw-semibold mb-2" style="direction: rtl; font-size: 18px;">المجموع الكلي للعبء التدريسي</h3>
+             <p class="text-primary fw-bold fs-4 mb-0" style="direction: ltr;">@(teachingLoadScore) / 40</p>
+             </div>
+        </div>
+     }
+          </div>
+ </div>
+
+       <!-- Child Components -->
+     <Srs.Client.Compontets.TeachingActivitiesEvaluation TeachingLoadScore="@teachingLoadScore"
+        OnRatingsChanged="OnTeachingActivitiesRatingsChanged"
+     IsViewMode="@IsViewMode"
+    ExistingRatings="@GetExistingRatings("DirectTeaching")" />
+
+  <Srs.Client.Compontets.ScientificActivityComponentForHod EvaluationId="@(SelectedTA?.EvaluationId ?? 0)"
+ EvaluationPeriodId="EvaluationPeriodId"
+                TaEmployeeId="SelectedTA.Id"
+          OnRatingsChanged="OnScientificActivityRatingsChanged"
+     IsViewMode="@IsViewMode"
+          ExistingRatings="@GetExistingRatings("Administrative")" />
+
+  <Srs.Client.Compontets.GradesComponent OnPersonalTraitsChanged="OnPersonalTraitsRatingsChanged"
+       OnStudentActivitiesChanged="OnStudentActivitiesRatingsChanged"
+         IsViewMode="@IsViewMode"
+     ExistingPersonalTraits="@GetExistingRatings("PersonalTraits")"
+             ExistingStudentActivities="@GetExistingRatings("StudentActivities")" />
+
+       <!-- Comments Section -->
+    <div class="border rounded p-3 bg-light mb-3">
+        <h5 class="mb-3 text-primary">الملاحظات والتعليقات</h5>
+
+              <div class="mb-3">
+            <label class="form-label fw-bold">نقاط القوة</label>
+        <textarea class="form-control"
+       rows="3"
+       @bind="hodStrengths"
+       disabled="@IsViewMode"
+         placeholder="اذكر نقاط القوة لمساعد التدريس..."></textarea>
             </div>
-            <div class="modal-body">
-                @if (isLoadingModal)
-                {
-                    <div class="text-center p-5">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">جارٍ التحميل...</span>
-                        </div>
-                        <p class="mt-2">جارٍ تحميل البيانات...</p>
-                    </div>
-                }
-                else
-                {
-                    <div class="border rounded p-3 bg-light mb-3">
-                        <h5 class="mb-3 text-primary">البيانات الأساسية</h5>
 
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label fw-bold">اسم مساعد التدريس</label>
-                                <input type="text" class="form-control" disabled value="@SelectedTA?.Name" />
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label fw-bold">الرقم الوظيفي:</label>
-                                <input type="text" class="form-control" disabled value="@SelectedTA?.EmployeeNumber" />
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label fw-bold">القسم</label>
-                                <input type="text" class="form-control" disabled value="@SelectedTA?.Department" />
-                            </div>
-                        </div>
+ <div class="mb-3">
+        <label class="form-label fw-bold">نقاط الضعف</label>
+  <textarea class="form-control"
+             rows="3"
+    @bind="hodWeaknesses"
+           disabled="@IsViewMode"
+        placeholder="اذكر نقاط الضعف ومجالات التحسين..."></textarea>
+        </div>
+                </div>
 
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label fw-bold">القسم</label>
-                                <input type="text" class="form-control" disabled value="@SelectedTA?.College" />
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label fw-bold">الكلية</label>
-                                <input type="text" class="form-control" disabled value="@SelectedTA?.College" />
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label fw-bold">العبئ الدراسي</label>
-                                <input type="text" class="form-control" disabled value="@SelectedTA?.EmployeeNumber" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Professor Evaluations -->
-                    <div class="border rounded p-3 bg-light mb-3">
-                        <h5 class="mb-3 text-primary">تقييم النشاط العلمي</h5>
-                        <div class="border rounded p-3 bg-light mb-3">
-                            <h5 class="mb-3 text-primary">
-                                <i class="bi bi-person-check-fill me-2"></i>
-                                تقييمات أساتذة المقررات
-                            </h5>
-
-                            @if (profdto == null || !profdto.Any())
-                            {
-                                <div class="alert alert-warning text-center" role="alert">
-                                    <i class="bi bi-exclamation-triangle me-2"></i>
-                                    لا توجد تقييمات من أساتذة المقررات حتى الآن
-                                </div>
-                            }
-                            else
-                            {
-                                <div class="table-responsive">
-                                    <table class="table table-bordered table-hover align-middle">
-                                        <thead class="table-secondary">
-                                            <tr>
-                                                <th class="text-center">المقرر</th>
-                                                <th class="text-center">أستاذ المقرر</th>
-                                                <th class="text-center">الساعات المكتبية</th>
-                                                <th class="text-center">الحضور</th>
-                                                <th class="text-center">الأداء</th>
-                                                <th class="text-center">المجموع</th>
-                                                <th class="text-center">الحالة</th>
-                                                <th class="text-center">الملاحظات</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach (var eval in profdto)
-                                            {
-                                                <tr>
-                                                    <td>
-                                                        <div class="fw-bold">@eval.CourseName</div>
-                                                        <small class="text-muted">@eval.CourseCode</small>
-                                                    </td>
-                                                    <td>@eval.ProfessorName</td>
-                                                    <td class="text-center">
-                                                        <span class="badge bg-info">@eval.OfficeHoursScore / 10</span>
-                                                    </td>
-                                                    <td class="text-center">
-                                                        <span class="badge bg-info">@eval.AttendanceScore / 5</span>
-                                                    </td>
-                                                    <td class="text-center">
-                                                        <span class="badge bg-info">@eval.PerformanceScore / 15</span>
-                                                    </td>
-                                                    <td class="text-center">
-                                                        <span class="badge bg-primary fs-6">@eval.TotalScore / 30</span>
-                                                    </td>
-                                                    <td class="text-center">
-                                                        @if (eval.IsReturned)
-                                                        {
-                                                            <span class="badge bg-warning text-dark">
-                                                                <i class="bi bi-arrow-return-right me-1"></i> تم الإرجاع
-                                                            </span>
-                                                        }
-                                                        else if (eval.IsSubmitted)
-                                                        {
-                                                            <span class="badge bg-success">
-                                                                <i class="bi bi-check-circle me-1"></i> مقدم
-                                                            </span>
-                                                        }
-                                                        else
-                                                        {
-                                                            <span class="badge bg-secondary">
-                                                                <i class="bi bi-clock me-1"></i> قيد الانتظار
-                                                            </span>
-                                                        }
-                                                    </td>
-                                                    <td class="text-center">
-                                                        @eval.Comments
-                                                    </td>
-                                                </tr>
-                                            }
-                                        </tbody>
-                                        <tfoot class="table-light">
-                                            <tr>
-                                                <th colspan="5" class="text-end">المتوسط الإجمالي:</th>
-                                                <th class="text-center">
-                                                    <span class="badge bg-success fs-5">@CalculateAverageScore() / 30</span>
-                                                </th>
-                                                <th colspan="2"></th>
-                                            </tr>
-                                        </tfoot>
-                                    </table>
-                                </div>
-
-                                <div class="mt-3 p-3 bg-light rounded shadow-sm">
-                                    <h6 class="fw-bold mb-3 text-primary">
-                                        <i class="bi bi-book-half me-1"></i>اكتمال ساعات النصاب (10)
-                                    </h6>
-
-                                    <div class="row text-center">
-                                        <div class="col">
-                                            <div class="p-2 bg-white rounded border">
-                                                <i class="bi bi-clock-history fs-4 d-block text-secondary"></i>
-                                                <span class="fw-bold">التدريس المتوقع</span>
-                                                <div>@teachingdto.ExpectedTeachingLoad</div>
-                                            </div>
-                                        </div>
-                                        <div class="col">
-                                            <div class="p-2 bg-white rounded border">
-                                                <i class="bi bi-check-circle fs-4 d-block text-success"></i>
-                                                <span class="fw-bold">التدريس الفعلي</span>
-                                                <div>@teachingdto.ActualTeachingLoad</div>
-                                            </div>
-                                        </div>
-                                        <div class="col">
-                                            <div class="p-2 bg-white rounded border">
-                                                <i class="bi bi-star-fill fs-4 d-block text-warning"></i>
-                                                <span class="fw-bold">التقييم</span>
-                                                <div>@(teachingdto.gradegiven)/10</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="card bg-primary bg-opacity-10 shadow-sm mx-auto mt-4" style="max-width: 600px; border-radius: 12px;">
-                                    <div class="card-body text-center py-4">
-                                        <h3 class="text-primary fw-semibold mb-2" style="direction: rtl; font-size: 18px;">المجموع الكلي للعبء التدريسي</h3>
-                                        <p class="text-primary fw-bold fs-4 mb-0" style="direction: ltr;">@(teachingLoadScore) / 40</p>
-                                    </div>
-                                </div>
-                            }
-                        </div>
-                    </div>
-
-                    <!-- Child Components -->
-                    <Srs.Client.Compontets.TeachingActivitiesEvaluation TeachingLoadScore="@teachingLoadScore"
-                                                                        OnRatingsChanged="OnTeachingActivitiesRatingsChanged"
-                                                                        IsViewMode="@IsViewMode"
-                                                                        ExistingRatings="@GetExistingRatings("DirectTeaching")" />
-
-                    <Srs.Client.Compontets.ScientificActivityComponentForHod EvaluationId="@(SelectedTA?.EvaluationId ?? 0)"
-                                                                             EvaluationPeriodId="EvaluationPeriodId"
-                                                                             TaEmployeeId="SelectedTA.Id"
-                                                                             OnRatingsChanged="OnScientificActivityRatingsChanged"
-                                                                             IsViewMode="@IsViewMode"
-                                                                             ExistingRatings="@GetExistingRatings("Administrative")" />
-
-                    <Srs.Client.Compontets.GradesComponent OnPersonalTraitsChanged="OnPersonalTraitsRatingsChanged"
-                                                           OnStudentActivitiesChanged="OnStudentActivitiesRatingsChanged"
-                                                           IsViewMode="@IsViewMode"
-                                                           ExistingPersonalTraits="@GetExistingRatings("PersonalTraits")"
-                                                           ExistingStudentActivities="@GetExistingRatings("StudentActivities")" />
-
-                    <!-- Comments Section -->
-                    <div class="border rounded p-3 bg-light mb-3">
-                        <h5 class="mb-3 text-primary">الملاحظات والتعليقات</h5>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">نقاط القوة</label>
-                            <textarea class="form-control"
-                                      rows="3"
-                                      @bind="hodStrengths"
-                                      disabled="@IsViewMode"
-                                      placeholder="اذكر نقاط القوة لمساعد التدريس..."></textarea>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">نقاط الضعف</label>
-                            <textarea class="form-control"
-                                      rows="3"
-                                      @bind="hodWeaknesses"
-                                      disabled="@IsViewMode"
-                                      placeholder="اذكر نقاط الضعف ومجالات التحسين..."></textarea>
-                        </div>
-                    </div>
-
-                    <!-- Score Summary -->
-                    @if (IsViewMode && hodEvaluationData != null)
-                    {
-                        <div class="alert alert-info">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span class="fs-5 fw-bold">المجموع الكلي:</span>
-                                <span class="fs-3 fw-bold text-primary">@hodEvaluationData.TotalScore / @hodEvaluationData.MaxScore</span>
-                            </div>
-                        </div>
-                    }
-                }
-            </div>
-            <div class="modal-footer">
-                @if (IsViewMode)
-                {
-                    <button type="button" class="btn btn-secondary" @onclick="HandleClose">إغلاق</button>
-                    <button type="button"
-                            class="btn btn-outline-primary px-4"
-                            @onclick="PrintModal"
-                            disabled="@isLoadingModal">
-                        <i class="bi bi-printer me-2"></i>طباعة التقرير الكامل
-                    </button>
-                }
-                else if (!isLoadingModal)
-                {
-                    <button type="button" class="btn btn-secondary" @onclick="HandleClose">إلغاء</button>
-                    <button type="button" class="btn btn-primary"
-                            @onclick="HandleSave"
-                            disabled="@isSaving">
-                        @(isSaving ? "جارٍ الحفظ..." : "حفظ التقييم")
-                    </button>
-                }
-            </div>
+<!-- Score Summary -->
+        @if (IsViewMode && hodEvaluationData != null)
+           {
+            <div class="alert alert-info">
+    <div class="d-flex justify-content-between align-items-center">
+   <span class="fs-5 fw-bold">المجموع الكلي:</span>
+       <span class="fs-3 fw-bold text-primary">@hodEvaluationData.TotalScore / @hodEvaluationData.MaxScore</span>
+               </div>
+         </div>
+          }
+            }
+   </div>
+        <div class="modal-footer">
+    @if (IsViewMode)
+    {
+    <button type="button" class="btn btn-secondary" @onclick="HandleClose">إغلاق</button>
+           <button type="button"
+             class="btn btn-outline-primary px-4"
+   @onclick="PrintModal"
+     disabled="@isLoadingModal">
+<i class="bi bi-printer me-2"></i>طباعة التقرير الكامل
+         </button>
+            }
+ else if (!isLoadingModal)
+            {
+              <button type="button" class="btn btn-secondary" @onclick="HandleClose">إلغاء</button>
+         <button type="button" class="btn btn-primary"
+@onclick="HandleSave"
+              disabled="@isSaving">
+     @(isSaving ? "جارٍ الحفظ..." : "حفظ التقييم")
+      </button>
+  }
         </div>
     </div>
 </div>

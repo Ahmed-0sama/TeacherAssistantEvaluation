@@ -128,8 +128,9 @@
                                         <th class="py-3 fw-semibold text-center">عدد الصفحات</th>
                                         <th class="py-3 fw-semibold text-center">التاريخ</th>
                                         <th class="py-3 fw-semibold text-center">الحالة</th>
+                                    @if (!IsReadOnly){
                                         <th class="py-3 fw-semibold text-center">إجراء</th>
-
+                                    }
                                     </tr>
                                 </thead>
                                 <tbody class="table-group-divider">
@@ -160,30 +161,35 @@
                                                     @GetStatusName(paper.Status)
                                                 </span>
                                             </td>
-
-                                                <td class="py-3 text-center">
-                                                    <div class="btn-group btn-group-sm" role="group">
-                                                        <button class="btn btn-outline-primary"
-                                                        @onclick="() => EditPaper(paper.Id)">
-                                                            <i class="bi bi-pencil-square me-1"></i>تعديل
-                                                        </button>
-                                                        <button class="btn btn-outline-danger"
-                                                        @onclick="() => DeletePaper(paper.Id)">
-                                                            <i class="bi bi-trash3 me-1"></i>حذف
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                        </tr>
+                                        @if (!IsReadOnly)
+                                        {
+                                            <td class="py-3 text-center">
+                                                <div class="btn-group btn-group-sm" role="group">
+                                                    <button class="btn btn-outline-primary"
+                                                    @onclick="() => EditPaper(paper.Id)">
+                                                        <i class="bi bi-pencil-square me-1"></i>تعديل
+                                                    </button>
+                                                    <button class="btn btn-outline-danger"
+                                                    @onclick="() => DeletePaper(paper.Id)">
+                                                        <i class="bi bi-trash3 me-1"></i>حذف
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        }
+                                    </tr>
                                     }
                                 </tbody>
                             </table>
                         </div>
                     }
                     <div class="text-end mt-3">
+                    @if (!IsReadOnly)
+                    {
                         <button class="btn btn-success btn-lg" @onclick="AddNewPaper">
                             <i class="bi bi-plus-circle me-2"></i>إضافة بحث جديد
                         </button>
-                    </div>
+                    }
+                </div>
                 </div>
             </div>
 
@@ -196,7 +202,7 @@
                                 <input type="checkbox"
                                        class="form-check-input"
                                        id="technicalReports"
-                                       @bind="otherActivities.HasTechnicalReportsOrArticles" />
+                                       @bind="otherActivities.HasTechnicalReportsOrArticles" disabled="@IsReadOnly"/>
                                 <label class="form-check-label" for="technicalReports">
                                     تقارير فنية او مقالات منشور(دون ان تكون ورقة بحثية)
                                 </label>
@@ -208,7 +214,7 @@
                                 <input type="checkbox"
                                        class="form-check-input"
                                        id="lectures"
-                                       @bind="otherActivities.HasGivenLecturesOrSeminars" />
+                                   @bind="otherActivities.HasGivenLecturesOrSeminars" disabled="@IsReadOnly" />
                                 <label class="form-check-label" for="lectures">
                                     القاء محاضرات في ندوات او لقاءات
                                 </label>
@@ -220,7 +226,7 @@
                                 <input type="checkbox"
                                        class="form-check-input"
                                        id="seminars"
-                                       @bind="otherActivities.HasAttendedScientificSeminars" />
+                                   @bind="otherActivities.HasAttendedScientificSeminars" disabled="@IsReadOnly" />
                                 <label class="form-check-label" for="seminars">
                                     حضور ندوات علمية ودورات تدريبية علمية
                                 </label>
@@ -281,14 +287,15 @@
 
                         <div class="col-md-4">
                             <label class="form-label fw-bold">الحالة <span class="text-danger">*</span></label>
-                            <InputSelect class="form-select" @bind-Value="currentPaper.Status">
-                                <option value="">-- اختر الحالة --</option>
-                                <option value=1>منشور</option>
-                                <option value=2>قيد المراجعة</option>
-                                <option value=3>مقبول</option>
-                                <option value="4">مرفوض</option>
-                            </InputSelect>
-                            <ValidationMessage For="@(() => currentPaper.Status)" class="text-danger" />
+                                <InputSelect class="form-select" @bind-Value="currentPaper.Status" TValue="int">
+                                    <option value="0">-- اختر الحالة --</option>
+                                    <option value="1">منشور</option>
+                                    <option value="2">قيد المراجعة</option>
+                                    <option value="3">مقبول</option>
+                                    <option value="4">مرفوض</option>
+                                </InputSelect>
+                                <ValidationMessage For="@(() => currentPaper.Status)" class="text-danger" />
+
                         </div>
                     </div>
                 </div>
@@ -310,12 +317,14 @@
     private bool isLoading = true;
     private List<ResearchPaperDto> researchPapers = new List<ResearchPaperDto>();
     private readonly int evaluationPeriodId = 1; // Example static value
-    private readonly int taEmployeeId = 19; // Example static value
     private OtherActivitiesDto otherActivities = new OtherActivitiesDto();
     private string? errorMessage;
-
+    [Parameter]
+    public bool IsReadOnly { get; set; }
     [Parameter]
     public int EvaluationId { get; set; }
+    [Parameter]
+    public int TAEmployeeId { get; set; }
     [Parameter]
     public List<ResearchPaperDto>? InitialResearchPapers { get; set; }
 
@@ -378,7 +387,7 @@
             }
 
             // Fetch data from API
-            var response = await Http.GetAsync($"/api/GSDean/GetEvaluationForTA/{evaluationPeriodId}/{taEmployeeId}");
+            var response = await Http.GetAsync($"/api/GSDean/GetEvaluationForTA/{evaluationPeriodId}/{TAEmployeeId}");
 
             if (response.IsSuccessStatusCode)
             {

@@ -168,7 +168,7 @@ namespace Business_Access.Services
                                 ActivityId = r.ActivityId,
                                 Title = r.Title,
                                 Journal = r.Journal,
-                                StatusName = r.Status?.StatusName ?? "",
+                                StatusId = r.StatusId,  // Fixed: Changed from StatusName to StatusId
                                 ActivityDate = r.ActivityDate
                             }).ToList() ?? new List<ResearchActivityResponseDto>(),
                     }

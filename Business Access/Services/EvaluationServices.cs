@@ -18,40 +18,60 @@ namespace Business_Access.Services
         {
             this.db = db;
         }
-        
-        public async Task<int> CreateEvaluationAsync(int taEmployeeId, int periodId)
+        public async Task<GetEvaluationDto> GetOrCreateEvaluationAsync(int taEmployeeId, int periodId)
         {
+            using var transaction = await db.Database.BeginTransactionAsync();
             try
             {
+                // Check if period exists
                 var period = await db.EvaluationPeriods.FirstOrDefaultAsync(p => p.PeriodId == periodId);
                 if (period == null)
                 {
-                    throw new Exception($"Evaluation Period Not Found");
+                    throw new KeyNotFoundException($"Evaluation Period with ID {periodId} not found");
                 }
-                var existingEvaluation = await db.Evaluations
+
+                // Try to get existing evaluation
+                var evaluation = await db.Evaluations
+                    .Include(e => e.Period)
+                    .Include(e => e.Status)
+                    .Include(e => e.Tasubmission)
                     .FirstOrDefaultAsync(e => e.TaEmployeeId == taEmployeeId && e.PeriodId == periodId);
-                if (existingEvaluation != null)
+
+                // If evaluation exists, return it
+                if (evaluation != null)
                 {
-                    throw new Exception("Evaluation already exists for the given TA and period.");
+                    await transaction.CommitAsync();
+                    return MapToGetEvaluationDto(evaluation);
                 }
-                var evaluation = new Evaluation
+
+                var newEvaluation = new Evaluation
                 {
                     TaEmployeeId = taEmployeeId,
                     PeriodId = periodId,
-                    StatusId = 1, // Assuming 1 is the default status for a new evaluation
+                    StatusId = 1, // Draft status
                     DateSubmitted = null,
                     DateApproved = null
                 };
-                db.Evaluations.Add(evaluation);
-                await db.SaveChangesAsync();
-                return evaluation.EvaluationId;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Error creating evaluation: {ex.Message}");
-            }
 
+                db.Evaluations.Add(newEvaluation);
+                await db.SaveChangesAsync();
+
+                evaluation = await db.Evaluations
+                    .Include(e => e.Period)
+                    .Include(e => e.Status)
+                    .Include(e => e.Tasubmission)
+                    .FirstOrDefaultAsync(e => e.EvaluationId == newEvaluation.EvaluationId);
+
+                await transaction.CommitAsync();
+                return MapToGetEvaluationDto(evaluation);
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
+
         public async Task<int> SubmitTAFilesAsync(int evaluationId, CreateTASubmissionDto submissionDto)
         {
             var transaction = await db.Database.BeginTransactionAsync();
@@ -202,7 +222,86 @@ namespace Business_Access.Services
                 throw;
             }
         }
+        public async Task<GetEvaluationDto> SubmitEvaluation(int evaluationId,UpdateTASubmissionsDto submissionDto)
+        {
+            if(evaluationId <= 0)
+            {
+                throw new ArgumentException("Invalid evaluation ID");
+            }
+            using var transaction = await db.Database.BeginTransactionAsync();
 
+            try
+            {
+                var submission = await db.Tasubmissions
+                    .Include(s => s.ResearchActivities)
+                    .FirstOrDefaultAsync(s => s.EvaluationId == evaluationId);
+
+                if (submission == null)
+                    throw new KeyNotFoundException($"TA submission with ID {evaluationId} not found");
+
+                var evaluation = await db.Evaluations
+                    .FirstOrDefaultAsync(e => e.EvaluationId == submission.EvaluationId);
+
+                if (evaluation == null)
+                    throw new KeyNotFoundException("Associated evaluation not found");
+
+                submission.ActualTeachingLoad = submissionDto.ActualTeachingLoad;
+                submission.ExpectedTeachingLoad = submissionDto.ExpectedTeachingLoad;
+                submission.HasTechnicalReports = submissionDto.HasTechnicalReports;
+                submission.HasSeminarLectures = submissionDto.HasSeminarLectures;
+                submission.HasAttendingSeminars = submissionDto.HasAttendingSeminars;
+                submission.AdvisedStudentCount = submissionDto.AdvisedStudentCount;
+
+                // Update added boolean fields
+                submission.IsInAcademicAdvisingCommittee = submissionDto.IsInAcademicAdvisingCommittee;
+                submission.IsInSchedulingCommittee = submissionDto.IsInSchedulingCommittee;
+                submission.IsInQualityAssuranceCommittee = submissionDto.IsInQualityAssuranceCommittee;
+                submission.IsInLabEquipmentCommittee = submissionDto.IsInLabEquipmentCommittee;
+                submission.IsInExamOrganizationCommittee = submissionDto.IsInExamOrganizationCommittee;
+                submission.IsInSocialOrSportsCommittee = submissionDto.IsInSocialOrSportsCommittee;
+
+                submission.ParticipatedInSports = submissionDto.ParticipatedInSports;
+                submission.ParticipatedInSocial = submissionDto.ParticipatedInSocial;
+                submission.ParticipatedInCultural = submissionDto.ParticipatedInCultural;
+                // Remove existing research activities and add new ones
+                if (submission.ResearchActivities.Any())
+                {
+                    db.ResearchActivities.RemoveRange(submission.ResearchActivities);
+                }
+
+                // Add updated research activities
+                if (submissionDto.ResearchActivities?.Any() == true)
+                {
+                    foreach (var activityDto in submissionDto.ResearchActivities)
+                    {
+                        var activity = new ResearchActivity
+                        {
+                            SubmissionId = submission.SubmissionId,
+                            Title = activityDto.Title,
+                            Journal = activityDto.Journal,
+                            Location = activityDto.Location,
+                            PageCount = activityDto.PageCount,
+                            ActivityDate = activityDto.ActivityDate,
+                            StatusId = activityDto.StatusId,
+                            Url = activityDto.Url
+                        };
+                        db.ResearchActivities.Add(activity);
+                    }
+                }
+                submission.Evaluation.StatusId = 2; // Update status to "Submitted"
+                db.Tasubmissions.Update(submission);
+                await db.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+            return await GetEvaluationByIdAsync(evaluationId);
+
+        }
         public async Task<TASubmissionResponseDto> GetTASubmissionAsync(int evaluationId)
         {
             try
@@ -256,7 +355,7 @@ namespace Business_Access.Services
                         Location = ra.Location,
                         PageCount = ra.PageCount,
                         ActivityDate = ra.ActivityDate,
-                        StatusName = ra.Status?.StatusName ?? "",
+                        StatusId = ra.StatusId,  // Fixed: Now using StatusId
                         Url = ra.Url
                     }).ToList(),
                     SubmittedDate = submission.Evaluation.DateSubmitted ?? DateTime.MinValue
@@ -374,26 +473,27 @@ namespace Business_Access.Services
                 throw new Exception($"Error getting evaluations for period {periodId}", ex);
             }
         }
-        public async Task<int?> CanTAEditEvaluationAsync(int taEmployeeId)
-        {
-            try
-            {
-                var evaluation = await db.Evaluations
-                    .FirstOrDefaultAsync(e => e.TaEmployeeId == taEmployeeId);
+        //i will use the getor create instead of this method
+        //public async Task<int?> CanTAEditEvaluationAsync(int taEmployeeId)
+        //{
+        //    try
+        //    {
+        //        var evaluation = await db.Evaluations
+        //            .FirstOrDefaultAsync(e => e.TaEmployeeId == taEmployeeId);
 
-                if (evaluation == null)
-                    return null;
-                if (evaluation.StatusId == 1)
-                {
-                    return evaluation.EvaluationId;
-                }
-                return null;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Error checking if TA can edit evaluation {taEmployeeId}", ex);
-            }
-        }
+        //        if (evaluation == null)
+        //            return null;
+        //        if (evaluation.StatusId == 1)
+        //        {
+        //            return evaluation.EvaluationId;
+        //        }
+        //        return null;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        throw new Exception($"Error checking if TA can edit evaluation {taEmployeeId}", ex);
+        //    }
+        //}
 
         private static GetEvaluationDto MapToGetEvaluationDto(Evaluation evaluation)
         {

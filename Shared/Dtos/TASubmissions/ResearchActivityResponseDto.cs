@@ -14,7 +14,7 @@ namespace Shared.Dtos.TASubmissions
         public string Location { get; set; }
         public int PageCount { get; set; }
         public DateOnly ActivityDate { get; set; }
-        public string StatusName { get; set; }
+        public int StatusId { get; set; } // Changed from StatusName to StatusId
         public string Url { get; set; }
     }
 }

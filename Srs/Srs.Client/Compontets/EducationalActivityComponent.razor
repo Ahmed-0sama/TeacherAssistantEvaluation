@@ -67,7 +67,6 @@
     private bool isLoading = false;
     private string? errorMessage;
     private EducationalActivityDto educationalActivity = new EducationalActivityDto();
-
     [Parameter] public EducationalActivityDto? InitialData { get; set; }
     [Parameter] public bool IsEditMode { get; set; }
     [Parameter] public EventCallback<EducationalActivityDto> OnActivityLoaded { get; set; }

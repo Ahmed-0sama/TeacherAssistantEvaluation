@@ -13,7 +13,7 @@ public partial class EvaluationPeriod
 
     public DateOnly EndDate { get; set; }
     public virtual ICollection<Evaluation> Evaluations { get; set; } = new List<Evaluation>();
-    public virtual GsdeanEvaluation? GsdeanEvaluation { get; set; }
+    public virtual ICollection<GsdeanEvaluation> GsdeanEvaluations { get; set; } = new List<GsdeanEvaluation>();
     public virtual ICollection<ProfessorCourseEvaluation> ProfessorCourseEvaluations { get; set; } = new List<ProfessorCourseEvaluation>();
 
 }

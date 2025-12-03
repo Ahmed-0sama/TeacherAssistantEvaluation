@@ -80,6 +80,16 @@ h3.text-center {
     flex-direction: column;
 }
 
+/* Large modal variant for Dean component */
+.modal-container-lg {
+    max-width: 900px;
+}
+
+/* Extra large modal variant for HOD component */
+.modal-container-xl {
+  max-width: 1140px;
+}
+
 .modal-header {
     background-color: #0d6efd;
     color: white;
