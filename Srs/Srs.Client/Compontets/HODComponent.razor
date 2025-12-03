@@ -3,13 +3,9 @@
 @inject HttpClient Http
 @inject IJSRuntime JS
 
-<HeadContent>
- <link href="./Custom-Rtl.css" rel="stylesheet" />
-</HeadContent>
-
-<div class="modal d-block hod-evaluation-modal @(isPrinting ? "printing" : "")" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5);">
+<div class="modal d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5);">
     <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content hod-modal-content" dir="rtl">
+        <div class="modal-content" dir="rtl">
             <div class="modal-header" dir="rtl">
                 <button type="button" class="btn-close ms-0 me-auto" @onclick="HandleClose"></button>
                 <h5 class="modal-title">تفاصيل مساعد التدريس</h5>
@@ -281,7 +277,6 @@
     // Internal state
     private bool isLoadingModal = true;
     private bool isSaving = false;
-    private bool isPrinting = false;
     private TeachingDataDto teachingdto = new TeachingDataDto();
     private List<ProfessorEvaluationResponseDto> profdto = new List<ProfessorEvaluationResponseDto>();
     private HodEvaluationResponseDto? hodEvaluationData;
@@ -526,52 +521,7 @@
     }
     private async Task PrintModal()
     {
-        try
-        {
-            Console.WriteLine("🔵 Starting HOD print process");
-            
-            // Add class to BODY element
-await JS.InvokeVoidAsync("eval", @"
-   console.log('Adding hod-printing class to body');
-       document.body.classList.add('hod-printing');
-    console.log('Body classes:', document.body.className);
-         ");
-            
-     // Set printing state
-      isPrinting = true;
-   StateHasChanged();
-            
-   // Wait for DOM to update
-       await Task.Delay(200);
-            
- // Trigger print
-  Console.WriteLine("🔵 Triggering print dialog");
-         await JS.InvokeVoidAsync("window.print");
-            
-        // Wait for print dialog
-     await Task.Delay(300);
-            
-     // Remove class from BODY
-   await JS.InvokeVoidAsync("eval", @"
-        console.log('Removing hod-printing class from body');
-  document.body.classList.remove('hod-printing');
-            ");
-       
-            // Reset printing state
-       isPrinting = false;
-            StateHasChanged();
-    
-            Console.WriteLine("✅ Print process completed");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"❌ Error printing: {ex.Message}");
-            await JS.InvokeVoidAsync("alert", $"خطأ في الطباعة: {ex.Message}");
-     
-            // Ensure cleanup
- await JS.InvokeVoidAsync("eval", "document.body.classList.remove('hod-printing');");
-            isPrinting = false;
-   StateHasChanged();
-        }
+        Console.WriteLine("🔵 Printing entire modal");
+        await JS.InvokeVoidAsync("window.print");
     }
 }
