@@ -66,18 +66,18 @@ namespace Srs.Controllers
                 return StatusCode(500, new { message = "An error occurred while submitting TA files.", details = ex.Message });
             }
         }
-        [HttpPut("UpdateTASubmission/{submissionId}")]
-        public async Task<IActionResult> UpdateTASubmission(int submissionId, [FromBody] UpdateTASubmissionsDto submissionDto)
+        [HttpPut("UpdateTASubmission/{evaluationid}")]
+        public async Task<IActionResult> UpdateTASubmission(int evaluationid, [FromBody] UpdateTASubmissionsDto submissionDto)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
 
-                if (submissionId <= 0)
+                if (evaluationid <= 0)
                     return BadRequest("Invalid submission ID");
 
-                await _evaluationService.UpdateTASubmissionAsync(submissionId, submissionDto);
+                await _evaluationService.UpdateTASubmissionAsync(evaluationid, submissionDto);
                 return Ok(new { message = "Data Updated Successfully" });
             }
             catch (Exception ex)

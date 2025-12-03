@@ -22,5 +22,6 @@ namespace Shared.Dtos
 
 
         public bool IsSocialOrSportsActivityCommittees { get; set; }
+        public decimal? TotalAdministrativeActivityScore { get; set; }
     }
 }

@@ -240,3 +240,468 @@ hr {
     font-size: 0.9rem;
     display: inline-block;
 }
+@media print {
+    /* Remove ALL default page margins */
+    @page {
+  margin: 0;
+        size: auto;
+    }
+
+    /* Hide everything except the modal */
+    body * {
+ visibility: hidden !important;
+    }
+
+    html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        height: auto !important;
+        width: 100% !important;
+    }
+
+    .modal-overlay {
+    visibility: visible !important;
+ position: absolute !important;
+  top: 0 !important;
+        left: 0 !important;
+        background: white !important;
+   display: block !important;
+margin: 0 !important;
+        padding: 0 !important;
+        height: auto !important;
+        width: 100% !important;
+    }
+
+    .modal-container, .modal-container * {
+        visibility: visible !important;
+    }
+
+    .modal-container {
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        max-height: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: white !important;
+        overflow: visible !important;
+        height: auto !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        display: block !important;
+        transform: none !important;
+    }
+
+    .modal-header {
+        background-color: #0d6efd !important;
+color: white !important;
+    -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+        page-break-after: avoid !important;
+        padding: 1rem 1.5rem !important;
+        margin: 0 !important;
+    }
+
+    .modal-body {
+        overflow: visible !important;
+        max-height: none !important;
+        height: auto !important;
+     padding: 1rem !important;
+        margin: 0 !important;
+    }
+
+    /* Hide buttons in footer when printing */
+    .modal-footer {
+        display: none !important;
+    }
+
+    /* Ensure content flows across pages */
+    .info-section,
+    .card,
+    .alert {
+ page-break-inside: avoid !important;
+ }
+
+    /* Info section with background color */
+    .info-section {
+        background-color: #f8f9fa !important;
+        -webkit-print-color-adjust: exact !important;
+     print-color-adjust: exact !important;
+        color-adjust: exact !important;
+        padding: 1rem !important;
+ border-radius: 6px !important;
+        margin-bottom: 1rem !important;
+    }
+
+    /* Keep badges and pills colored */
+    .badge,
+    .result-pill {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
+
+    .badge.bg-success {
+        background-color: #198754 !important;
+    color: white !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+   color-adjust: exact !important;
+    }
+
+    .badge.bg-warning {
+        background-color: #ffc107 !important;
+        color: #000 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
+
+    .badge.bg-primary {
+        background-color: #0d6efd !important;
+     color: white !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
+
+    /* Card styling for print */
+    .card {
+     border: 1px solid #dee2e6 !important;
+     margin-bottom: 0.5rem !important;
+     background-color: white !important;
+     -webkit-print-color-adjust: exact !important;
+     print-color-adjust: exact !important;
+     color-adjust: exact !important;
+    }
+
+ .card-body {
+padding: 0.75rem !important;
+    }
+
+    .card.border-primary {
+   border-color: #0d6efd !important;
+        border-width: 2px !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+color-adjust: exact !important;
+    }
+
+    .card.border-success {
+        border-color: #198754 !important;
+        border-width: 2px !important;
+        -webkit-print-color-adjust: exact !important;
+     print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
+
+    .card.bg-light {
+        background-color: #f8f9fa !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
+
+    /* Text colors for cards */
+    .text-primary {
+     color: #0d6efd !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+}
+
+    .text-success {
+      color: #198754 !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      color-adjust: exact !important;
+    }
+
+    .text-warning {
+color: #ffc107 !important;
+        -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
+
+    .text-muted {
+        color: #6c757d !important;
+        -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+ color-adjust: exact !important;
+    }
+
+    /* Alert styling for print */
+    .alert {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+        padding: 0.75rem 1rem !important;
+        margin-bottom: 1rem !important;
+        border-radius: 6px !important;
+    }
+
+    .alert-info {
+   background-color: #cfe2ff !important;
+      border-color: #b6d4fe !important;
+     color: #084298 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
+
+    .alert-secondary {
+        background-color: #e2e3e5 !important;
+        border-color: #d3d6d8 !important;
+        color: #41464b !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
+
+    /* Ensure table content is visible */
+    .table {
+border-collapse: collapse !important;
+    }
+
+    .table th,
+    .table td {
+        border: 1px solid #dee2e6 !important;
+    }
+
+    /* Prevent page breaks inside important sections */
+    h6 {
+  page-break-after: avoid !important;
+        color: #333 !important;
+        font-weight: 600 !important;
+    }
+
+  /* Ensure proper spacing */
+    hr {
+        border-top: 1px solid #dee2e6 !important;
+        page-break-after: avoid !important;
+        margin: 1rem 0 !important;
+    }
+
+    /* Force colors on all elements */
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
+}
+
+/* ==================== HOD COMPONENT PRINT STYLES ==================== */
+@media print {
+    /* When body has hod-printing class, hide everything EXCEPT HOD modal */
+    body.hod-printing > *:not(.hod-evaluation-modal) {
+        display: none !important;
+    }
+
+    /* Ensure HOD modal is visible and takes full page */
+    body.hod-printing .hod-evaluation-modal {
+        position: fixed !important;
+        top: 0 !important;
+left: 0 !important;
+        right: 0 !important;
+  bottom: 0 !important;
+        background: white !important;
+        display: block !important;
+        margin: 0 !important;
+        padding: 0 !important;
+  width: 100% !important;
+        height: 100% !important;
+        z-index: 999999 !important;
+        overflow: auto !important;
+    }
+
+    /* Ensure all child elements are displayed */
+  body.hod-printing .hod-evaluation-modal * {
+        display: revert !important;
+    }
+
+    /* Reset modal dialog for print */
+    body.hod-printing .hod-evaluation-modal .modal-dialog {
+        position: static !important;
+        width: 100% !important;
+      max-width: 100% !important;
+      margin: 0 !important;
+   padding: 0 !important;
+        display: block !important;
+    }
+
+    body.hod-printing .hod-evaluation-modal .hod-modal-content {
+        position: static !important;
+    width: 100% !important;
+        max-width: 100% !important;
+        max-height: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      background: white !important;
+        overflow: visible !important;
+        height: auto !important;
+      box-shadow: none !important;
+        border-radius: 0 !important;
+        display: block !important;
+        border: none !important;
+    }
+
+    body.hod-printing .hod-evaluation-modal .modal-header {
+        background-color: #0d6efd !important;
+    color: white !important;
+   -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        page-break-after: avoid !important;
+        padding: 1rem 1.5rem !important;
+        margin: 0 !important;
+  display: block !important;
+    }
+
+    body.hod-printing .hod-evaluation-modal .modal-body {
+        overflow: visible !important;
+      max-height: none !important;
+ height: auto !important;
+        padding: 1rem !important;
+  margin: 0 !important;
+        display: block !important;
+    }
+
+    body.hod-printing .hod-evaluation-modal .modal-footer,
+    body.hod-printing .hod-evaluation-modal .btn-close {
+     display: none !important;
+    }
+
+    /* Color preservation for HOD print */
+    body.hod-printing .hod-evaluation-modal .badge,
+    body.hod-printing .hod-evaluation-modal .bg-light,
+    body.hod-printing .hod-evaluation-modal .table-secondary,
+    body.hod-printing .hod-evaluation-modal .card {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    body.hod-printing .hod-evaluation-modal .badge.bg-success {
+ background-color: #198754 !important;
+        color: white !important;
+    }
+
+    body.hod-printing .hod-evaluation-modal .badge.bg-warning {
+        background-color: #ffc107 !important;
+        color: #000 !important;
+    }
+
+    body.hod-printing .hod-evaluation-modal .badge.bg-info {
+        background-color: #0dcaf0 !important;
+     color: #000 !important;
+    }
+
+    body.hod-printing .hod-evaluation-modal .badge.bg-primary {
+ background-color: #0d6efd !important;
+        color: white !important;
+    }
+
+    body.hod-printing .hod-evaluation-modal .badge.bg-secondary {
+ background-color: #6c757d !important;
+        color: white !important;
+    }
+
+    body.hod-printing .hod-evaluation-modal .bg-light {
+      background-color: #f8f9fa !important;
+    }
+
+    body.hod-printing .hod-evaluation-modal .table-secondary {
+        background-color: #e2e3e5 !important;
+    }
+
+    body.hod-printing .hod-evaluation-modal .table {
+    border-collapse: collapse !important;
+        width: 100% !important;
+        display: table !important;
+    }
+
+    body.hod-printing .hod-evaluation-modal .table thead {
+    display: table-header-group !important;
+  }
+
+    body.hod-printing .hod-evaluation-modal .table tbody {
+        display: table-row-group !important;
+    }
+
+    body.hod-printing .hod-evaluation-modal .table tr {
+      display: table-row !important;
+    }
+
+    body.hod-printing .hod-evaluation-modal .table th,
+    body.hod-printing .hod-evaluation-modal .table td {
+        display: table-cell !important;
+        border: 1px solid #dee2e6 !important;
+        padding: 0.5rem !important;
+    }
+
+    body.hod-printing .hod-evaluation-modal .row {
+        display: flex !important;
+ flex-wrap: wrap !important;
+    }
+
+    body.hod-printing .hod-evaluation-modal .col,
+    body.hod-printing .hod-evaluation-modal [class*="col-"] {
+        display: block !important;
+    }
+
+    body.hod-printing .hod-evaluation-modal .card {
+        border: 1px solid #dee2e6 !important;
+        page-break-inside: avoid !important;
+        margin-bottom: 0.5rem !important;
+ background-color: white !important;
+      display: block !important;
+    }
+
+    body.hod-printing .hod-evaluation-modal .card-body {
+        display: block !important;
+    }
+
+    body.hod-printing .hod-evaluation-modal .card.bg-primary {
+        background-color: rgba(13, 110, 253, 0.1) !important;
+    }
+
+    body.hod-printing .hod-evaluation-modal .text-primary {
+        color: #0d6efd !important;
+    }
+
+    body.hod-printing .hod-evaluation-modal .text-success {
+     color: #198754 !important;
+    }
+
+    body.hod-printing .hod-evaluation-modal h5,
+    body.hod-printing .hod-evaluation-modal h6 {
+        page-break-after: avoid !important;
+        color: #333 !important;
+        display: block !important;
+    }
+
+    body.hod-printing .hod-evaluation-modal .alert {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        display: block !important;
+    }
+
+    body.hod-printing .hod-evaluation-modal .table-responsive {
+        overflow: visible !important;
+        display: block !important;
+    }
+
+    body.hod-printing .hod-evaluation-modal .border,
+    body.hod-printing .hod-evaluation-modal .rounded,
+    body.hod-printing .hod-evaluation-modal .mb-3,
+    body.hod-printing .hod-evaluation-modal .p-3 {
+ display: block !important;
+    }
+
+    @page {
+        margin: 0.5cm;
+        size: auto;
+    }
+}

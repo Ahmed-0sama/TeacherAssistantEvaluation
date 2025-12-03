@@ -9,10 +9,10 @@ namespace Srs.Controllers
     [ApiController]
     public class ProfessorEvaluationController : ControllerBase
     {
-        private readonly IProfessorEvaluation IProfessorEvaluation;
-        public ProfessorEvaluationController(IProfessorEvaluation IProfessorEvaluation)
+        private readonly IProfessorEvaluation _professorEvaluation;
+        public ProfessorEvaluationController(IProfessorEvaluation professorEvaluation)
         {
-            this.IProfessorEvaluation = IProfessorEvaluation;
+            _professorEvaluation = professorEvaluation;
         }
         [HttpPost("CreateProfessorEvaluation")]
         public async Task<IActionResult> Create([FromBody] CreateProfessorEvaluationDto dto)
@@ -22,7 +22,7 @@ namespace Srs.Controllers
 
             try
             {
-                var profEvalId = await IProfessorEvaluation.CreateProfessorEvaluationAsync(dto);
+                var profEvalId = await _professorEvaluation.CreateProfessorEvaluationAsync(dto);
                 return Ok(new { ProfEvalId = profEvalId });
             }
             catch (Exception ex)
@@ -32,12 +32,12 @@ namespace Srs.Controllers
         }
 
         // Get a professor evaluation by its ID
-        [HttpGet("GetProfessorEvaluationById{profEvalId}")]
+        [HttpGet("GetProfessorEvaluationById/{profEvalId}")]
         public async Task<IActionResult> GetProfessorEvaluationByIdAsync(int profEvalId)
         {
             try
             {
-                var result = await IProfessorEvaluation.GetProfessorEvaluationByIdAsync(profEvalId);
+                var result = await _professorEvaluation.GetProfessorEvaluationByIdAsync(profEvalId);
                 return Ok(result);
             }
             catch (KeyNotFoundException ex)
@@ -49,13 +49,12 @@ namespace Srs.Controllers
                 return StatusCode(500, new { message = ex.Message });
             }
         }
-        // Get all evaluations by a professor
-        [HttpGet("professor/{professorEmployeeId}")]
-        public async Task<IActionResult> GetByProfessor(int professorEmployeeId)
+        [HttpGet("GetByEvaluationPeriodId/{evaluationPeriodId}")]
+        public async Task<IActionResult> GetByEvaluationPeriodIdAsync(int evaluationPeriodId)
         {
             try
             {
-                var results = await IProfessorEvaluation.GetEvaluationsByProfessorAsync(professorEmployeeId);
+                var results = await _professorEvaluation.GetByEvaluationIdAsync(evaluationPeriodId);
                 return Ok(results);
             }
             catch (Exception ex)
@@ -63,16 +62,54 @@ namespace Srs.Controllers
                 return StatusCode(500, new { message = ex.Message });
             }
         }
-
-        [HttpPut("UpdateEvaluationByEvaluationId{evaluationid}")]
-        public async Task<IActionResult> Update(int evaluationid, [FromBody] UpdateProfessorEvaluationDto dto)
+        [HttpGet("GetByProfessor/{professorEmployeeId}")]  // CLEANED UP: Better naming
+        public async Task<IActionResult> GetByProfessor(int professorEmployeeId)
+        {
+            try
+            {
+                var results = await _professorEvaluation.GetEvaluationsByProfessorAsync(professorEmployeeId);
+                return Ok(results);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+        [HttpGet("GetByTAEmployee/{taEmployeeId}")]
+        public async Task<IActionResult> GetByTAEmployeeId(int taEmployeeId)
+        {
+            try
+            {
+                var results = await _professorEvaluation.GetByTAEmployeeIdAsync(taEmployeeId);
+                return Ok(results);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+        [HttpGet("GetByPeriodAndTA/{evaluationPeriodId}/{taEmployeeId}")]
+        public async Task<IActionResult> GetByPeriodAndTA(int evaluationPeriodId, int taEmployeeId)
+        {
+            try
+            {
+                var results = await _professorEvaluation.GetByPeriodAndTAAsync(evaluationPeriodId, taEmployeeId);
+                return Ok(results);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+        [HttpPut("UpdateEvaluation/{profEvalId}")]
+        public async Task<IActionResult> Update(int profEvalId, [FromBody] UpdateProfessorEvaluationDto dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
             try
             {
-                await IProfessorEvaluation.UpdateProfessorEvaluationAsync(evaluationid, dto);
+                await _professorEvaluation.UpdateProfessorEvaluationAsync(profEvalId, dto);
                 return Ok(new { message = "Professor evaluation updated successfully." });
             }
             catch (KeyNotFoundException ex)

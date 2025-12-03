@@ -11,5 +11,6 @@ namespace Shared.Dtos
         public int ActualTeachingLoad { get; set; }      
         public int ExpectedTeachingLoad { get; set; }    
         public int ClassCount { get; set; }
+        public int? gradegiven { get; set; }
     }
 }

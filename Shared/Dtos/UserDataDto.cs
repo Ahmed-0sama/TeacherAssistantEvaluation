@@ -24,5 +24,8 @@ namespace Shared.Dtos
             [Required(ErrorMessage = "Requird")]
             public string College { get; set; } = string.Empty;
             public string status { get; set; } = string.Empty;
+        public int EvaluationId { get; set; }
+        public bool? HasVpgsEvaluation { get; set; }
+        public bool? HasHodEvaluation { get; set; }
     }
 }

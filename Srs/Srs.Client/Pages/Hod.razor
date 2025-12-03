@@ -1,0 +1,179 @@
+﻿@page "/hod"
+@using Shared.Dtos
+@using Shared.Dtos.HODEvaluation
+@using Shared.Dtos.ProfessorEvaluationDto
+@inject HttpClient Http
+@inject IJSRuntime JS
+@rendermode InteractiveWebAssembly
+
+<HeadContent>
+    <link href="./Custom-Rtl.css" rel="stylesheet" />
+</HeadContent>
+
+<h3 class="text-center mb-4">تقييم رئيس القسم لمساعدي التدريس</h3>
+
+<div class="card shadow-sm" dir="rtl">
+    <div class="card-body">
+        <h3 class="text-center" style="color:cornflowerblue;">قائمة مساعدي التدريس</h3>
+        <hr style="color:cornflowerblue;" />
+
+        <div class="d-flex justify-content-center">
+            <div class="w-75 mb-4 shadow-sm">
+                @if (isLoading)
+                {
+                    <p class="text-center">جارٍ تحميل البيانات...</p>
+                }
+                else if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="alert alert-danger text-center">@errorMessage</div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped text-center align-middle" dir="rtl">
+                            <thead class="table-secondary">
+                                <tr>
+                                    <th>اسم مساعد التدريس</th>
+                                    <th>الفترة</th>
+                                    <th>الحالة</th>
+                                    <th>حالة التقييم</th>
+                                    <th>إجراء</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var ta in taList)
+                                {
+                                    <tr>
+                                        <td>@ta.Name</td>
+                                        <td>@ta.Department</td>
+                                        <td>@ta.status</td>
+                                        <td>
+                                            @if (ta.HasHodEvaluation == true)
+                                            {
+                                                <span class="badge bg-success">تم التقييم</span>
+                                            }
+                                            else if (ta.status == "Draft")
+                                            {
+                                                <span class="badge bg-warning text-dark">بانتظار التقييم</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">غير متاح</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (ta.status == "Draft" || ta.HasHodEvaluation == true)
+                                            {
+                                                <button class="btn btn-sm btn-primary" @onclick="() => OpenModal(ta)">
+                                                    @(ta.HasHodEvaluation == true ? "عرض التقييم" : "تقييم")
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <button class="btn btn-sm btn-secondary" disabled>غير متاح</button>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (showModal && selectedTA != null)
+{
+    <Srs.Client.Compontets.HODComponent 
+        SelectedTA="@selectedTA"
+        EvaluationPeriodId="@EvaluationPeriodId"
+        IsViewMode="@isViewMode"
+        OnClose="@CloseModal"
+        OnSaveSuccess="@HandleSaveSuccess" />
+}
+
+@code {
+    private List<UserDataDto> taList = new();
+    private bool isLoading = true;
+    private string errorMessage = string.Empty;
+    private bool showModal = false;
+    private UserDataDto? selectedTA;
+    private bool isViewMode = false;
+    private const int EvaluationPeriodId = 1; // Example period ID
+    
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTAList();
+    }
+
+    private async Task LoadTAList()
+    {
+        isLoading = true;
+        try
+        {
+            // Load evaluations from API
+            var evaluations = await Http.GetFromJsonAsync<List<EvaluationApiResponseDto>>("api/evaluation/period/1")
+                ?? new List<EvaluationApiResponseDto>();
+
+            // Check which evaluations have HOD evaluations
+            var hodEvaluationIds = new HashSet<int>();
+            try
+            {
+                var hodEvaluations = await Http.GetFromJsonAsync<List<HodEvaluationResponseDto>>("api/HodEvaluation/GetHodEvaluationByPeriod/1")
+                    ?? new List<HodEvaluationResponseDto>();
+
+                hodEvaluationIds = hodEvaluations
+                    .Where(h => h.Evaluations != null && h.Evaluations.Any())
+                    .Select(h => h.EvaluationId)
+                    .ToHashSet();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Warning: Could not load HOD evaluations: {ex.Message}");
+            }
+
+            // Map API response to UserDataDto
+            taList = evaluations.Select(e => new UserDataDto
+            {
+                Name = $"TA #{e.taEmployeeId}",
+                Department = e.periodName,
+                EmployeeNumber = e.taEmployeeId,
+                status = e.statusName,
+                EvaluationId = e.evaluationId,
+                Id = e.taEmployeeId,
+                HasHodEvaluation = hodEvaluationIds.Contains(e.evaluationId)
+            }).ToList();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"حدث خطأ أثناء تحميل البيانات: {ex.Message}";
+            Console.WriteLine($"Error: {ex}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void OpenModal(UserDataDto ta)
+    {
+        selectedTA = ta;
+        isViewMode = ta.HasHodEvaluation == true;
+        showModal = true;
+    }
+
+    private void CloseModal()
+    {
+        showModal = false;
+        selectedTA = null;
+    }
+
+    private async Task HandleSaveSuccess()
+    {
+        showModal = false;
+        selectedTA = null;
+        await LoadTAList(); // Refresh the list
+    }
+}

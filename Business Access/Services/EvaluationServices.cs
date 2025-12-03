@@ -76,7 +76,17 @@ namespace Business_Access.Services
                     HasTechnicalReports = submissionDto.HasTechnicalReports,
                     HasSeminarLectures = submissionDto.HasSeminarLectures,
                     HasAttendingSeminars = submissionDto.HasAttendingSeminars,
-                    AdvisedStudentCount = submissionDto.AdvisedStudentCount
+                    AdvisedStudentCount = submissionDto.AdvisedStudentCount,
+                    IsInAcademicAdvisingCommittee = submissionDto.IsInAcademicAdvisingCommittee,
+                    IsInSchedulingCommittee = submissionDto.IsInSchedulingCommittee,
+                    IsInQualityAssuranceCommittee = submissionDto.IsInQualityAssuranceCommittee,
+                    IsInLabEquipmentCommittee = submissionDto.IsInLabEquipmentCommittee,
+                    IsInExamOrganizationCommittee = submissionDto.IsInExamOrganizationCommittee,
+                    IsInSocialOrSportsCommittee = submissionDto.IsInSocialOrSportsCommittee,
+                    ParticipatedInSports = submissionDto.ParticipatedInSports,
+                    ParticipatedInSocial = submissionDto.ParticipatedInSocial,
+                    ParticipatedInCultural = submissionDto.ParticipatedInCultural
+
                 };
 
                 db.Tasubmissions.Add(submission);
@@ -104,7 +114,7 @@ namespace Business_Access.Services
                 }
 
                 // Update evaluation status to "Submitted"
-                evaluation.StatusId = 2; // Submitted status - adjust based on your status IDs
+                evaluation.StatusId = 1; // Submitted status - adjust based on your status IDs
                 evaluation.DateSubmitted = DateTime.Now;
                 db.Evaluations.Update(evaluation);
                 await db.SaveChangesAsync();
@@ -118,7 +128,7 @@ namespace Business_Access.Services
                 throw;
             }
         }
-        public async Task UpdateTASubmissionAsync(int submissionId, UpdateTASubmissionsDto submissionDto)
+        public async Task UpdateTASubmissionAsync(int evaluationid, UpdateTASubmissionsDto submissionDto)
         {
             using var transaction = await db.Database.BeginTransactionAsync();
 
@@ -126,10 +136,10 @@ namespace Business_Access.Services
             {
                 var submission = await db.Tasubmissions
                     .Include(s => s.ResearchActivities)
-                    .FirstOrDefaultAsync(s => s.SubmissionId == submissionId);
+                    .FirstOrDefaultAsync(s => s.EvaluationId == evaluationid);
 
                 if (submission == null)
-                    throw new KeyNotFoundException($"TA submission with ID {submissionId} not found");
+                    throw new KeyNotFoundException($"TA submission with ID {evaluationid} not found");
 
                 var evaluation = await db.Evaluations
                     .FirstOrDefaultAsync(e => e.EvaluationId == submission.EvaluationId);
@@ -144,6 +154,17 @@ namespace Business_Access.Services
                 submission.HasAttendingSeminars = submissionDto.HasAttendingSeminars;
                 submission.AdvisedStudentCount = submissionDto.AdvisedStudentCount;
 
+                // Update added boolean fields
+                submission.IsInAcademicAdvisingCommittee = submissionDto.IsInAcademicAdvisingCommittee;
+                submission.IsInSchedulingCommittee = submissionDto.IsInSchedulingCommittee;
+                submission.IsInQualityAssuranceCommittee = submissionDto.IsInQualityAssuranceCommittee;
+                submission.IsInLabEquipmentCommittee = submissionDto.IsInLabEquipmentCommittee;
+                submission.IsInExamOrganizationCommittee = submissionDto.IsInExamOrganizationCommittee;
+                submission.IsInSocialOrSportsCommittee = submissionDto.IsInSocialOrSportsCommittee;
+
+                submission.ParticipatedInSports = submissionDto.ParticipatedInSports;
+                submission.ParticipatedInSocial = submissionDto.ParticipatedInSocial;
+                submission.ParticipatedInCultural = submissionDto.ParticipatedInCultural;
                 // Remove existing research activities and add new ones
                 if (submission.ResearchActivities.Any())
                 {
@@ -205,6 +226,16 @@ namespace Business_Access.Services
                     HasSeminarLectures = submission.HasSeminarLectures,
                     HasAttendingSeminars = submission.HasAttendingSeminars,
                     AdvisedStudentCount = submission.AdvisedStudentCount,
+                    ParticipatedInCultural = submission.ParticipatedInCultural,
+                    ParticipatedInSocial = submission.ParticipatedInSocial,
+                    ParticipatedInSports = submission.ParticipatedInSports,
+                    IsInLabEquipmentCommittee = submission.IsInLabEquipmentCommittee,
+                    IsInAcademicAdvisingCommittee = submission.IsInAcademicAdvisingCommittee,
+                    IsInQualityAssuranceCommittee = submission.IsInQualityAssuranceCommittee,
+                    IsInSchedulingCommittee = submission.IsInSchedulingCommittee,
+                    IsInSocialOrSportsCommittee = submission.IsInSocialOrSportsCommittee,
+
+                    IsInExamOrganizationCommittee = submission.IsInExamOrganizationCommittee,
                     CommitteeParticipation = new CommiteParticipationDto
                     {
                         IsInAcademicAdvisingCommittee = submission.IsInAcademicAdvisingCommittee,
@@ -332,7 +363,7 @@ namespace Business_Access.Services
                     .Include(e => e.Period)
                     .Include(e => e.Status)
                     .Include(e => e.Tasubmission)
-                    .Where(e => e.PeriodId == periodId)
+                    .Where(e => e.PeriodId == periodId)//to add the status must be 2 but i removed it to check and debug
                     .OrderBy(e => e.TaEmployeeId)
                     .ToListAsync();
 
@@ -352,9 +383,11 @@ namespace Business_Access.Services
 
                 if (evaluation == null)
                     return null;
-
-                // Return the ID regardless of status
-                return evaluation.EvaluationId;
+                if (evaluation.StatusId == 1)
+                {
+                    return evaluation.EvaluationId;
+                }
+                return null;
             }
             catch (Exception ex)
             {

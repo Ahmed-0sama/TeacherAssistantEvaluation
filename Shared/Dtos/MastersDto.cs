@@ -10,7 +10,7 @@ namespace Shared.Dtos
     {
         public string Major { get; set; }
         public int HoursGained { get; set; }
-        public double Grade { get; set; }
+        public decimal Grade { get; set; }
         public DateOnly EstimatedGraduationDate { get; set; }
         public bool ResearchPointsCompleted { get; set; }
         public bool SearchInResources { get; set; }
@@ -18,7 +18,8 @@ namespace Shared.Dtos
         public bool CollectDataAndAnalyze { get; set; }
         public bool ResearchReportWriting { get; set; }
         public bool ScientificResearchReport { get; set; }
-        public double GradeGivenbySupervisor { get; set; }
+        public decimal? GradeGivenbySupervisor { get; set; }
         public string Status { get; set; }
+        public string? Notes { get; set; }
     }
 }

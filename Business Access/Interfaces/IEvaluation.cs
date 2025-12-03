@@ -12,7 +12,7 @@ namespace Business_Access.Interfaces
         Task<int> CreateEvaluationAsync(int taEmployeeId, int periodId);
         Task<int> SubmitTAFilesAsync(int evaluationId, CreateTASubmissionDto submissionDto);
 
-        Task UpdateTASubmissionAsync(int submissionId, UpdateTASubmissionsDto submissionDto);
+        Task UpdateTASubmissionAsync(int evalautionid, UpdateTASubmissionsDto submissionDto);
 
         Task<TASubmissionResponseDto> GetTASubmissionAsync(int evaluationId);
         Task<GetEvaluationDto> GetEvaluationByIdAsync(int evaluationId);

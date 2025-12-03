@@ -1,4 +1,5 @@
 ﻿@using Shared.Dtos
+@using Shared.Dtos.GSDean
 @inject HttpClient Http
 @inject IJSRuntime JSRuntime
 <HeadContent>
@@ -103,7 +104,7 @@
                     </div>
                 </div>
             </div>
-
+            }
             <!-- Research Papers Section -->
             <div class="card shadow-sm mb-4">
                 <div class="card-body">
@@ -128,6 +129,7 @@
                                         <th class="py-3 fw-semibold text-center">التاريخ</th>
                                         <th class="py-3 fw-semibold text-center">الحالة</th>
                                         <th class="py-3 fw-semibold text-center">إجراء</th>
+
                                     </tr>
                                 </thead>
                                 <tbody class="table-group-divider">
@@ -155,21 +157,22 @@
                                             </td>
                                             <td class="py-3 text-center">
                                                 <span class="badge @GetStatusBadgeClass(paper.Status) fs-6 px-3 py-2">
-                                                    @paper.Status
+                                                    @GetStatusName(paper.Status)
                                                 </span>
                                             </td>
-                                            <td class="py-3 text-center">
-                                                <div class="btn-group btn-group-sm" role="group">
-                                                    <button class="btn btn-outline-primary"
-                                                            @onclick="() => EditPaper(paper.Id)">
-                                                        <i class="bi bi-pencil-square me-1"></i>تعديل
-                                                    </button>
-                                                    <button class="btn btn-outline-danger"
-                                                            @onclick="() => DeletePaper(paper.Id)">
-                                                        <i class="bi bi-trash3 me-1"></i>حذف
-                                                    </button>
-                                                </div>
-                                            </td>
+
+                                                <td class="py-3 text-center">
+                                                    <div class="btn-group btn-group-sm" role="group">
+                                                        <button class="btn btn-outline-primary"
+                                                        @onclick="() => EditPaper(paper.Id)">
+                                                            <i class="bi bi-pencil-square me-1"></i>تعديل
+                                                        </button>
+                                                        <button class="btn btn-outline-danger"
+                                                        @onclick="() => DeletePaper(paper.Id)">
+                                                            <i class="bi bi-trash3 me-1"></i>حذف
+                                                        </button>
+                                                    </div>
+                                                </td>
                                         </tr>
                                     }
                                 </tbody>
@@ -190,24 +193,35 @@
                     <div class="row g-3">
                         <div class="col-md-4">
                             <div class="form-check form-check-rtl">
-                                <input class="form-check-input" type="checkbox" id="attendSeminars" @bind="otherActivities.HasTechnicalReportsOrArticles">
-                                <label class="form-check-label" for="attendSeminars">
+                                <input type="checkbox"
+                                       class="form-check-input"
+                                       id="technicalReports"
+                                       @bind="otherActivities.HasTechnicalReportsOrArticles" />
+                                <label class="form-check-label" for="technicalReports">
                                     تقارير فنية او مقالات منشور(دون ان تكون ورقة بحثية)
                                 </label>
                             </div>
                         </div>
+
                         <div class="col-md-4">
                             <div class="form-check form-check-rtl">
-                                <input class="form-check-input" type="checkbox" id="publishArticle" @bind="otherActivities.HasGivenLecturesOrSeminars">
-                                <label class="form-check-label" for="publishArticle">
+                                <input type="checkbox"
+                                       class="form-check-input"
+                                       id="lectures"
+                                       @bind="otherActivities.HasGivenLecturesOrSeminars" />
+                                <label class="form-check-label" for="lectures">
                                     القاء محاضرات في ندوات او لقاءات
                                 </label>
                             </div>
                         </div>
+
                         <div class="col-md-4">
                             <div class="form-check form-check-rtl">
-                                <input class="form-check-input" type="checkbox" id="superviseStudents" @bind="otherActivities.HasAttendedScientificSeminars">
-                                <label class="form-check-label" for="superviseStudents">
+                                <input type="checkbox"
+                                       class="form-check-input"
+                                       id="seminars"
+                                       @bind="otherActivities.HasAttendedScientificSeminars" />
+                                <label class="form-check-label" for="seminars">
                                     حضور ندوات علمية ودورات تدريبية علمية
                                 </label>
                             </div>
@@ -215,15 +229,16 @@
                     </div>
                 </div>
             </div>
-        }
+        
     </div>
 </div>
+
 <!--Modal -->
 @if (showModal)
 {
-<div class="modal-overlay">
-    <div class="modal-container">
-        <div class="modal-header">
+    <div class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
                 <h5 class="modal-title m-0">
                     <i class="bi bi-file-earmark-plus me-2"></i>
                     @(isEditMode ? "تعديل البحث" : "إضافة بحث جديد")
@@ -268,10 +283,10 @@
                             <label class="form-label fw-bold">الحالة <span class="text-danger">*</span></label>
                             <InputSelect class="form-select" @bind-Value="currentPaper.Status">
                                 <option value="">-- اختر الحالة --</option>
-                                <option value="منشور">منشور</option>
-                                <option value="قيد المراجعة">قيد المراجعة</option>
-                                <option value="مقبول">مقبول</option>
-                                <option value="مرفوض">مرفوض</option>
+                                <option value=1>منشور</option>
+                                <option value=2>قيد المراجعة</option>
+                                <option value=3>مقبول</option>
+                                <option value="4">مرفوض</option>
                             </InputSelect>
                             <ValidationMessage For="@(() => currentPaper.Status)" class="text-danger" />
                         </div>
@@ -294,70 +309,152 @@
     MastersDto mastersData = new MastersDto();
     private bool isLoading = true;
     private List<ResearchPaperDto> researchPapers = new List<ResearchPaperDto>();
+    private readonly int evaluationPeriodId = 1; // Example static value
+    private readonly int taEmployeeId = 19; // Example static value
     private OtherActivitiesDto otherActivities = new OtherActivitiesDto();
     private string? errorMessage;
+
+    [Parameter]
+    public int EvaluationId { get; set; }
+    [Parameter]
+    public List<ResearchPaperDto>? InitialResearchPapers { get; set; }
+
+    [Parameter]
+    public OtherActivitiesDto? InitialOtherActivities { get; set; }
+
+    [Parameter]
+    public EventCallback<List<ResearchPaperDto>> OnResearchPapersLoaded { get; set; }
+
+    [Parameter]
+    public EventCallback<OtherActivitiesDto> OnOtherActivitiesLoaded { get; set; }
 
     // Modal state
     private bool showModal = false;
     private bool isEditMode = false;
     private ResearchPaperDto currentPaper = new ResearchPaperDto();
     private int nextId = 3;
-    private int testCounter = 0;
 
     protected override async Task OnInitializedAsync()
     {
         await LoadActivityData();
     }
 
+    protected override async Task OnParametersSetAsync()
+    {
+        Console.WriteLine("=== OnParametersSetAsync Called ===");
+
+        if (InitialResearchPapers != null && InitialResearchPapers.Any())
+        {
+            researchPapers = new List<ResearchPaperDto>(InitialResearchPapers);
+            nextId = researchPapers.Max(p => p.Id) + 1;
+            Console.WriteLine($"✅ Loaded {researchPapers.Count} initial research papers");
+        }
+
+        if (InitialOtherActivities != null)
+        {
+            otherActivities = new OtherActivitiesDto
+            {
+                HasTechnicalReportsOrArticles = InitialOtherActivities.HasTechnicalReportsOrArticles,
+                HasGivenLecturesOrSeminars = InitialOtherActivities.HasGivenLecturesOrSeminars,
+                HasAttendedScientificSeminars = InitialOtherActivities.HasAttendedScientificSeminars
+            };
+
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
     private async Task LoadActivityData()
     {
         isLoading = true;
         errorMessage = null;
+
         try
         {
-            mastersData = new MastersDto
+            // Validate EvaluationId
+            if (EvaluationId <= 0)
             {
-                Major = "علوم الحاسب --تعلم الالة",
-                HoursGained = 24,
-                Grade = 3.75,
-                EstimatedGraduationDate = new DateOnly(2026, 6, 15),
-                ResearchPointsCompleted = true,
-                SearchInResources = true,
-                SearchPlanning = false,
-                CollectDataAndAnalyze = true,
-                ResearchReportWriting = false,
-                ScientificResearchReport = false
-            };
+                errorMessage = "معرف التقييم غير صالح";
+                return;
+            }
 
-            researchPapers = new List<ResearchPaperDto>
+            // Fetch data from API
+            var response = await Http.GetAsync($"/api/GSDean/GetEvaluationForTA/{evaluationPeriodId}/{taEmployeeId}");
+
+            if (response.IsSuccessStatusCode)
             {
-                new ResearchPaperDto
+                var evaluationData = await response.Content.ReadFromJsonAsync<GsdeanEvaluationDto>();
+
+                if (evaluationData != null)
                 {
-                    Id = 1,
-                    Title = "تطبيقات التعلم الآلي في معالجة اللغة العربية",
-                    ConferenceOrJournal = "المؤتمر الدولي للذكاء الاصطناعي",
-                    Location = "الرياض، السعودية",
-                    PageCount = 12,
-                    Date = new DateOnly(2024, 10, 15),
-                    Status =1
-                },
-                new ResearchPaperDto
-                {
-                    Id = 2,
-                    Title = "خوارزميات التعلم العميق للتعرف على الصور",
-                    ConferenceOrJournal = "مجلة الحوسبة العربية",
-                    Location = "القاهرة، مصر",
-                    PageCount = 18,
-                    Date = new DateOnly(2024, 8, 20),
-                    Status = 1
+                    // Map API data to mastersData
+                    mastersData = new MastersDto
+                    {
+                        Major = evaluationData.ProgramName,
+                        HoursGained = evaluationData.CompletedHours,
+                        Grade = evaluationData.Gpa,
+                        EstimatedGraduationDate = evaluationData.ExpectedCompletionDate,
+                        //GradeGivenbySupervisor = evaluationData.ProgressScore ?? 0,
+                        //mock data for testing
+                        Status = evaluationData.EvaluationComments,
+                        ResearchPointsCompleted = evaluationData.TopicChosen,
+                        SearchInResources = evaluationData.LiteratureReview,
+                        SearchPlanning = evaluationData.ResearchPlan,
+                        CollectDataAndAnalyze = evaluationData.DataCollection,
+                        ResearchReportWriting = evaluationData.Writing,
+                        ScientificResearchReport = evaluationData.ThesisDefense
+                    };
+
+                    Console.WriteLine("✅ Data loaded successfully from API");
                 }
-            };
+                else
+                {
+                    errorMessage = "لم يتم العثور على بيانات التقييم";
+                }
+            }
+            else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                // No data found - initialize with empty data
+                Console.WriteLine("No evaluation data found - initializing empty form");
+                mastersData = new MastersDto
+                {
+                    Major = "",
+                    HoursGained = 0,
+                    Grade = 0,
+                    EstimatedGraduationDate = DateOnly.FromDateTime(DateTime.Now),
+                    ResearchPointsCompleted = false,
+                    SearchInResources = false,
+                    SearchPlanning = false,
+                    CollectDataAndAnalyze = false,
+                    ResearchReportWriting = false,
+                    ScientificResearchReport = false
+                };
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                errorMessage = $"خطأ في تحميل البيانات: {response.StatusCode} - {errorContent}";
+            }
 
-            await SendDataToParent();
+            // Initialize research papers and activities if not loaded from parameters
+            if (researchPapers == null || !researchPapers.Any())
+            {
+                researchPapers = new List<ResearchPaperDto>();
+            }
+
+            if (otherActivities == null)
+            {
+                otherActivities = new OtherActivitiesDto();
+            }
+        }
+        catch (HttpRequestException httpEx)
+        {
+            errorMessage = $"خطأ في الاتصال بالخادم: {httpEx.Message}";
+            Console.WriteLine($"HTTP Error: {httpEx}");
         }
         catch (Exception ex)
         {
-            errorMessage = "حدث خطأ أثناء تحميل البيانات: " + ex.Message;
+            errorMessage = $"حدث خطأ أثناء تحميل البيانات: {ex.Message}";
+            Console.WriteLine($"Error loading data: {ex}");
         }
         finally
         {
@@ -365,6 +462,7 @@
             StateHasChanged();
         }
     }
+
     private void AddNewPaper()
     {
         Console.WriteLine("AddNewPaper method called!");
@@ -378,7 +476,6 @@
             Status = 1
         };
         showModal = true;
-        Console.WriteLine($"showModal set to: {showModal}");
         StateHasChanged();
     }
 
@@ -454,15 +551,10 @@
             2 => "bg-warning text-dark",
             3 => "bg-info",
             4 => "bg-danger",
-            _ => "bg-secondary"
+            0 => "bg-secondary",
+            _ => "bg-secondary text-white"
         };
     }
-
-    [Parameter]
-    public EventCallback<List<ResearchPaperDto>> OnResearchPapersLoaded { get; set; }
-
-    [Parameter]
-    public EventCallback<OtherActivitiesDto> OnOtherActivitiesLoaded { get; set; }
 
     private async Task SendDataToParent()
     {
@@ -475,5 +567,18 @@
         {
             await OnOtherActivitiesLoaded.InvokeAsync(otherActivities);
         }
+    }
+
+    private string GetStatusName(int status)
+    {
+        return status switch
+        {
+            1 => "منشور",
+            2 => "قيد المراجعة",
+            3 => "مقبول",
+            4 => "مرفوض",
+            0 => "غير محدد",
+            _ => "حالة غير معروفة"
+        };
     }
 }

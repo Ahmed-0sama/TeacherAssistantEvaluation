@@ -1,8 +1,11 @@
 ﻿@page "/professor"
 @using Shared.Dtos
+@using Shared.Dtos.EvaluationPeriod
+@using Shared.Dtos.ProfessorEvaluationDto
 @inject HttpClient Http
 @inject IJSRuntime JS
 @rendermode InteractiveWebAssembly
+
 <HeadContent>
     <link href="./Custom-Rtl.css" rel="stylesheet" />
 </HeadContent>
@@ -13,52 +16,63 @@
     <div class="w-75 mb-4 shadow-sm">
         @if (isLoading)
         {
-            <p>جارٍ تحميل البيانات...</p>
+            <div class="text-center p-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">جارٍ تحميل البيانات...</span>
+                </div>
+                <p class="mt-3">جارٍ تحميل البيانات...</p>
+            </div>
         }
         else if (!string.IsNullOrEmpty(errorMessage))
         {
             <div class="alert alert-danger">@errorMessage</div>
         }
+        else if (!evaluationsList.Any())
+        {
+            <div class="alert alert-info text-center">
+                <i class="bi bi-info-circle me-2"></i>
+                لا توجد تقييمات متاحة حالياً
+                <br />
+                <small class="text-muted">Debug: isLoading=@isLoading, Count=@evaluationsList.Count, Error=@(string.IsNullOrEmpty(errorMessage) ? "none" : errorMessage)</small>
+            </div>
+        }
         else
         {
-             <div class="table-responsive">
+            <div class="table-responsive">
                 <table class="table table-hover table-striped" dir="rtl">
                     <thead class="table-primary">
                         <tr>
-                            <th>اسم مساعد المدرس</th>
+                            <th>اسم مساعد التدريس</th>
                             <th>المقرر</th>
                             <th>الحالة</th>
                             <th>إجراء</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var ta in taList)
+                        @foreach (var eval in evaluationsList)
                         {
                             <tr>
-                                <td>@ta.TAName</td>
-                                <td>@ta.SubjectName</td>
+                                <td>@eval.TAName</td>
+                                <td>@eval.CourseName</td>
                                 <td>
-                                    @if (ta.Total.HasValue)
+                                    @if (eval.ProfessorEvaluationTotal.HasValue)
                                     {
-                                        @if (ta.Total.Value >= 25)
-                                        {
-                                            <span class="result-pill">النتيجة: @ta.Total/30</span>
-                                        }
-                                        else if (ta.Total.Value >= 15)
-                                        {
-                                            <span class="result-pill">النتيجة:  @ta.Total/30</span>
-                                        }
+                                        <span class="result-pill" style="background-color:#e6f7e6; color:#006600;">
+                                            النتيجة: @eval.ProfessorEvaluationTotal/30
+                                        </span>
                                     }
                                     else
                                     {
-                                        <span class="result-pill" style="background-color:#ffe6e6; color:#b30000;">غير مقيّم</span>
+                                        <span class="result-pill" style="background-color:#ffe6e6; color:#b30000;">
+                                            غير مقيّم
+                                        </span>
                                     }
                                 </td>
-                               <td>
+                                <td>
                                     <button type="button"
-                                            class="btn btn-sm @(ta.Status == "Approved" ? "btn-success" : "btn-primary")"
-                                            @onclick="() => OpenModal(ta)">
-                                        @GetButtonText(ta)
+                                            class="btn btn-sm @(eval.IsEvaluated ? "btn-info" : "btn-primary")"
+                                            @onclick="() => OpenModal(eval)">
+                                        @(eval.IsEvaluated ? "عرض/تعديل" : "تقييم")
                                     </button>
                                 </td>
                             </tr>
@@ -71,10 +85,10 @@
 </div>
 
 <!-- Modal Component -->
-@if (isModalVisible && selectedTA != null)
+@if (isModalVisible && selectedEvaluation != null)
 {
     <div class="modal-overlay" @onclick="HideModal">
-        <div class="modal-container" @onclick:stopPropagation="true">
+        <div class="modal-container" @onclick:stopPropagation="true" style="max-width: 700px;">
             <div class="modal-header">
                 <h5 class="m-0">تقييم استاذ المقرر</h5>
                 <button type="button" class="btn-close btn-close-white" @onclick="HideModal" aria-label="Close"></button>
@@ -82,18 +96,24 @@
 
             <div class="modal-body">
                 <div class="info-section mb-4">
-                    <div class="row g-2">
+                    <div class="row g-3">
                         <div class="col-6">
-                            <p class="mb-2"><strong>الاسم:</strong> @selectedTA.TAName</p>
+                            <p class="mb-2"><strong>اسم المساعد:</strong> @selectedEvaluation.TAName</p>
                         </div>
                         <div class="col-6">
-                            <p class="mb-2"><strong>الرقم الوظيفي:</strong> @selectedTA.WorkId</p>
+                            <p class="mb-2"><strong>الرقم الوظيفي:</strong> @selectedEvaluation.TAEmployeeId</p>
                         </div>
                         <div class="col-6">
-                            <p class="mb-2"><strong>المقرر:</strong> @selectedTA.SubjectName</p>
+                            <p class="mb-2"><strong>المقرر:</strong> @selectedEvaluation.CourseName</p>
                         </div>
                         <div class="col-6">
-                            <p class="mb-2"><strong>عدد الحصص:</strong> @selectedTA.NumberOfClasses</p>
+                            <p class="mb-2"><strong>كود المقرر:</strong> @selectedEvaluation.CourseCode</p>
+                        </div>
+                        <div class="col-6">
+                            <p class="mb-2"><strong>عدد الحصص:</strong> @selectedEvaluation.NumberOfClasses</p>
+                        </div>
+                        <div class="col-6">
+                            <p class="mb-2"><strong>الفترة:</strong> @selectedEvaluation.PeriodName</p>
                         </div>
                     </div>
                 </div>
@@ -101,63 +121,75 @@
                 <hr class="my-3" />
 
                 <div class="grades-section">
-                    <!-- Grade 1 -->
+                    <!-- Grade 1: Office Hours -->
                     <div class="row mb-4">
                         <div class="col-12">
                             <h6 class="fw-bold mb-2">الالتزام بالساعات المكتبية</h6>
                             <small class="text-muted d-block mb-2">(من 0 إلى 10)</small>
                             <input type="number"
-                                   class="form-control @(validationErrors.ContainsKey("grade1") ? "is-invalid" : "")"
-                                   @bind="selectedTA.grade1"
+                                   class="form-control @(validationErrors.ContainsKey("officeHours") ? "is-invalid" : "")"
+                                   @bind="currentProfEval.OfficeHoursScore"
                                    @bind:event="oninput"
-                                   @onblur="ValidateGrade1"
+                                   @onblur="ValidateOfficeHours"
                                    min="0"
                                    max="10"
                                    readonly="@isReadOnly" />
-                            @if (validationErrors.ContainsKey("grade1"))
+                            @if (validationErrors.ContainsKey("officeHours"))
                             {
-                                <div class="invalid-feedback">@validationErrors["grade1"]</div>
+                                <div class="invalid-feedback">@validationErrors["officeHours"]</div>
                             }
                         </div>
                     </div>
 
-                    <!-- Grade 2 -->
+                    <!-- Grade 2: Attendance -->
                     <div class="row mb-4">
                         <div class="col-12">
                             <h6 class="fw-bold mb-2">تدوين ورصد الغياب</h6>
                             <small class="text-muted d-block mb-2">(من 0 إلى 5)</small>
                             <input type="number"
-                                   class="form-control @(validationErrors.ContainsKey("grade2") ? "is-invalid" : "")"
-                                   @bind="selectedTA.grade2"
+                                   class="form-control @(validationErrors.ContainsKey("attendance") ? "is-invalid" : "")"
+                                   @bind="currentProfEval.AttendanceScore"
                                    @bind:event="oninput"
-                                   @onblur="ValidateGrade2"
+                                   @onblur="ValidateAttendance"
                                    min="0"
                                    max="5"
                                    readonly="@isReadOnly" />
-                            @if (validationErrors.ContainsKey("grade2"))
+                            @if (validationErrors.ContainsKey("attendance"))
                             {
-                                <div class="invalid-feedback">@validationErrors["grade2"]</div>
+                                <div class="invalid-feedback">@validationErrors["attendance"]</div>
                             }
                         </div>
                     </div>
 
-                    <!-- Grade 3 -->
+                    <!-- Grade 3: Performance -->
                     <div class="row mb-4">
                         <div class="col-12">
                             <h6 class="fw-bold mb-2">الأداء التدريبي في المقرر</h6>
                             <small class="text-muted d-block mb-2">(من 0 إلى 15)</small>
                             <input type="number"
-                                   class="form-control @(validationErrors.ContainsKey("grade3") ? "is-invalid" : "")"
-                                   @bind="selectedTA.grade3"
+                                   class="form-control @(validationErrors.ContainsKey("performance") ? "is-invalid" : "")"
+                                   @bind="currentProfEval.PerformanceScore"
                                    @bind:event="oninput"
-                                   @onblur="ValidateGrade3"
+                                   @onblur="ValidatePerformance"
                                    min="0"
                                    max="15"
                                    readonly="@isReadOnly" />
-                            @if (validationErrors.ContainsKey("grade3"))
+                            @if (validationErrors.ContainsKey("performance"))
                             {
-                                <div class="invalid-feedback">@validationErrors["grade3"]</div>
+                                <div class="invalid-feedback">@validationErrors["performance"]</div>
                             }
+                        </div>
+                    </div>
+
+                    <!-- Comments -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <label class="form-label fw-bold">ملاحظات إضافية (اختياري)</label>
+                            <textarea class="form-control"
+                                      @bind="currentProfEval.Comments"
+                                      rows="3"
+                                      placeholder="أضف أي ملاحظات إضافية..."
+                                      readonly="@isReadOnly"></textarea>
                         </div>
                     </div>
 
@@ -177,7 +209,16 @@
                             يرجى تصحيح الأخطاء قبل الحفظ
                         </div>
                     }
+
+                    @if (!string.IsNullOrEmpty(saveMessage))
+                    {
+                        <div class="alert @(saveSuccess ? "alert-success" : "alert-danger") mt-3">
+                            @saveMessage
+                        </div>
+                    }
                 </div>
+            </div>
+
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary px-4" @onclick="HideModal">
                     <i class="bi bi-x-circle me-2"></i>إلغاء
@@ -186,219 +227,446 @@
                 {
                     <button type="button"
                             class="btn btn-success px-4"
-                            @onclick="SaveGrade"
-                            disabled="@(validationErrors.Any())">
-                        <i class="bi bi-check-circle me-2"></i>حفظ التقييم
+                            @onclick="SaveEvaluation"
+                            disabled="@(validationErrors.Any() || isSaving)">
+                        @if (isSaving)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                        }
+                        <i class="bi bi-check-circle me-2"></i>@(selectedEvaluation.IsEvaluated ? "تحديث التقييم" : "حفظ التقييم")
                     </button>
                 }
             </div>
         </div>
     </div>
-</div>
 }
 
 @code {
-    private List<TAEvaluationDto> taList = new();
-    private TAEvaluationDto? selectedTA;
+    // State variables
+    private List<TAEvaluationViewModelDto> evaluationsList = new();
+    private TAEvaluationViewModelDto? selectedEvaluation;
+    private ProfessorEvaluationResponseDto currentProfEval = new();
+
     private bool isLoading = true;
-    private string? errorMessage;
-    private Dictionary<string, string> validationErrors = new();
-    private bool isReadOnly = false;
-
-    private int Total => (selectedTA?.grade1 ?? 0) + (selectedTA?.grade2 ?? 0) + (selectedTA?.grade3 ?? 0);
-
     private bool isModalVisible = false;
+    private bool isReadOnly = false;
+    private bool isSaving = false;
+    private bool saveSuccess = false;
 
-    private void ValidateGrade1()
+    private string? errorMessage;
+    private string? saveMessage;
+    private Dictionary<string, string> validationErrors = new();
+
+    // TODO: Replace with actual logged-in professor ID from authentication
+    private int currentProfessorId = 123;
+
+    // ✅ FIXED: Using actual period ID
+    private int currentEvaluationPeriodId = 1;
+
+    private int Total => currentProfEval.OfficeHoursScore +
+                         currentProfEval.AttendanceScore +
+                         currentProfEval.PerformanceScore;
+
+    protected override async Task OnInitializedAsync()
     {
-        if (selectedTA == null) return;
+        Console.WriteLine("=== OnInitializedAsync called ===");
+        Console.WriteLine($"HttpClient BaseAddress: {Http.BaseAddress}");
 
-        validationErrors.Remove("grade1");
-
-        if (selectedTA.grade1 < 0)
-        {
-            selectedTA.grade1 = 0;
-            validationErrors["grade1"] = "الدرجة لا يمكن أن تكون سالبة";
-        }
-        else if (selectedTA.grade1 > 10)
-        {
-            selectedTA.grade1 = 10;
-            validationErrors["grade1"] = "الحد الأقصى للدرجة الأولى هو 10";
-        }
-
-        StateHasChanged();
+        await LoadData();
     }
 
-    private void ValidateGrade2()
+    private async Task LoadData()
     {
-        if (selectedTA == null) return;
+        isLoading = true;
+        errorMessage = null;
+        evaluationsList.Clear(); // ✅ Clear existing data
 
-        validationErrors.Remove("grade2");
-
-        if (selectedTA.grade2 < 0)
+        try
         {
-            selectedTA.grade2 = 0;
-            validationErrors["grade2"] = "الدرجة لا يمكن أن تكون سالبة";
+            Console.WriteLine("=== Starting LoadData ===");
+            await LoadDataFromApi();
+            Console.WriteLine($"=== LoadData completed. Found {evaluationsList.Count} evaluations ===");
         }
-        else if (selectedTA.grade2 > 5)
+        catch (Exception ex)
         {
-            selectedTA.grade2 = 5;
-            validationErrors["grade2"] = "الحد الأقصى للدرجة الثانية هو 5";
+            errorMessage = $"فشل تحميل البيانات: {ex.Message}";
+            Console.WriteLine($"❌ Error in LoadData: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
         }
-
-        StateHasChanged();
+        finally
+        {
+            isLoading = false;
+            StateHasChanged(); // ✅ Force UI update
+        }
     }
 
-    private void ValidateGrade3()
+    private async Task LoadDataFromApi()
     {
-        if (selectedTA == null) return;
-
-        validationErrors.Remove("grade3");
-
-        if (selectedTA.grade3 < 0)
+        try
         {
-            selectedTA.grade3 = 0;
-            validationErrors["grade3"] = "الدرجة لا يمكن أن تكون سالبة";
-        }
-        else if (selectedTA.grade3 > 15)
-        {
-            selectedTA.grade3 = 15;
-            validationErrors["grade3"] = "الحد الأقصى للدرجة الثالثة هو 15";
-        }
+            // ✅ OPTION 1: Load using Period-based approach (RECOMMENDED)
+            Console.WriteLine($"Loading evaluations for period {currentEvaluationPeriodId}...");
 
-        StateHasChanged();
+            // Step 1: Get all evaluations for this period
+            var evaluationsResponse = await Http.GetAsync($"api/evaluation/period/{currentEvaluationPeriodId}");
+
+            if (!evaluationsResponse.IsSuccessStatusCode)
+            {
+                var error = await evaluationsResponse.Content.ReadAsStringAsync();
+                throw new Exception($"Failed to load evaluations: {error}");
+            }
+
+            var allEvaluations = await evaluationsResponse.Content.ReadFromJsonAsync<List<EvaluationApiResponseDto>>()
+                ?? new List<EvaluationApiResponseDto>();
+
+            Console.WriteLine($"✅ Loaded {allEvaluations.Count} evaluations from API");
+
+            if (!allEvaluations.Any())
+            {
+                Console.WriteLine("⚠️ No evaluations found for this period");
+                return;
+            }
+
+            // Step 2: Get existing professor evaluations for this professor
+            var profEvalResponse = await Http.GetAsync($"api/ProfessorEvaluation/GetByProfessor/{currentProfessorId}");
+            var existingProfEvaluations = new Dictionary<int, List<ProfessorEvaluationResponseDto>>();
+
+            if (profEvalResponse.IsSuccessStatusCode)
+            {
+                var profEvals = await profEvalResponse.Content.ReadFromJsonAsync<List<ProfessorEvaluationResponseDto>>()
+                    ?? new List<ProfessorEvaluationResponseDto>();
+
+                Console.WriteLine($"✅ Loaded {profEvals.Count} professor evaluations");
+
+                // Group by TA employee ID for easier lookup
+                existingProfEvaluations = profEvals
+                    .Where(pe => pe.EvaluationPeriodId == currentEvaluationPeriodId)
+                    .GroupBy(pe => pe.TaEmployeeId)
+                    .ToDictionary(g => g.Key, g => g.ToList());
+            }
+            else
+            {
+                Console.WriteLine("⚠️ No existing professor evaluations found");
+            }
+
+            // Step 3: Build the view models
+            foreach (var evaluation in allEvaluations)
+            {
+                int taEmployeeId = evaluation.taEmployeeId;
+
+                // Check if this TA has been evaluated by this professor
+                if (existingProfEvaluations.TryGetValue(taEmployeeId, out var profEvalsForTA))
+                {
+                    // TA has been evaluated - create entry for each course
+                    foreach (var profEval in profEvalsForTA)
+                    {
+                        var viewModel = new TAEvaluationViewModelDto
+                        {
+                            ProfEvalId = profEval.ProfEvalId,
+                            EvaluationPeriodId = currentEvaluationPeriodId,
+                            TAEmployeeId = taEmployeeId,
+                            PeriodId = currentEvaluationPeriodId,
+                            PeriodName = evaluation.periodName ?? "فترة غير معروفة",
+                            StatusId = profEval.StatusId,
+                            StatusName = profEval.StatusName ?? "قيد الانتظار",
+                            CanEdit = profEval.StatusId <= 6,
+
+                            TAName = $"TA #{taEmployeeId}", // TODO: Get actual name
+                            CourseCode = profEval.CourseCode ?? "CS100",
+                            CourseName = profEval.CourseName ?? "ComputerScience",
+                            NumberOfClasses = 12, // Default
+
+                            ProfessorEvaluationTotal = profEval.TotalScore
+                        };
+
+                        evaluationsList.Add(viewModel);
+                        Console.WriteLine($"Added evaluated TA: {viewModel.TAName} - Course: {viewModel.CourseName}");
+                    }
+                }
+                else
+                {
+                    // TA hasn't been evaluated yet by this professor
+                    var viewModel = new TAEvaluationViewModelDto
+                    {
+                        ProfEvalId = null,
+                        EvaluationPeriodId = currentEvaluationPeriodId,
+                        TAEmployeeId = taEmployeeId,
+                        PeriodId = currentEvaluationPeriodId,
+                        PeriodName = evaluation.periodName ?? "فترة غير معروفة",
+                        StatusId = 1,
+                        StatusName = "قيد الانتظار",
+                        CanEdit = true,
+
+                        TAName = $"TA #{taEmployeeId}", // TODO: Get actual name
+                        CourseCode = "CS101",
+                        CourseName = "ComputerScience",
+                        NumberOfClasses = 12,
+
+                        ProfessorEvaluationTotal = null
+                    };
+
+                    evaluationsList.Add(viewModel);
+                    Console.WriteLine($"Added unevaluated TA: {viewModel.TAName}");
+                }
+            }
+
+            Console.WriteLine($"✅ Total view models created: {evaluationsList.Count}");
+        }
+        catch (HttpRequestException httpEx)
+        {
+            Console.WriteLine($"❌ HTTP Error: {httpEx.Message}");
+            throw new Exception($"خطأ في الاتصال بالخادم: {httpEx.Message}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Unexpected error: {ex.Message}");
+            throw;
+        }
     }
 
-    private void ValidateAllGrades()
+    private void OpenModal(TAEvaluationViewModelDto eval)
     {
-        ValidateGrade1();
-        ValidateGrade2();
-        ValidateGrade3();
-    }
+        Console.WriteLine($"Opening modal for TA: {eval.TAName}");
 
-    private void OpenModal(TAEvaluationDto ta)
-    {
-        selectedTA = ta;
+        selectedEvaluation = eval;
         validationErrors.Clear();
-        // Determine if the modal should be read-only
-        isReadOnly = ta.Status == "Approved";
-        // Initialize grades if they haven't been set
-        if (selectedTA.grade1 == 0 && selectedTA.grade2 == 0 && selectedTA.grade3 == 0 && !selectedTA.Total.HasValue)
+        saveMessage = null;
+
+        if (eval.IsEvaluated && eval.ProfEvalId.HasValue)
         {
-            selectedTA.grade1 = 0;
-            selectedTA.grade2 = 0;
-            selectedTA.grade3 = 0;
+            Console.WriteLine($"Loading existing evaluation with ID: {eval.ProfEvalId}");
+            LoadExistingEvaluationAsync(eval);
+        }
+        else
+        {
+            Console.WriteLine("Creating new evaluation");
+            // New evaluation
+            currentProfEval = new ProfessorEvaluationResponseDto
+            {
+                EvaluationPeriodId = eval.EvaluationPeriodId,
+                TaEmployeeId = eval.TAEmployeeId,
+                ProfessorEmployeeId = currentProfessorId,
+                CourseCode = "CS100",
+                CourseName = "ComputerScience",
+                OfficeHoursScore = 0,
+                AttendanceScore = 0,
+                PerformanceScore = 0,
+                Comments = "",
+                StatusId = 1
+            };
+            isReadOnly = false;
         }
 
         isModalVisible = true;
         StateHasChanged();
     }
 
+    private async void LoadExistingEvaluationAsync(TAEvaluationViewModelDto eval)
+    {
+        try
+        {
+            Console.WriteLine($"Fetching evaluation from API: /api/ProfessorEvaluation/GetProfessorEvaluationById/{eval.ProfEvalId}");
+
+            var response = await Http.GetAsync($"api/ProfessorEvaluation/GetProfessorEvaluationById/{eval.ProfEvalId}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var profEvalDetail = await response.Content.ReadFromJsonAsync<ProfessorEvaluationResponseDto>();
+
+                if (profEvalDetail != null)
+                {
+                    currentProfEval = profEvalDetail;
+                    Console.WriteLine($"✅ Loaded existing evaluation successfully");
+                }
+                else
+                {
+                    Console.WriteLine("⚠️ Evaluation data is null");
+                }
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"⚠️ Failed to load evaluation: {response.StatusCode} - {error}");
+            }
+
+            isReadOnly = eval.StatusId > 6;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error loading evaluation: {ex.Message}");
+            
+            isReadOnly = eval.StatusId > 6;
+            StateHasChanged();
+        }
+    }
+
     private void HideModal()
     {
         isModalVisible = false;
-        selectedTA = null;
+        selectedEvaluation = null;
         validationErrors.Clear();
+        saveMessage = null;
         StateHasChanged();
     }
 
-    private async Task SaveGrade()
+    // Validation methods
+    private void ValidateOfficeHours()
     {
-        if (selectedTA == null) return;
-
-        // Validate all grades before saving
-        ValidateAllGrades();
-
-        if (validationErrors.Any()) 
+        validationErrors.Remove("officeHours");
+        if (currentProfEval.OfficeHoursScore < 0)
         {
-            return; // Don't save if there are validation errors
+            currentProfEval.OfficeHoursScore = 0;
+            validationErrors["officeHours"] = "الدرجة لا يمكن أن تكون سالبة";
         }
-
-        selectedTA.Total = Total;
-
-        try
+        else if (currentProfEval.OfficeHoursScore > 10)
         {
-            await Http.PostAsJsonAsync("api/taevaluations/grade", selectedTA);
-
-            // Update the item in the list
-            var item = taList.FirstOrDefault(x => x.Id == selectedTA.Id);
-            if (item != null)
-            {
-                item.grade1 = selectedTA.grade1;
-                item.grade2 = selectedTA.grade2;
-                item.grade3 = selectedTA.grade3;
-                item.Total = selectedTA.Total;
-            }
-
-            HideModal();
+            currentProfEval.OfficeHoursScore = 10;
+            validationErrors["officeHours"] = "الحد الأقصى للدرجة هو 10";
         }
-        catch (Exception ex)
-        {
-            errorMessage = $"فشل حفظ التقييم: {ex.Message}";
-        }
+        StateHasChanged();
     }
 
-    protected override async Task OnInitializedAsync()
+    private void ValidateAttendance()
     {
+        validationErrors.Remove("attendance");
+        if (currentProfEval.AttendanceScore < 0)
+        {
+            currentProfEval.AttendanceScore = 0;
+            validationErrors["attendance"] = "الدرجة لا يمكن أن تكون سالبة";
+        }
+        else if (currentProfEval.AttendanceScore > 5)
+        {
+            currentProfEval.AttendanceScore = 5;
+            validationErrors["attendance"] = "الحد الأقصى للدرجة هو 5";
+        }
+        StateHasChanged();
+    }
+
+    private void ValidatePerformance()
+    {
+        validationErrors.Remove("performance");
+        if (currentProfEval.PerformanceScore < 0)
+        {
+            currentProfEval.PerformanceScore = 0;
+            validationErrors["performance"] = "الدرجة لا يمكن أن تكون سالبة";
+        }
+        else if (currentProfEval.PerformanceScore > 15)
+        {
+            currentProfEval.PerformanceScore = 15;
+            validationErrors["performance"] = "الحد الأقصى للدرجة هو 15";
+        }
+        StateHasChanged();
+    }
+
+    private void ValidateAllFields()
+    {
+        ValidateOfficeHours();
+        ValidateAttendance();
+        ValidatePerformance();
+    }
+
+    private async Task SaveEvaluation()
+    {
+        ValidateAllFields();
+
+        if (validationErrors.Any())
+        {
+            saveMessage = "يرجى تصحيح الأخطاء قبل الحفظ";
+            saveSuccess = false;
+            return;
+        }
+
+        isSaving = true;
+        saveMessage = null;
+
         try
         {
-            // Demo data with proper grade calculations
-            taList = new List<TAEvaluationDto>
+            if (selectedEvaluation!.IsEvaluated && currentProfEval.ProfEvalId > 0)
             {
-                new TAEvaluationDto 
-                { 
-                    Id=1, 
-                    TAName="أحمد محمد", 
-                    WorkId="EMP001", 
-                    SubjectName="البرمجة الموجهة", 
-                    NumberOfClasses=12,
-                    grade1=8,
-                    grade2=4,
-                    grade3=12,
-                    Total=24,
-                    Status="Approved"
-                },
-                new TAEvaluationDto 
-                { 
-                    Id=2, 
-                    TAName="فاطمة علي", 
-                    WorkId="EMP002", 
-                    SubjectName="قواعد البيانات", 
-                    NumberOfClasses=10,
-                    grade1=0,
-                    grade2=0,
-                    grade3=0,
-                    Status="Pending"
-                },
-                new TAEvaluationDto 
-                { 
-                    Id=3, 
-                    TAName="محمود حسن", 
-                    WorkId="EMP003", 
-                    SubjectName="هندسة البرمجيات", 
-                    NumberOfClasses=14,
-                    grade1=10,
-                    grade2=5,
-                    grade3=15,
-                    Total=30,
-                    Status="Pending"
+                Console.WriteLine($"Updating evaluation {currentProfEval.ProfEvalId}");
+
+                // Update existing evaluation
+                var updateDto = new UpdateProfessorEvaluationDto
+                {
+                    CourseCode = currentProfEval.CourseCode,
+                    CourseName = currentProfEval.CourseName,
+                    OfficeHoursScore = currentProfEval.OfficeHoursScore,
+                    AttendanceScore = currentProfEval.AttendanceScore,
+                    PerformanceScore = currentProfEval.PerformanceScore,
+                    Comments = currentProfEval.Comments
+                };
+
+                var response = await Http.PutAsJsonAsync(
+                    $"api/ProfessorEvaluation/UpdateEvaluation/{currentProfEval.ProfEvalId}",
+                    updateDto);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    saveMessage = "تم تحديث التقييم بنجاح";
+                    saveSuccess = true;
+                    Console.WriteLine("✅ Update successful");
                 }
-            };
+                else
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    saveMessage = $"فشل تحديث التقييم: {error}";
+                    saveSuccess = false;
+                    Console.WriteLine($"❌ Update failed: {error}");
+                }
+            }
+            else
+            {
+                Console.WriteLine("Creating new evaluation");
+
+                // Create new evaluation
+                var createDto = new CreateProfessorEvaluationDto
+                {
+                    EvaluationPeriodId = currentProfEval.EvaluationPeriodId,
+                    TaEmployeeId = currentProfEval.TaEmployeeId,
+                    ProfessorEmployeeId = currentProfessorId,
+                    CourseCode = currentProfEval.CourseCode,
+                    CourseName = currentProfEval.CourseName,
+                    OfficeHoursScore = currentProfEval.OfficeHoursScore,
+                    AttendanceScore = currentProfEval.AttendanceScore,
+                    PerformanceScore = currentProfEval.PerformanceScore,
+                    Comments = currentProfEval.Comments
+                };
+
+                var response = await Http.PostAsJsonAsync("api/ProfessorEvaluation/CreateProfessorEvaluation", createDto);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    saveMessage = "تم حفظ التقييم بنجاح";
+                    saveSuccess = true;
+                    Console.WriteLine("✅ Create successful");
+                }
+                else
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    saveMessage = $"فشل حفظ التقييم: {error}";
+                    saveSuccess = false;
+                    Console.WriteLine($"❌ Create failed: {error}");
+                }
+            }
+
+            if (saveSuccess)
+            {
+                await Task.Delay(1500);
+                await LoadData(); // Reload data
+                HideModal();
+            }
         }
         catch (Exception ex)
         {
-            errorMessage = "فشل تحميل بيانات المساعدين.";
+            saveMessage = $"حدث خطأ: {ex.Message}";
+            saveSuccess = false;
+            Console.WriteLine($"❌ Exception in SaveEvaluation: {ex.Message}");
         }
         finally
         {
-            isLoading = false;
+            isSaving = false;
+            StateHasChanged();
         }
-    }
-    private string GetButtonText(TAEvaluationDto ta)
-    {
-        if (ta.Status == "Approved") return "عرض";
-        else if (ta.grade1==0&&ta.grade2==0&&ta.grade3==0) return "تقييم"; // For 0 / not graded
-        else  return "تعديل";
-
     }
 }

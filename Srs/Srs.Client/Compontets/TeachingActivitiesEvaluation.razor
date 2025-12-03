@@ -1,0 +1,168 @@
+﻿@* TeachingActivitiesEvaluation.razor *@
+<div class="card shadow-sm mx-auto" style="max-width: 1100px;">
+    <div class="card-body p-4">
+        <h5 class="text-end text-dark mb-4">1-2 الأنشطة التعليمية المباشرة والمعادلة (10%)</h5>
+
+        <div class="row mb-3 align-items-center">
+            <div class="col-md-8 text-end">
+                <label class="form-label mb-0">إعداد مذكرات للجزء العملي /تدريبات</label>
+            </div>
+            <div class="col-md-4">
+                <select class="form-select"
+                        value="@GetRatingValue(1)"
+                        @onchange="e => UpdateRating(1, e.Value?.ToString())"
+                        disabled="@IsViewMode">
+                    <option value="">اختر</option>
+                    @foreach (var option in gradeOptions)
+                    {
+                        <option value="@option.Value">@option.Label</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div class="row mb-3 align-items-center">
+            <div class="col-md-8 text-end">
+                <label class="form-label mb-0">إعداد مساعدات تعليمية وتدريسية جديدة</label>
+            </div>
+            <div class="col-md-4">
+                <select class="form-select"
+                        value="@GetRatingValue(2)"
+                        @onchange="e => UpdateRating(2, e.Value?.ToString())"
+                        disabled="@IsViewMode">
+                    <option value="">اختر</option>
+                    @foreach (var option in gradeOptions)
+                    {
+                        <option value="@option.Value">@option.Label</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div class="row mb-3 align-items-center">
+            <div class="col-md-8 text-end">
+                <label class="form-label mb-0">المساعدة في إعداد التجارب العملية / التمارين</label>
+            </div>
+            <div class="col-md-4">
+                <select class="form-select"
+                        value="@GetRatingValue(3)"
+                        @onchange="e => UpdateRating(3, e.Value?.ToString())"
+                        disabled="@IsViewMode">
+                    <option value="">اختر</option>
+                    @foreach (var option in gradeOptions)
+                    {
+                        <option value="@option.Value">@option.Label</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div class="row mb-3 align-items-center">
+            <div class="col-md-8 text-end">
+                <label class="form-label mb-0">المشاركة في تنظيم وإدارة دورات تدريسية/ مؤتمرات</label>
+            </div>
+            <div class="col-md-4">
+                <select class="form-select"
+                        value="@GetRatingValue(4)"
+                        @onchange="e => UpdateRating(4, e.Value?.ToString())"
+                        disabled="@IsViewMode">
+                    <option value="">اختر</option>
+                    @foreach (var option in gradeOptions)
+                    {
+                        <option value="@option.Value">@option.Label</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div class="row mb-4 align-items-center">
+            <div class="col-md-8 text-end">
+                <label class="form-label mb-0">أي نشاط تعليمي آخر مكلف به</label>
+            </div>
+            <div class="col-md-4">
+                <select class="form-select"
+                        value="@GetRatingValue(5)"
+                        @onchange="e => UpdateRating(5, e.Value?.ToString())"
+                        disabled="@IsViewMode">
+                    <option value="">اختر</option>
+                    @foreach (var option in gradeOptions)
+                    {
+                        <option value="@option.Value">@option.Label</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div class="border-top pt-3">
+            <p class="text-end fw-semibold mb-0">
+                إجمالي تقييم الأنشطة التعليمية المباشرة والمعادلة:
+                @CalculateTotal() / 10
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="card bg-primary bg-opacity-10 shadow-sm mx-auto mt-3 mb-4" style="max-width: 800px;">
+    <div class="card-body text-center py-4">
+        <h5 class="text-primary fw-semibold mb-2">المجموع الكلي للنشاط التعليمي</h5>
+        <p class="text-primary fw-bold fs-3 mb-0">
+            @(CalculateTotal() + (decimal)TeachingLoadScore) / 50
+        </p>
+    </div>
+</div>
+
+@code {
+    [Parameter] public double TeachingLoadScore { get; set; }
+    [Parameter] public EventCallback<Dictionary<int, int>> OnRatingsChanged { get; set; }
+    [Parameter] public bool IsViewMode { get; set; }
+    [Parameter] public Dictionary<int, int>? ExistingRatings { get; set; }
+
+    private Dictionary<int, int> ratings = new();
+
+    private List<GradeOption> gradeOptions = new List<GradeOption>
+    {
+        new GradeOption { Value = 1, Label = "ضعيف" },
+        new GradeOption { Value = 2, Label = "مقبول" },
+        new GradeOption { Value = 3, Label = "جيد" },
+        new GradeOption { Value = 4, Label = "جيد جداً" },
+        new GradeOption { Value = 5, Label = "ممتاز" }
+    };
+
+    protected override void OnParametersSet()
+    {
+        if (ExistingRatings != null && ExistingRatings.Any())
+        {
+            ratings = new Dictionary<int, int>(ExistingRatings);
+        }
+    }
+
+    private void UpdateRating(int criterionId, string? value)
+    {
+        if (int.TryParse(value, out int ratingId) && ratingId > 0)
+        {
+            ratings[criterionId] = ratingId;
+        }
+        else
+        {
+            ratings.Remove(criterionId);
+        }
+
+        OnRatingsChanged.InvokeAsync(ratings);
+    }
+
+    private string GetRatingValue(int criterionId)
+    {
+        return ratings.TryGetValue(criterionId, out var ratingId) ? ratingId.ToString() : "";
+    }
+
+    private decimal CalculateTotal()
+    {
+        return ratings.Values.Sum();
+    }
+
+    public class GradeOption
+    {
+        public int Value { get; set; }
+        public string Label { get; set; } = string.Empty;
+    }
+}

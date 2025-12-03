@@ -9,122 +9,154 @@
 <div class="d-flex flex-column justify-content-center align-items-center vh-80">
     <h3 class="text-center mb-4">تقييم مساعد التدريس</h3>
 
-    <div class="w-75 mb-4 shadow-sm">
-        <div class="card shadow-sm" style="width: 100%;" dir="rtl">
-            <div class="card-body">
-                @if (isLoading)
-                {
-                    <div class="text-center py-5">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">جاري التحميل...</span>
-                        </div>
-                        <p class="mt-3">جاري تحميل البيانات</p>
-                    </div>
-                }
-                else if (errorMessage != null)
-                {
-                    <div class="alert alert-danger" role="alert">
-                        <strong>خطأ:</strong> @errorMessage
-                    </div>
-                    <button class="btn btn-primary" @onclick="LoadUserData">إعادة المحاولة</button>
-                }
-                else
-                {
+    @if (isLoading)
+    {
+        @* --- GLOBAL LOADING STATE --- *@
+        <div class="text-center py-5 w-100">
+            <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                <span class="visually-hidden">جاري التحميل...</span>
+            </div>
+            <h5 class="mt-3 text-muted">جاري تحميل البيانات، يرجى الانتظار...</h5>
+        </div>
+    }
+    else if (errorMessage != null)
+    {
+        @* --- ERROR STATE --- *@
+        <div class="w-75 mb-4">
+            <div class="alert alert-danger shadow-sm" role="alert">
+                <h4 class="alert-heading">حدث خطأ</h4>
+                <p>@errorMessage</p>
+                <hr>
+                <button class="btn btn-outline-danger" @onclick="LoadUserData">إعادة المحاولة</button>
+            </div>
+        </div>
+    }
+    else
+    {
+        @* --- MAIN CONTENT (Only shows when loading is false) --- *@
+
+        @* 1. Personal Data Card *@
+        <div class="w-75 mb-4 shadow-sm">
+            <div class="card shadow-sm" style="width: 100%;" dir="rtl">
+                <div class="card-body">
                     <EditForm Model="@userData">
                         <DataAnnotationsValidator />
                         <h3 style="color:cornflowerblue">البيانات الشخصية</h3>
                         <hr style="color:cornflowerblue" />
                         <div class="row g-3">
-                            <!-- Name Field -->
                             <div class="col-md-4">
                                 <div class="mb-3">
                                     <label for="name" class="form-label">الاسم</label>
                                     <InputText id="name" class="form-control" @bind-Value="userData.Name" readonly />
-                                    <ValidationMessage For="@(() => userData.Name)" />
                                 </div>
                             </div>
-
-                            <!-- Employee Number Field -->
                             <div class="col-md-4">
                                 <div class="mb-3">
                                     <label for="employeeNumber" class="form-label">الرقم الوظيفي</label>
                                     <InputNumber id="employeeNumber" class="form-control" @bind-Value="userData.EmployeeNumber" readonly />
-                                    <ValidationMessage For="@(() => userData.EmployeeNumber)" />
                                 </div>
                             </div>
-
-                            <!-- Qualification Field -->
                             <div class="col-md-4">
                                 <div class="mb-3">
                                     <label for="qualification" class="form-label">المؤهل</label>
                                     <InputText id="qualification" class="form-control" @bind-Value="userData.Qualification" readonly />
-                                    <ValidationMessage For="@(() => userData.Qualification)" />
                                 </div>
                             </div>
-
-                            <!-- Department Field -->
                             <div class="col-md-4">
                                 <div class="mb-3">
                                     <label for="department" class="form-label">القسم</label>
                                     <InputText id="department" class="form-control" @bind-Value="userData.Department" readonly />
-                                    <ValidationMessage For="@(() => userData.Department)" />
                                 </div>
                             </div>
-                            <!-- College Field -->
                             <div class="col-md-4">
                                 <div class="mb-3">
-                                    <label for="department" class="form-label">الكلية/الفرع </label>
-                                    <InputText id="department" class="form-control" @bind-Value="userData.College" readonly />
-                                    <ValidationMessage For="@(() => userData.College)" />
+                                    <label for="college" class="form-label">الكلية/الفرع </label>
+                                    <InputText id="college" class="form-control" @bind-Value="userData.College" readonly />
                                 </div>
                             </div>
                         </div>
-
                     </EditForm>
-                }
+                </div>
             </div>
         </div>
-    </div>
 
-    <div class="w-75 mb-4 shadow-sm">
-        <Srs.Client.Compontets.EducationalActivityComponent OnActivityLoaded="HandleEducationalData" />
-    </div>
+        <div class="w-75 mb-4 shadow-sm">
+            <Srs.Client.Compontets.EducationalActivityComponent OnActivityLoaded="HandleEducationalData" />
+        </div>
 
-    <div class="w-75 mb-4 shadow-sm">
-        <Srs.Client.Compontets.SentificِActivityComponent OnResearchPapersLoaded="HandleResearchPapers"
-                                                          OnOtherActivitiesLoaded="HandleOtherActivities" />
-    </div>
+        @* FIXED: Pass evaluationId to the component *@
+        <div class="w-75 mb-4 shadow-sm">
+            <Srs.Client.Compontets.SentificِActivityComponent EvaluationId="@evaluationId"
+                                                              InitialResearchPapers="@researchPapers"
+                                                              InitialOtherActivities="@otherActivities"
+                                                              OnResearchPapersLoaded="@HandleResearchPapersLoaded"
+                                                              OnOtherActivitiesLoaded="@HandleOtherActivitiesLoaded" />
+        </div>
 
-    <div class="w-75 mb-4 shadow-sm">
-        <Srs.Client.Compontets.AdministrativeِِActivityComponent OnActivityLoaded="HandleAdministrativeData" />
-    </div>
+        <div class="w-75 mb-4 shadow-sm">
+            <Srs.Client.Compontets.AdministrativeِِActivityComponent InitialData="administrativeData"
+                                                                     OnActivityLoaded="HandleAdministrativeData" />
+        </div>
 
-    <div class="w-75 mb-4 shadow-sm">
-        <Srs.Client.Compontets.StudentActivityComponent OnActivityLoaded="HandleStudentActivityData" />
-    </div>
+        <div class="w-75 mb-4 shadow-sm">
+            <Srs.Client.Compontets.StudentActivityComponent InitialData="studentActivityData"
+                                                            OnActivityLoaded="HandleStudentActivityData" />
+        </div>
 
-    <div class="w-75 mb-4 shadow-sm">
-        <Srs.Client.Compontets._ِAcademicAdvisingComponent />
-    </div>
+        <div class="w-75 mb-4 shadow-sm">
+            <Srs.Client.Compontets._ِAcademicAdvisingComponent />
+        </div>
 
-    <div class="w-75 mb-4">
-        <button class="btn btn-primary btn-lg w-100" @onclick="SubmitAllData">
-            حفظ جميع البيانات
-        </button>
-    </div>
+        @if (!string.IsNullOrEmpty(successMessage))
+        {
+            <div class="w-75 mb-4">
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <strong>نجح!</strong> @successMessage
+                    <button type="button" class="btn-close" @onclick="@(() => successMessage = null)"></button>
+                </div>
+            </div>
+        }
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="w-75 mb-4">
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <strong>خطأ!</strong> @errorMessage
+                    <button type="button" class="btn-close" @onclick="@(() => errorMessage = null)"></button>
+                </div>
+            </div>
+        }
+
+        <div class="w-75 mb-4">
+            <button class="btn btn-primary btn-lg w-100" @onclick="SubmitAllData">
+                @if (isExistingSubmission)
+                {
+                    <text>تحديث البيانات</text>
+                }
+                else
+                {
+                    <text>حفظ جميع البيانات</text>
+                }
+            </button>
+        </div>
+    }
 </div>
 
 @code {
     private UserDataDto userData = new UserDataDto();
     private bool isLoading = true;
-    private int evaluationId;
+    private int evaluationId; // This will be set after CreateEvaluation
+    private int? submissionId;
+    private bool isExistingSubmission = false;
     private string? errorMessage;
-    private int pageTestCounter = 0;
+    private string? successMessage;
+
     private List<ResearchPaperDto> researchPapers = new List<ResearchPaperDto>();
     private OtherActivitiesDto otherActivities = new OtherActivitiesDto();
-    private AdminstrativeActivityDto? administrativeData;
-    private StudentActivityDto? studentActivityData;
+    private AdminstrativeActivityDto administrativeData = new AdminstrativeActivityDto();
+    private StudentActivityDto studentActivityData = new StudentActivityDto();
     private EducationalActivityDto? educationalData;
+
     protected override async Task OnInitializedAsync()
     {
         await LoadUserData();
@@ -147,6 +179,19 @@
         studentActivityData = data;
         Console.WriteLine("Student activity data received");
     }
+
+    private void HandleResearchPapersLoaded(List<ResearchPaperDto> papers)
+    {
+        researchPapers = papers;
+        Console.WriteLine($"Research papers loaded: {papers.Count} papers");
+    }
+
+    private void HandleOtherActivitiesLoaded(OtherActivitiesDto activities)
+    {
+        otherActivities = activities;
+        Console.WriteLine("Other activities loaded");
+    }
+
     private async Task LoadUserData()
     {
         isLoading = true;
@@ -156,7 +201,7 @@
         {
             userData = new Shared.Dtos.UserDataDto
             {
-                Id = 121,
+                Id = 19,
                 Name = "علياء احمد",
                 EmployeeNumber = 12323,
                 Qualification = "ماجستير في علوم الحاسب",
@@ -166,7 +211,7 @@
 
             Console.WriteLine("User data loaded successfully");
 
-            // Immediately create evaluation record
+            // Create or get evaluation
             await CreateEvaluation();
         }
         catch (Exception ex)
@@ -177,8 +222,10 @@
         finally
         {
             isLoading = false;
+            StateHasChanged(); // Force UI update after evaluationId is set
         }
     }
+
     private async Task CreateEvaluation()
     {
         try
@@ -189,17 +236,19 @@
             {
                 var result = await response.Content.ReadFromJsonAsync<EvaluationResponseDto>();
                 evaluationId = result.id;
-                Console.WriteLine($"Evaluation created with ID: {evaluationId}");
+                Console.WriteLine($"✅ Evaluation created with ID: {evaluationId}");
+
+                // Force state change to update child components
+                StateHasChanged();
             }
             else
             {
                 var error = await response.Content.ReadAsStringAsync();
                 Console.WriteLine($"Failed to create evaluation: {error}");
 
-                // Check if it contains the expected message
                 if (error.Contains("Evaluation already exists", StringComparison.OrdinalIgnoreCase))
                 {
-                    Console.WriteLine("Evaluation already exists, checking existing evaluation...");
+                    Console.WriteLine("Evaluation already exists, fetching existing...");
                     await GetExistingEvaluationId();
                 }
             }
@@ -209,6 +258,7 @@
             Console.WriteLine($"Error creating evaluation: {ex.Message}");
         }
     }
+
     private async Task GetExistingEvaluationId()
     {
         try
@@ -225,17 +275,14 @@
                     if (doc.RootElement.TryGetProperty("evaluationId", out var idElement))
                     {
                         evaluationId = idElement.GetInt32();
-                        Console.WriteLine($"Existing evaluation found, ID = {evaluationId}");
-                    }
-                    else
-                    {
-                        Console.WriteLine("Cannot edit — evaluation not in editable status.");
+                        Console.WriteLine($"✅ Existing evaluation found, ID = {evaluationId}");
+
+                        // Force state change
+                        StateHasChanged();
+
+                        await LoadExistingTAData();
                     }
                 }
-            }
-            else
-            {
-                Console.WriteLine($"Failed to get evaluation: {await response.Content.ReadAsStringAsync()}");
             }
         }
         catch (Exception ex)
@@ -243,16 +290,88 @@
             Console.WriteLine($"Error getting existing evaluation: {ex.Message}");
         }
     }
+
+    private async Task LoadExistingTAData()
+    {
+        try
+        {
+            var response = await http.GetAsync($"/api/Evaluation/GetTASubmission/{evaluationId}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var existingData = await response.Content.ReadFromJsonAsync<UpdateTASubmissionsDto>();
+
+                if (existingData != null)
+                {
+                    isExistingSubmission = true;
+
+                    // Map research activities
+                    researchPapers = existingData.ResearchActivities?.Select(r => new ResearchPaperDto
+                    {
+                        Title = r.Title,
+                        ConferenceOrJournal = r.Journal,
+                        Location = r.Location,
+                        PageCount = r.PageCount,
+                        Date = r.ActivityDate,
+                        Status = r.StatusId,
+                        Url = r.Url
+                    }).ToList() ?? new List<ResearchPaperDto>();
+
+                    // Map other activities
+                    otherActivities = new OtherActivitiesDto
+                    {
+                        HasTechnicalReportsOrArticles = existingData.HasTechnicalReports,
+                        HasGivenLecturesOrSeminars = existingData.HasSeminarLectures,
+                        HasAttendedScientificSeminars = existingData.HasAttendingSeminars
+                    };
+
+                    // Map administrative data - CREATE NEW INSTANCE
+                    administrativeData = new AdminstrativeActivityDto
+                    {
+                        IsAcademicGuidanceCommittee = existingData.IsInAcademicAdvisingCommittee,
+                        ISchedulingCommittee = existingData.IsInSchedulingCommittee,
+                        IsQualityWorksCommittee = existingData.IsInQualityAssuranceCommittee,
+                        IsLaboratoryEquipmentCommittee = existingData.IsInLabEquipmentCommittee,
+                        IsExaminationsOrganizingCommittee = existingData.IsInExamOrganizationCommittee,
+                        IsSocialOrSportsActivityCommittees = existingData.IsInSocialOrSportsCommittee
+                    };
+
+                    // Map student activity data - CREATE NEW INSTANCE
+                    studentActivityData = new StudentActivityDto
+                    {
+                        IsCompletedStudentActivity = existingData.ParticipatedInSports,
+                        IsCompletedSocialActivity = existingData.ParticipatedInSocial,
+                        IsCompletedCulturalActivity = existingData.ParticipatedInCultural
+                    };
+
+                    Console.WriteLine($"✅ Loaded existing data: {researchPapers.Count} research papers");
+                    Console.WriteLine("✅ Administrative data loaded:");
+                    Console.WriteLine($"   IsAcademicGuidanceCommittee = {administrativeData.IsAcademicGuidanceCommittee}");
+                    Console.WriteLine($"   ISchedulingCommittee = {administrativeData.ISchedulingCommittee}");
+                    Console.WriteLine($"   IsQualityWorksCommittee = {administrativeData.IsQualityWorksCommittee}");
+                    Console.WriteLine($"   IsLaboratoryEquipmentCommittee = {administrativeData.IsLaboratoryEquipmentCommittee}");
+                    Console.WriteLine($"   IsExaminationsOrganizingCommittee = {administrativeData.IsExaminationsOrganizingCommittee}");
+                    Console.WriteLine($"   IsSocialOrSportsActivityCommittees = {administrativeData.IsSocialOrSportsActivityCommittees}");
+                    Console.WriteLine($"✅ Student Activity: Sport={studentActivityData.IsCompletedStudentActivity}, Social={studentActivityData.IsCompletedSocialActivity}, Cultural={studentActivityData.IsCompletedCulturalActivity}");
+
+                    // Force UI update to pass data to child components
+                    await InvokeAsync(StateHasChanged);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading existing TA data: {ex.Message}");
+        }
+    }
+
     private async Task SubmitAllData()
     {
         Console.WriteLine("=== Starting SubmitAllData ===");
-        Console.WriteLine($"educationalData is null: {educationalData == null}");
-        Console.WriteLine($"administrativeData is null: {administrativeData == null}");
-        Console.WriteLine($"studentActivityData is null: {studentActivityData == null}");
 
+        // Validate all required data
         if (educationalData == null)
         {
-            Console.WriteLine("❌ ERROR: Educational data is missing!");
             errorMessage = "بيانات النشاط التعليمي مفقودة";
             StateHasChanged();
             return;
@@ -260,7 +379,6 @@
 
         if (administrativeData == null)
         {
-            Console.WriteLine("❌ ERROR: Administrative data is missing!");
             errorMessage = "بيانات النشاط الإداري مفقودة";
             StateHasChanged();
             return;
@@ -268,16 +386,13 @@
 
         if (studentActivityData == null)
         {
-            Console.WriteLine("❌ ERROR: Student activity data is missing!");
             errorMessage = "بيانات النشاط الطلابي مفقودة";
             StateHasChanged();
             return;
         }
 
-        // Additional check for TeachingData
         if (educationalData.TeachingData == null)
         {
-            Console.WriteLine("❌ ERROR: TeachingData is null inside educationalData!");
             errorMessage = "بيانات التدريس مفقودة";
             StateHasChanged();
             return;
@@ -305,41 +420,125 @@
             HasSeminarLectures = otherActivities.HasGivenLecturesOrSeminars,
             HasAttendingSeminars = otherActivities.HasAttendedScientificSeminars,
             AdvisedStudentCount = 2,
-            ResearchActivities = researchActivities
+            ResearchActivities = researchActivities,
+            IsInAcademicAdvisingCommittee = administrativeData.IsAcademicGuidanceCommittee,
+            IsInSchedulingCommittee = administrativeData.ISchedulingCommittee,
+            IsInQualityAssuranceCommittee = administrativeData.IsQualityWorksCommittee,
+            IsInLabEquipmentCommittee = administrativeData.IsLaboratoryEquipmentCommittee,
+            IsInExamOrganizationCommittee = administrativeData.IsExaminationsOrganizingCommittee,
+            IsInSocialOrSportsCommittee = administrativeData.IsSocialOrSportsActivityCommittees,
+            ParticipatedInSports = studentActivityData.IsCompletedStudentActivity,
+            ParticipatedInSocial = studentActivityData.IsCompletedSocialActivity,
+            ParticipatedInCultural = studentActivityData.IsCompletedCulturalActivity
         };
 
-        Console.WriteLine("Mapped TA submission DTO:");
-        Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(taSubmission));
-
-        // Call API
-        await SubmitToApi(taSubmission);
-    }
-    private async Task SubmitToApi(CreateTASubmissionDto data)
-    {
-        var response = await http.PostAsJsonAsync($"/api/Evaluation/{evaluationId}/SubmitTAFiles", data);
-
-
-        if (response.IsSuccessStatusCode)
+        if (isExistingSubmission)
         {
-            Console.WriteLine("Submission successful!");
+            var updateData = new UpdateTASubmissionsDto
+            {
+                ActualTeachingLoad = taSubmission.ActualTeachingLoad,
+                ExpectedTeachingLoad = taSubmission.ExpectedTeachingLoad,
+                HasTechnicalReports = taSubmission.HasTechnicalReports,
+                HasSeminarLectures = taSubmission.HasSeminarLectures,
+                HasAttendingSeminars = taSubmission.HasAttendingSeminars,
+                AdvisedStudentCount = taSubmission.AdvisedStudentCount,
+                ResearchActivities = taSubmission.ResearchActivities,
+                IsInAcademicAdvisingCommittee = taSubmission.IsInAcademicAdvisingCommittee,
+                IsInSchedulingCommittee = taSubmission.IsInSchedulingCommittee,
+                IsInQualityAssuranceCommittee = taSubmission.IsInQualityAssuranceCommittee,
+                IsInLabEquipmentCommittee = taSubmission.IsInLabEquipmentCommittee,
+                IsInExamOrganizationCommittee = taSubmission.IsInExamOrganizationCommittee,
+                IsInSocialOrSportsCommittee = taSubmission.IsInSocialOrSportsCommittee,
+                ParticipatedInSports = taSubmission.ParticipatedInSports,
+                ParticipatedInSocial = taSubmission.ParticipatedInSocial,
+                ParticipatedInCultural = taSubmission.ParticipatedInCultural
+            };
+            await UpdateSubmission(updateData);
         }
         else
         {
-            var error = await response.Content.ReadAsStringAsync();
-            Console.WriteLine($"Submission failed: {error}");
+            await CreateSubmission(taSubmission);
         }
     }
 
-    private void HandleResearchPapers(List<ResearchPaperDto> papers)
+    private async Task CreateSubmission(CreateTASubmissionDto data)
     {
-        researchPapers = papers;
-        Console.WriteLine("Research papers received from child");
+        try
+        {
+            var response = await http.PostAsJsonAsync($"/api/Evaluation/{evaluationId}/SubmitTAFiles", data);
+
+            if (response.IsSuccessStatusCode)
+            {
+                Console.WriteLine("✅ Submission created successfully!");
+
+                try
+                {
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    if (!string.IsNullOrWhiteSpace(responseContent))
+                    {
+                        var result = JsonDocument.Parse(responseContent);
+                        var root = result.RootElement;
+
+                        if (root.TryGetProperty("id", out var idElement))
+                        {
+                            submissionId = idElement.GetInt32();
+                            isExistingSubmission = true;
+                            Console.WriteLine($"📋 New submission ID: {submissionId}");
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"ℹ️ Could not extract submission ID: {ex.Message}");
+                }
+
+                successMessage = "تم حفظ البيانات بنجاح!";
+                errorMessage = null;
+                StateHasChanged();
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"❌ Create submission failed: {error}");
+                errorMessage = $"فشل في حفظ البيانات: {error}";
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Exception during create: {ex.Message}");
+            errorMessage = $"حدث خطأ أثناء الحفظ: {ex.Message}";
+            StateHasChanged();
+        }
     }
 
-    private void HandleOtherActivities(OtherActivitiesDto activities)
+    private async Task UpdateSubmission(UpdateTASubmissionsDto data)
     {
-        otherActivities = activities;
-        Console.WriteLine("Other activities received from child");
-    }
+        try
+        {
+            Console.WriteLine($"🔄 Updating submission ID: {evaluationId}");
+            var response = await http.PutAsJsonAsync($"/api/Evaluation/UpdateTASubmission/{evaluationId}", data);
 
+            if (response.IsSuccessStatusCode)
+            {
+                Console.WriteLine("✅ Submission updated successfully!");
+                successMessage = "تم تحديث البيانات بنجاح!";
+                errorMessage = null;
+                StateHasChanged();
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"❌ Update submission failed: {error}");
+                errorMessage = $"فشل في تحديث البيانات: {error}";
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Exception during update: {ex.Message}");
+            errorMessage = $"حدث خطأ أثناء التحديث: {ex.Message}";
+            StateHasChanged();
+        }
+    }
 }

@@ -27,16 +27,16 @@ namespace Business_Access.Services
 
             try
             {
-                var evaluation = await _db.Evaluations.Include(s => s.Status)
-                    .FirstOrDefaultAsync(e => e.EvaluationId == evaluationDto.EvaluationId);
+                var evaluationPeriod = await _db.EvaluationPeriods
+                    .FirstOrDefaultAsync(ep => ep.PeriodId == evaluationDto.EvaluationPeriodId);
 
-                if (evaluation == null)
-                    throw new KeyNotFoundException($"Evaluation with ID {evaluationDto.EvaluationId} not found");
+                if (evaluationPeriod == null)
+                    throw new KeyNotFoundException($"Evaluation with ID {evaluationDto.EvaluationPeriodId} not found");
 
                 // Check if professor already evaluated this TA for this course
                 var existingEvaluation = await _db.ProfessorCourseEvaluations
                     .FirstOrDefaultAsync(pe =>
-                        pe.EvaluationId == evaluationDto.EvaluationId &&
+                        pe.EvaluationPeriodId == evaluationDto.EvaluationPeriodId &&
                         pe.ProfessorEmployeeId == evaluationDto.ProfessorEmployeeId &&
                         pe.CourseCode == evaluationDto.CourseCode.Trim());
 
@@ -51,7 +51,8 @@ namespace Business_Access.Services
                 // Create professor evaluation
                 var profEvaluation = new ProfessorCourseEvaluation
                 {
-                    EvaluationId = evaluationDto.EvaluationId,
+                    EvaluationPeriodId = evaluationDto.EvaluationPeriodId,
+                    TaEmployeeId=evaluationDto.TaEmployeeId,
                     ProfessorEmployeeId = evaluationDto.ProfessorEmployeeId,
                     CourseCode = evaluationDto.CourseCode.Trim(),
                     CourseName = evaluationDto.CourseName.Trim(),
@@ -59,9 +60,11 @@ namespace Business_Access.Services
                     AttendanceScore = evaluationDto.AttendanceScore,
                     PerformanceScore = evaluationDto.PerformanceScore,
                     TotalScore = totalScore,
-                    Comments = evaluationDto.Comments?.Trim(),
+                    Comments = evaluationDto.Comments,
                     IsReturned = false,
-                    HodReturnComment = null
+                    HodReturnComment = null,
+                    //to be added to get the status of the professor added to the ta
+                    StatusId = 2 
                 };
 
                 _db.ProfessorCourseEvaluations.Add(profEvaluation);
@@ -85,8 +88,8 @@ namespace Business_Access.Services
                 throw new ArgumentException("Invalid professor evaluation ID", nameof(profEvalId));
             }
             var profEvaluation = await _db.ProfessorCourseEvaluations
-                .Include(pe => pe.Evaluation)
-                    .ThenInclude(e => e.Period)
+                .Include(pe => pe.EvaluationPeriod)  
+                .Include(pe => pe.Status)            
                 .FirstOrDefaultAsync(pe => pe.ProfEvalId == profEvalId);
 
             if (profEvaluation == null)
@@ -100,18 +103,16 @@ namespace Business_Access.Services
                 throw new ArgumentException("Invalid professor employee ID", nameof(professorEmployeeId));
 
             var evaluations = await _db.ProfessorCourseEvaluations
-                .Include(pe => pe.Evaluation)
-                    .ThenInclude(e => e.Period)
-                .Include(pe => pe.Evaluation)
-                    .ThenInclude(e => e.Status)
+                .Include(pe => pe.EvaluationPeriod) 
+                .Include(pe => pe.Status)            
                 .Where(pe => pe.ProfessorEmployeeId == professorEmployeeId)
-                .OrderByDescending(pe => pe.Evaluation.Period.StartDate)
+                .OrderByDescending(pe => pe.EvaluationPeriod.StartDate) 
                 .ThenBy(pe => pe.CourseCode)
                 .ToListAsync();
 
             return evaluations.Select(pe => MapToResponseDto(pe)).ToList();
         }
-        public async Task UpdateProfessorEvaluationAsync(int evaluationid, UpdateProfessorEvaluationDto evaluationDto)
+        public async Task UpdateProfessorEvaluationAsync(int profEvalId, UpdateProfessorEvaluationDto evaluationDto)
         {
             if (evaluationDto == null)
                 throw new ArgumentNullException(nameof(evaluationDto));
@@ -121,14 +122,15 @@ namespace Business_Access.Services
             try
             {
                 var profEvaluation = await _db.ProfessorCourseEvaluations
-                    .Include(pe => pe.Evaluation)
-                    .FirstOrDefaultAsync(pe => pe.EvaluationId == evaluationid);
+                     .Include(pe => pe.EvaluationPeriod)  // CHANGED from Evaluation
+                     .Include(pe => pe.Status)            // NEW
+                     .FirstOrDefaultAsync(pe => pe.ProfEvalId == profEvalId);  // CHANGED
 
                 if (profEvaluation == null)
-                    throw new KeyNotFoundException($"evaluation with ID {evaluationid} not found");
+                    throw new KeyNotFoundException($"Professor evaluation with ID {profEvalId} not found");
 
-                // Check if evaluation can still be edited
-                if (profEvaluation.Evaluation.StatusId > 6) // After HOD review
+                // CHANGED: Check status directly on the evaluation
+                if (profEvaluation.StatusId > 6) // After HOD review
                     throw new InvalidOperationException("Cannot update evaluation after HOD review stage");
 
                 // Update fields
@@ -141,6 +143,8 @@ namespace Business_Access.Services
                                            evaluationDto.AttendanceScore +
                                            evaluationDto.PerformanceScore;
                 profEvaluation.Comments = evaluationDto.Comments?.Trim();
+                //to be added later
+               // profEvaluation.StatusId = evaluationDto.StatusId;  // NEW - allow status update
 
                 _db.ProfessorCourseEvaluations.Update(profEvaluation);
                 await _db.SaveChangesAsync();
@@ -152,15 +156,61 @@ namespace Business_Access.Services
                 throw;
             }
         }
+        public async Task<List<ProfessorCourseEvaluation>> GetByEvaluationIdAsync(int evaluationPeriodId)
+        {
+            // Validate input
+            if (evaluationPeriodId <= 0)
+                throw new ArgumentException("Invalid evaluationPeriodId. It must be a positive number.", nameof(evaluationPeriodId));
+
+            var evaluations = await _db.ProfessorCourseEvaluations
+                .Include(p => p.EvaluationPeriod)  
+                .Include(p => p.Status)            
+                .Where(p => p.EvaluationPeriodId == evaluationPeriodId)
+                .ToListAsync();
+
+            if (evaluations == null || !evaluations.Any())
+            {
+                return new List<ProfessorCourseEvaluation>();
+            }
+
+            return evaluations;
+        }
+        public async Task<List<ProfessorCourseEvaluation>> GetByTAEmployeeIdAsync(int taEmployeeId)
+        {
+            if (taEmployeeId<=0)
+                throw new ArgumentException("Invalid TA employee ID", nameof(taEmployeeId));
+
+            var evaluations = await _db.ProfessorCourseEvaluations
+                .Include(p => p.EvaluationPeriod)
+                .Include(p => p.Status)
+                .Where(p => p.TaEmployeeId == taEmployeeId)
+                .ToListAsync();
+
+            return evaluations ?? new List<ProfessorCourseEvaluation>();
+        }
+
+        public async Task <List<ProfessorEvaluationResponseDto>> GetByPeriodAndTAAsync(int evaluationPeriodId, int taEmployeeId)
+        {
+            if (evaluationPeriodId <= 0)
+                throw new ArgumentException("Invalid evaluationPeriodId", nameof(evaluationPeriodId));
+
+            var evaluation = await _db.ProfessorCourseEvaluations
+                .Include(p => p.EvaluationPeriod)
+                .Include(p => p.Status)
+                .Where(p => p.EvaluationPeriodId == evaluationPeriodId && p.TaEmployeeId == taEmployeeId).ToListAsync();
+
+            return evaluation.Select(MapToResponseDto).ToList();
+        }
+
         private ProfessorEvaluationResponseDto MapToResponseDto(ProfessorCourseEvaluation profEvaluation)
         {
             var professorName = $"Professor {profEvaluation.ProfessorEmployeeId}"; // Placeholder
 
-
             return new ProfessorEvaluationResponseDto
             {
                 ProfEvalId = profEvaluation.ProfEvalId,
-                EvaluationId = profEvaluation.EvaluationId,
+                EvaluationPeriodId = profEvaluation.EvaluationPeriodId,  // CHANGED from EvaluationId
+                TaEmployeeId = profEvaluation.TaEmployeeId,              // NEW
                 ProfessorEmployeeId = profEvaluation.ProfessorEmployeeId,
                 ProfessorName = professorName,
                 CourseCode = profEvaluation.CourseCode,
@@ -172,6 +222,9 @@ namespace Business_Access.Services
                 Comments = profEvaluation.Comments,
                 IsReturned = profEvaluation.IsReturned,
                 HodReturnComment = profEvaluation.HodReturnComment,
+                StatusId = profEvaluation.StatusId,                      // NEW
+                PeriodName = profEvaluation.EvaluationPeriod?.PeriodName, // NEW - Optional
+                StatusName = profEvaluation.Status?.StatusName,          // NEW - Optional
                 IsSubmitted = true,
                 SubmittedDate = DateTime.Now.Date
             };
