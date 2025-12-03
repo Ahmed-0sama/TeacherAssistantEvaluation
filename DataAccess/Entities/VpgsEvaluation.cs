@@ -6,7 +6,7 @@ namespace DataAccess.Entities;
 public partial class VpgsEvaluation
 {
     public int VpgsevalId { get; set; }
-    public int EvaluationId { get; set; }
+    public int? EvaluationId { get; set; }
     public decimal ScientificScore { get; set; }
     public int StatusId { get; set; }
 
