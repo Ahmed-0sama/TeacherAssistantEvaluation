@@ -46,14 +46,7 @@
                                         <td>@ta.Name</td>
                                         <td>@ta.Department</td>
                                         <td>
-                                            @if (ta.status == "Confirmed")
-                                            {
-                                                <span class="result-pill">@ta.status</span>
-                                            }
-                                            else if (ta.status == "Waiting For Review")
-                                            {
-                                                <span class="result-pill" style="background-color: antiquewhite; color: black;">@ta.status</span>
-                                            }
+                                            <span class="result-pill">@(ta.HasVpgsEvaluation == true ? "عرض" : "تقييم")</span>
                                         </td>
                                         <td>
                                             <button class="btn btn-sm btn-primary" @onclick="() => OpenModal(ta)">
@@ -298,7 +291,7 @@
     private MastersDto mastersDto = new();
     private bool isLoadingModalData = false;
     private bool isSaving = false;
-    private bool IsReadOnly => selectedTA?.status == "Confirmed";
+    private bool IsReadOnly => selectedTA?.statusid == 2;
     private bool IsViewMode => selectedTA?.HasVpgsEvaluation == true;
     private List<ResearchPaperDto> researchPapers = new();
 
@@ -329,7 +322,7 @@
                     Name = $"TA #{e.TaEmployeeId}",
                     Department = e.PeriodName,
                     EmployeeNumber = e.TaEmployeeId,
-                    status = e.StatusName,
+                    statusid = e.StatusId,
                     EvaluationId = e.EvaluationId,
                     HasVpgsEvaluation = vpgsExistenceMap.ContainsKey(e.EvaluationId)
                 }).ToList();

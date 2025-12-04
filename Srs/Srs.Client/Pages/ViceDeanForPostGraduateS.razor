@@ -45,18 +45,18 @@
                                         <td>@ta.Name</td>
                                         <td>@ta.Department</td>
                                         <td>
-                                            @if (ta.status == "Confirmed")
+                                            @if (ta.statusid == 2)
                                             {
-                                                <span class="result-pill">@ta.status</span>
+                                                <span class="result-pill"> "عرض"</span>
                                             }
-                                            else if (ta.status == "Waiting For Review")
+                                            else if (ta.statusid == 1)
                                             {
-                                                <span class="result-pill" style="background-color: antiquewhite; color: black;">@ta.status</span>
+                                                <span class="result-pill" style="background-color: antiquewhite; color: black;">"تقييم"</span>
                                             }
                                         </td>
                                         <td>
                                             <button class="btn btn-sm btn-primary" @onclick="() => OpenModal(ta)">
-                                                @(ta.status == "Confirmed" ? "عرض" : ta.status == "Waiting For Review" ? "تقييم" : "إجراء")
+                                                @(ta.statusid == 2? "عرض" : ta.statusid == 1 ? "تقييم" : "إجراء")
                                             </button>
                                         </td>
                                     </tr>
@@ -269,9 +269,48 @@
                 Name = $"TA #{e.TaEmployeeId}",
                 Department = e.PeriodName,
                 EmployeeNumber = e.TaEmployeeId,
-                status = e.StatusName,
+                statusid = 1,
                 EvaluationId = e.EvaluationId
-            }).ToList();
+            }
+            ).ToList(); var mockData = new List<UserDataDto>
+            {//to be removed when api is ready 
+            new UserDataDto
+            {
+                Name = "TA #1011",
+                Department = "Fall 2025",
+                EmployeeNumber = 1011,
+                statusid = 1,
+                EvaluationId = 5001
+            },
+            new UserDataDto
+            {
+                Name = "TA #1022",
+                Department = "Fall 2025",
+                EmployeeNumber = 1022,
+                statusid = 1,
+                EvaluationId = 5002
+            },
+            new UserDataDto
+            {
+                Name = "TA #1033",
+                Department = "Spring 2025",
+                EmployeeNumber = 1033,
+                statusid = 2,
+                EvaluationId = 5003
+            },
+            new UserDataDto
+            {
+                Name = "TA #1044",
+                Department = "Spring 2025",
+                EmployeeNumber = 1044,
+                statusid = 1,
+                EvaluationId = 5004
+            }
+        };
+
+            // Append mock data to the list
+            taList.AddRange(mockData);
+
         }
         catch (Exception ex)
         {
@@ -291,7 +330,7 @@
         isLoadingModalData = true;
 
         // Determine if readonly based on status
-        IsReadOnly = ta.status == "Confirmed";
+        IsReadOnly = ta.statusid == 2;
 
         // Reset the DTO
         mastersDto = new MastersDto();

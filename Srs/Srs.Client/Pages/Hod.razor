@@ -46,13 +46,13 @@
                                     <tr>
                                         <td>@ta.Name</td>
                                         <td>@ta.Department</td>
-                                        <td>@ta.status</td>
+                                        <td>@ta.statusid</td>
                                         <td>
                                             @if (ta.HasHodEvaluation == true)
                                             {
                                                 <span class="badge bg-success">تم التقييم</span>
                                             }
-                                            else if (ta.status == "Draft")
+                                            else if (ta.statusid == 1)
                                             {
                                                 <span class="badge bg-warning text-dark">بانتظار التقييم</span>
                                             }
@@ -62,7 +62,7 @@
                                             }
                                         </td>
                                         <td>
-                                            @if (ta.status == "Draft" || ta.HasHodEvaluation == true)
+                                            @if (ta.statusid == 1 || ta.HasHodEvaluation == true)
                                             {
                                                 <button class="btn btn-sm btn-primary" @onclick="() => OpenModal(ta)">
                                                     @(ta.HasHodEvaluation == true ? "عرض التقييم" : "تقييم")
@@ -140,7 +140,7 @@
                 Name = $"TA #{e.taEmployeeId}",
                 Department = e.periodName,
                 EmployeeNumber = e.taEmployeeId,
-                status = e.statusName,
+                statusid = e.statusId,
                 EvaluationId = e.evaluationId,
                 Id = e.taEmployeeId,
                 HasHodEvaluation = hodEvaluationIds.Contains(e.evaluationId)

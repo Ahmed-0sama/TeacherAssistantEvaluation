@@ -23,7 +23,7 @@ namespace Shared.Dtos
             public string Department { get; set; } = string.Empty;
             [Required(ErrorMessage = "Requird")]
             public string College { get; set; } = string.Empty;
-            public string status { get; set; } = string.Empty;
+            public int statusid { get; set; }
         public int EvaluationId { get; set; }
         public bool? HasVpgsEvaluation { get; set; }
         public bool? HasHodEvaluation { get; set; }
