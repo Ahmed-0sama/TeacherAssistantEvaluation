@@ -41,7 +41,8 @@ namespace Business_Access.Services
                     {
                         EvaluationId = dto.EvaluationId,
                         CriterionId = criterionRating.CriterionId,
-                        RatingId = criterionRating.RatingId
+                        RatingId = criterionRating.RatingId,
+                        StatusId = 5
                     };
 
                     _db.Hodevaluations.Add(hodEval);
@@ -50,7 +51,6 @@ namespace Business_Access.Services
                 // Update evaluation with HOD comments
                 evaluation.HodStrengths = dto.HodStrengths;
                 evaluation.HodWeaknesses = dto.HodWeaknesses;
-
                 await _db.SaveChangesAsync();
                 await transaction.CommitAsync();
 
@@ -88,9 +88,9 @@ namespace Business_Access.Services
                 RatingName = h.Rating.RatingName,
                 ScoreValue = h.Rating.ScoreValue
             }).ToList();
-
             var totalScore = hodEvaluations.Sum(h => h.ScoreValue);
             var maxScore = hodEvaluations.Count * hodEvaluations.Max(h => h.ScoreValue);
+            
 
             return new HodEvaluationResponseDto
             {
@@ -99,15 +99,16 @@ namespace Business_Access.Services
                 TaEmployeeId = evaluation.TaEmployeeId,
                 PeriodName = evaluation.Period.PeriodName,
                 StatusName = evaluation.Status.StatusName,
+                StatusId = evaluation.StatusId,
                 Evaluations = hodEvaluations,
                 HodStrengths = evaluation.HodStrengths,
                 HodWeaknesses = evaluation.HodWeaknesses,
                 TotalScore = totalScore,
-                MaxScore = maxScore
+                MaxScore = maxScore,
             };
         }
 
-        public async  Task<List<HodEvaluationResponseDto>> GetHodEvaluationsByPeriodAsync(int periodId)
+        public async Task<List<HodEvaluationResponseDto>> GetHodEvaluationsByPeriodAsync(int periodId)
         {
             var evaluations = await _db.Evaluations
                 .Include(e => e.Period)
@@ -130,7 +131,8 @@ namespace Business_Access.Services
                     CriterionType = h.Criterion.CriterionType,
                     RatingId = h.RatingId,
                     RatingName = h.Rating.RatingName,
-                    ScoreValue = h.Rating.ScoreValue
+                    ScoreValue = h.Rating.ScoreValue,
+                    statusid = h.StatusId  
                 }).ToList();
 
                 var totalScore = hodEvaluations.Any() ? hodEvaluations.Sum(h => h.ScoreValue) : 0;
@@ -145,6 +147,7 @@ namespace Business_Access.Services
                     TaEmployeeId = evaluation.TaEmployeeId,
                     PeriodName = evaluation.Period.PeriodName,
                     StatusName = evaluation.Status.StatusName,
+                    StatusId = evaluation.StatusId,  // ADD THIS
                     Evaluations = hodEvaluations,
                     HodStrengths = evaluation.HodStrengths,
                     HodWeaknesses = evaluation.HodWeaknesses,
@@ -186,7 +189,7 @@ namespace Business_Access.Services
                 // Update evaluation comments
                 evaluation.HodStrengths = dto.HodStrengths;
                 evaluation.HodWeaknesses = dto.HodWeaknesses;
-
+                evaluation.StatusId = 5; // Assuming 5 is the status for updated HOD evaluation
                 await _db.SaveChangesAsync();
                 await transaction.CommitAsync();
             }

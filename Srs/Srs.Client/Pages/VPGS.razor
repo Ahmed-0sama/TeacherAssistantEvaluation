@@ -46,7 +46,7 @@
                                         <td>@ta.Name</td>
                                         <td>@ta.Department</td>
                                         <td>
-                                            <span class="result-pill">@(ta.HasVpgsEvaluation == true ? "عرض" : "تقييم")</span>
+                                            <span class="result-pill">@(ta.HasVpgsEvaluation == true ? "تم التقييم" : " انتظار التقييم")</span>
                                         </td>
                                         <td>
                                             <button class="btn btn-sm btn-primary" @onclick="() => OpenModal(ta)">

@@ -24,6 +24,8 @@ namespace Shared.Dtos.ProfessorEvaluationDto
         [Required(ErrorMessage = "Course name is required")]
         [StringLength(200, ErrorMessage = "Course name must be less than 200 characters")]
         public string CourseName { get; set; }
+        [Required(ErrorMessage = "Semester name is required")]
+        public string SemesterName { get; set; }
 
         [Required(ErrorMessage = "Office hours score is required")]
         [Range(0, 10, ErrorMessage = "Office hours score must be between 0 and 10")]

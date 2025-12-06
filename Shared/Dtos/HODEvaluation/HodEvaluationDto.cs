@@ -16,5 +16,6 @@ namespace Shared.Dtos.HODEvaluation
         public int RatingId { get; set; }
         public string RatingName { get; set; } = null!;
         public int ScoreValue { get; set; }
+        public int statusid { get; set; }
     }
 }

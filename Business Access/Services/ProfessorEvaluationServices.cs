@@ -54,6 +54,7 @@ namespace Business_Access.Services
                     TaEmployeeId=evaluationDto.TaEmployeeId,
                     ProfessorEmployeeId = evaluationDto.ProfessorEmployeeId,
                     CourseCode = evaluationDto.CourseCode.Trim(),
+                    SemesterName= evaluationDto.SemesterName,
                     CourseName = evaluationDto.CourseName.Trim(),
                     OfficeHoursScore = evaluationDto.OfficeHoursScore,
                     AttendanceScore = evaluationDto.AttendanceScore,
@@ -63,7 +64,7 @@ namespace Business_Access.Services
                     IsReturned = false,
                     HodReturnComment = null,
                     //to be added to get the status of the professor added to the ta
-                    StatusId = 2 
+                    StatusId = 4// Submitted by Professor
                 };
 
                 _db.ProfessorCourseEvaluations.Add(profEvaluation);
@@ -135,6 +136,7 @@ namespace Business_Access.Services
                 // Update fields
                 profEvaluation.CourseCode = evaluationDto.CourseCode.Trim();
                 profEvaluation.CourseName = evaluationDto.CourseName.Trim();
+                profEvaluation.SemesterName = evaluationDto.SemesterName;
                 profEvaluation.OfficeHoursScore = evaluationDto.OfficeHoursScore;
                 profEvaluation.AttendanceScore = evaluationDto.AttendanceScore;
                 profEvaluation.PerformanceScore = evaluationDto.PerformanceScore;
@@ -212,6 +214,7 @@ namespace Business_Access.Services
                 TaEmployeeId = profEvaluation.TaEmployeeId,              // NEW
                 ProfessorEmployeeId = profEvaluation.ProfessorEmployeeId,
                 ProfessorName = professorName,
+                SemesterName=profEvaluation.SemesterName,
                 CourseCode = profEvaluation.CourseCode,
                 CourseName = profEvaluation.CourseName,
                 OfficeHoursScore = profEvaluation.OfficeHoursScore,
