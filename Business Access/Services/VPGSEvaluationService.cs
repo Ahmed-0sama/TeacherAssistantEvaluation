@@ -1,5 +1,5 @@
 ﻿using Business_Access.Interfaces;
-using DataAccess.Context;
+
 using DataAccess.Entities;
 using Microsoft.EntityFrameworkCore;
 using Shared.Dtos;
@@ -48,7 +48,7 @@ namespace Business_Access.Services
                 {
                     EvaluationId = evaluationDto.EvaluationId,
                     ScientificScore = evaluationDto.ScientificScore,
-                    StatusId= 2 // Set initial status based on evaluation status
+                    StatusId= 2 // Set as 2 as its given the grade status based on evaluation status
 
                 };
 
@@ -163,7 +163,7 @@ namespace Business_Access.Services
             return new VpgsEvaluationResponseDto
             {
                 VpgsevalId = vpgsEval.VpgsevalId,
-                EvaluationId = vpgsEval.EvaluationId,
+                EvaluationId = vpgsEval.EvaluationId??0,
                 ScientificScore = vpgsEval.ScientificScore,
                 TAEmployeeId = vpgsEval.Evaluation.TaEmployeeId,
                 PeriodName = vpgsEval.Evaluation.Period?.PeriodName ?? "Unknown Period",

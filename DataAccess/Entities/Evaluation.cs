@@ -22,12 +22,14 @@ public partial class Evaluation
     public string? DeanReturnComment { get; set; }
 
     public string? FinalGrade { get; set; }
-
-    public decimal? StudentSurveyScore { get; set; }
+    public decimal? TotalScore { get; set; }
+    public decimal? StudentSurveyScore { get; set; }//goes to auto caculated score
 
     public DateTime? DateSubmitted { get; set; }
 
     public DateTime? DateApproved { get; set; }
+    public virtual AutoCalculatedScore? AutoCalculatedScore { get; set; }
+    public virtual VpgsEvaluation EvaluationNavigation { get; set; } = null!;
 
     public virtual ICollection<Hodevaluation> Hodevaluations { get; set; } = new List<Hodevaluation>();
     public virtual EvaluationPeriod Period { get; set; } = null!;

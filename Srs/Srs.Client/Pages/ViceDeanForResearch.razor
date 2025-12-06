@@ -43,19 +43,19 @@
                                         <td>@ta.Name</td>
                                         <td>@ta.Department</td>
                                         <td>
-                                            @if (ta.status == "Confirmed")
+                                            @if (ta.statusid == 2)
                                             {
-                                                <span class="result-pill">@ta.status</span>
+                                                <span class="result-pill">confirmed</span>
                                             }
-                                            else if (ta.status == "Waiting For Review")
+                                            else if (ta.statusid == 1)
                                             {
-                                                <span class="result-pill" style="background-color: antiquewhite; color: black;">@ta.status</span>
+                                                <span class="result-pill" style="background-color: antiquewhite; color: black;">تقييم</span>
                                             }
 
                                         </td>
                                         <td>
                                             <button class="btn btn-sm btn-primary" @onclick="() => OpenModal(ta)">
-                                                @(ta.status == "Confirmed" ? "عرض" : ta.status == "Waiting For Review" ? "تقييم" : "إجراء")
+                                                @(ta.statusid == 2 ? "عرض" : ta.statusid == 1 ? "تقييم" : "إجراء")
                                             </button>
                                         </td>
                                     </tr>
@@ -178,7 +178,7 @@
                     </div>
 
                     <!-- Action Buttons (if status is Waiting For Review) -->
-                    @if (selectedTA?.status == "Waiting For Review")
+                    @if (selectedTA?.statusid == 1)
                     {
                         <div class="d-flex justify-content-center gap-2 mt-4">
                             <button class="btn btn-success px-4" @onclick="ConfirmTA">اعتماد الدرجة</button>
@@ -208,9 +208,9 @@
         try
         {
             taList = new List<UserDataDto> {
-                new UserDataDto { Name = "علياء نبيل", Department = "علوم الحاسب", EmployeeNumber = 679789, status = "Confirmed" },
-                new UserDataDto { Name = "سارة حسن", Department = "علوم الحاسب", EmployeeNumber = 679790, status = "Waiting For Review" },
-                new UserDataDto { Name = "أحمد محمود", Department = "علوم الحاسب", EmployeeNumber = 679791, status = "Waiting For Review" }
+                new UserDataDto { Name = "علياء نبيل", Department = "علوم الحاسب", EmployeeNumber = 679789, statusid = 1 },
+                new UserDataDto { Name = "سارة حسن", Department = "علوم الحاسب", EmployeeNumber = 679790, statusid = 1 },
+                new UserDataDto { Name = "أحمد محمود", Department = "علوم الحاسب", EmployeeNumber = 679791, statusid = 1 }
             };
 
             InitializeMockData();
@@ -334,7 +334,7 @@
     {
         if (selectedTA != null)
         {
-            selectedTA.status = "Confirmed";
+            selectedTA.statusid =2;
             ModalVisable = false;
             Console.WriteLine($"TA {selectedTA.Name} confirmed");
         }

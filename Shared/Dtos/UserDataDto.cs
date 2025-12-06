@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Shared.Dtos.HODEvaluation;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -23,9 +24,11 @@ namespace Shared.Dtos
             public string Department { get; set; } = string.Empty;
             [Required(ErrorMessage = "Requird")]
             public string College { get; set; } = string.Empty;
-            public string status { get; set; } = string.Empty;
-        public int EvaluationId { get; set; }
-        public bool? HasVpgsEvaluation { get; set; }
-        public bool? HasHodEvaluation { get; set; }
+            public int statusid { get; set; }
+             public int EvaluationId { get; set; }
+             public bool? HasVpgsEvaluation { get; set; }
+        public bool HasHodEvaluation { get; set; }
+        public int HodEvaluationStatus { get; set; }  // New: to track HOD status
+        public HodEvaluationResponseDto? HodEvaluationData { get; set; }  // New: full HOD data
     }
 }

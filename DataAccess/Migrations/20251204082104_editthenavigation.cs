@@ -3,18 +3,34 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
-
 namespace DataAccess.Migrations
 {
     /// <inheritdoc />
-    public partial class initalupdate : Migration
+    public partial class editthenavigation : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.EnsureSchema(
                 name: "taEvaluation");
+
+            migrationBuilder.CreateTable(
+                name: "EvaluationGradeRange",
+                schema: "taEvaluation",
+                columns: table => new
+                {
+                    RangeID = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    MaxGrade = table.Column<decimal>(type: "decimal(6,2)", nullable: false),
+                    MinGrade = table.Column<decimal>(type: "decimal(6,2)", nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
+                    ValidFromDate = table.Column<DateOnly>(type: "date", nullable: false),
+                    ValidToDate = table.Column<DateOnly>(type: "date", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK__Evaluati__6899CAF40A26F490", x => x.RangeID);
+                });
 
             migrationBuilder.CreateTable(
                 name: "EvaluationPeriods",
@@ -29,7 +45,7 @@ namespace DataAccess.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__Evaluati__E521BB36E10D5CDC", x => x.PeriodID);
+                    table.PrimaryKey("PK__Evaluati__E521BB36B76F7D95", x => x.PeriodID);
                 });
 
             migrationBuilder.CreateTable(
@@ -44,7 +60,7 @@ namespace DataAccess.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__Evaluati__C8EE20437A4A7778", x => x.StatusID);
+                    table.PrimaryKey("PK__Evaluati__C8EE2043B4D1D470", x => x.StatusID);
                 });
 
             migrationBuilder.CreateTable(
@@ -59,7 +75,7 @@ namespace DataAccess.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__HODEvalu__647C3BD119DF663C", x => x.CriterionID);
+                    table.PrimaryKey("PK__HODEvalu__647C3BD120762426", x => x.CriterionID);
                 });
 
             migrationBuilder.CreateTable(
@@ -76,7 +92,7 @@ namespace DataAccess.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__Notifica__20CF2E3254FA65A4", x => x.NotificationID);
+                    table.PrimaryKey("PK__Notifica__20CF2E32770FC71F", x => x.NotificationID);
                 });
 
             migrationBuilder.CreateTable(
@@ -91,7 +107,7 @@ namespace DataAccess.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__Ratings__FCCDF85C285DEC07", x => x.RatingID);
+                    table.PrimaryKey("PK__Ratings__FCCDF85CD6813305", x => x.RatingID);
                 });
 
             migrationBuilder.CreateTable(
@@ -106,7 +122,7 @@ namespace DataAccess.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__Research__C8EE20431C47CE6C", x => x.StatusID);
+                    table.PrimaryKey("PK__Research__C8EE204312F7CC6C", x => x.StatusID);
                 });
 
             migrationBuilder.CreateTable(
@@ -124,13 +140,14 @@ namespace DataAccess.Migrations
                     HOD_ReturnComment = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Dean_ReturnComment = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     FinalGrade = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
-                    StudentSurveyScore = table.Column<decimal>(type: "decimal(4,2)", nullable: true),
+                    TotalScore = table.Column<decimal>(type: "decimal(6,2)", nullable: true),
+                    StudentSurveyScore = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
                     DateSubmitted = table.Column<DateTime>(type: "datetime2", nullable: true),
                     DateApproved = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__Evaluati__36AE68D3DC67C19C", x => x.EvaluationID);
+                    table.PrimaryKey("PK__Evaluati__36AE68D38FC7B59C", x => x.EvaluationID);
                     table.ForeignKey(
                         name: "FK_Evaluations_PeriodID",
                         column: x => x.PeriodID,
@@ -153,13 +170,13 @@ namespace DataAccess.Migrations
                     GSEvalID = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     EvaluationPeriodID = table.Column<int>(type: "int", nullable: false),
-                    GSDean_EmloyeeID = table.Column<int>(type: "int", nullable: true),
+                    GsdeanEmloyeeId = table.Column<int>(type: "int", nullable: true),
                     TA_EmployeeID = table.Column<int>(type: "int", nullable: true),
-                    ProgramName = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
+                    ProgramName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     CompletedHours = table.Column<int>(type: "int", nullable: false),
-                    GPA = table.Column<decimal>(type: "decimal(3,2)", nullable: false),
+                    Gpa = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     ExpectedCompletionDate = table.Column<DateOnly>(type: "date", nullable: false),
-                    ProgressScore = table.Column<decimal>(type: "decimal(3,1)", nullable: true),
+                    ProgressScore = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
                     EvaluationComments = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     TopicChosen = table.Column<bool>(type: "bit", nullable: false),
                     LiteratureReview = table.Column<bool>(type: "bit", nullable: false),
@@ -171,7 +188,7 @@ namespace DataAccess.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__GSDean_E__C8B1293995D5C787", x => x.GSEvalID);
+                    table.PrimaryKey("PK_GSDean_Evaluations", x => x.GSEvalID);
                     table.ForeignKey(
                         name: "FK_GSDean_Evaluations_EvaluationPeriodID",
                         column: x => x.EvaluationPeriodID,
@@ -194,7 +211,7 @@ namespace DataAccess.Migrations
                     ProfEvalID = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     EvaluationPeriodID = table.Column<int>(type: "int", nullable: false),
-                    TA_EmployeeID = table.Column<int>(type: "int", nullable: false),
+                    TA_EmployeeID = table.Column<int>(type: "int", fixedLength: true, maxLength: 10, nullable: false),
                     Professor_EmployeeID = table.Column<int>(type: "int", nullable: false),
                     CourseCode = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     CourseName = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
@@ -209,19 +226,42 @@ namespace DataAccess.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__Professo__DACBBA35DF4A614E", x => x.ProfEvalID);
+                    table.PrimaryKey("PK__Professo__DACBBA357239488F", x => x.ProfEvalID);
                     table.ForeignKey(
-                        name: "FK_ProfessorCourseEvaluations_EvaluationPeriodID",
+                        name: "FK_ProfessorCourseEvaluations_EvaluationPeriods",
                         column: x => x.EvaluationPeriodID,
                         principalSchema: "taEvaluation",
                         principalTable: "EvaluationPeriods",
                         principalColumn: "PeriodID");
                     table.ForeignKey(
-                        name: "FK_ProfessorCourseEvaluations_StatusID",
+                        name: "FK_ProfessorCourseEvaluations_EvaluationStatuses",
                         column: x => x.StatusID,
                         principalSchema: "taEvaluation",
                         principalTable: "EvaluationStatuses",
                         principalColumn: "StatusID");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AutoCalculatedScores",
+                schema: "taEvaluation",
+                columns: table => new
+                {
+                    ScoreID = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    EvaluationID = table.Column<int>(type: "int", nullable: false),
+                    AcademicAdvisingScore = table.Column<int>(type: "int", nullable: false),
+                    StudentSurveyScore = table.Column<int>(type: "int", nullable: false),
+                    TechingLoadCompletionScore = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SystemScores", x => x.ScoreID);
+                    table.ForeignKey(
+                        name: "FK_AutoCalculatedScores_Evaluations",
+                        column: x => x.EvaluationID,
+                        principalSchema: "taEvaluation",
+                        principalTable: "Evaluations",
+                        principalColumn: "EvaluationID");
                 });
 
             migrationBuilder.CreateTable(
@@ -237,7 +277,7 @@ namespace DataAccess.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__HODEvalu__6A4AF4FAEBE6B771", x => x.HODEvalID);
+                    table.PrimaryKey("PK__HODEvalu__6A4AF4FA7D98075F", x => x.HODEvalID);
                     table.ForeignKey(
                         name: "FK_HODEvaluations_CriterionID",
                         column: x => x.CriterionID,
@@ -273,7 +313,7 @@ namespace DataAccess.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__Reminder__5E5499A80E5A40CB", x => x.LogID);
+                    table.PrimaryKey("PK__Reminder__5E5499A89B61C1AD", x => x.LogID);
                     table.ForeignKey(
                         name: "FK_ReminderLogs_EvaluationID",
                         column: x => x.EvaluationID,
@@ -308,7 +348,7 @@ namespace DataAccess.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__TASubmis__449EE105411A67B0", x => x.SubmissionID);
+                    table.PrimaryKey("PK__TASubmis__449EE1055BF179B8", x => x.SubmissionID);
                     table.ForeignKey(
                         name: "FK_TA_Submissions_EvaluationID",
                         column: x => x.EvaluationID,
@@ -324,7 +364,7 @@ namespace DataAccess.Migrations
                 {
                     VPGSEvalID = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    EvaluationID = table.Column<int>(type: "int", nullable: false),
+                    EvaluationID = table.Column<int>(type: "int", nullable: true),
                     ScientificScore = table.Column<decimal>(type: "decimal(3,1)", nullable: false),
                     StatusID = table.Column<int>(type: "int", nullable: false)
                 },
@@ -332,18 +372,17 @@ namespace DataAccess.Migrations
                 {
                     table.PrimaryKey("PK__VPGS_Eva__57C1D3BEE96AAFED", x => x.VPGSEvalID);
                     table.ForeignKey(
-                        name: "FK_VPGS_Evaluations_Evaluations_EvaluationID",
-                        column: x => x.EvaluationID,
-                        principalSchema: "taEvaluation",
-                        principalTable: "Evaluations",
-                        principalColumn: "EvaluationID",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_VPGS_Evaluations_StatusID",
+                        name: "FK_VPGS_Evaluations_EvaluationStatuses",
                         column: x => x.StatusID,
                         principalSchema: "taEvaluation",
                         principalTable: "EvaluationStatuses",
                         principalColumn: "StatusID");
+                    table.ForeignKey(
+                        name: "FK_VPGS_Evaluations_Evaluations_EvaluationID",
+                        column: x => x.EvaluationID,
+                        principalSchema: "taEvaluation",
+                        principalTable: "Evaluations",
+                        principalColumn: "EvaluationID");
                 });
 
             migrationBuilder.CreateTable(
@@ -364,7 +403,7 @@ namespace DataAccess.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__Research__45F4A7F1C12D163E", x => x.ActivityID);
+                    table.PrimaryKey("PK__Research__45F4A7F1FF725F51", x => x.ActivityID);
                     table.ForeignKey(
                         name: "FK_ResearchActivities_StatusID",
                         column: x => x.StatusID,
@@ -379,48 +418,15 @@ namespace DataAccess.Migrations
                         principalColumn: "SubmissionID");
                 });
 
-            migrationBuilder.InsertData(
+            migrationBuilder.CreateIndex(
+                name: "UQ_AutoCalc_EvaluationID",
                 schema: "taEvaluation",
-                table: "HODEvaluation_Criteria",
-                columns: new[] { "CriterionID", "CriterionName", "CriterionType" },
-                values: new object[,]
-                {
-                    { 1, "إعداد مذكرات للجزء العملي/تدريبات", "DirectTeaching" },
-                    { 2, "إعداد مساعدات تعليمية وتدريسية جديدة", "DirectTeaching" },
-                    { 3, "المساعدة في إعداد التجارب العملية/التمارين", "DirectTeaching" },
-                    { 4, "المشاركة في تنظيم وإدارة دورات تدريسية/مؤتمرات", "DirectTeaching" },
-                    { 5, "أي نشاط تعليمي آخر مكلف به", "DirectTeaching" },
-                    { 6, "لجنة الإرشاد الأكاديمي", "Administrative" },
-                    { 7, "لجنة الجدولة", "Administrative" },
-                    { 8, "لجنة أعمال الجودة", "Administrative" },
-                    { 9, "لجنة التجهيزات المعملية", "Administrative" },
-                    { 10, "لجنة تنظيم امتحانات", "Administrative" },
-                    { 11, "لجان النشاط الاجتماعي أو الرياضي", "Administrative" },
-                    { 12, "نشاط رياضي", "StudentActivities" },
-                    { 13, "نشاط اجتماعي", "StudentActivities" },
-                    { 14, "نشاط ثقافي", "StudentActivities" },
-                    { 15, "التعاون والعمل الجماعي", "PersonalTraits" },
-                    { 16, "الالتزام بالمواعيد", "PersonalTraits" },
-                    { 17, "المظهر العام", "PersonalTraits" },
-                    { 18, "المبادرة وتحمل المسؤولية", "PersonalTraits" },
-                    { 19, "إدارة الوقت", "PersonalTraits" }
-                });
-
-            migrationBuilder.InsertData(
-                schema: "taEvaluation",
-                table: "Ratings",
-                columns: new[] { "RatingID", "RatingName", "ScoreValue" },
-                values: new object[,]
-                {
-                    { 1, "ممتاز", 5 },
-                    { 2, "جيد جداً", 4 },
-                    { 3, "جيد", 3 },
-                    { 4, "مقبول", 2 },
-                    { 5, "ضعيف", 1 }
-                });
+                table: "AutoCalculatedScores",
+                column: "EvaluationID",
+                unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "UQ__Evaluati__D748F8F21DD95950",
+                name: "UQ_EvaluationPeriods",
                 schema: "taEvaluation",
                 table: "EvaluationPeriods",
                 column: "PeriodName",
@@ -439,7 +445,7 @@ namespace DataAccess.Migrations
                 column: "StatusID");
 
             migrationBuilder.CreateIndex(
-                name: "UQ__Evaluati__05E7698A9628677D",
+                name: "UQ_StatusName",
                 schema: "taEvaluation",
                 table: "EvaluationStatuses",
                 column: "StatusName",
@@ -452,11 +458,12 @@ namespace DataAccess.Migrations
                 column: "StatusID");
 
             migrationBuilder.CreateIndex(
-                name: "UQ__GSDean_E__EvaluationPeriodID",
+                name: "UQ_GSDean_Period_TA",
                 schema: "taEvaluation",
                 table: "GSDean_Evaluations",
-                column: "EvaluationPeriodID",
-                unique: true);
+                columns: new[] { "EvaluationPeriodID", "TA_EmployeeID" },
+                unique: true,
+                filter: "[TA_EmployeeID] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_HODEvaluations_CriterionID",
@@ -471,7 +478,7 @@ namespace DataAccess.Migrations
                 column: "RatingID");
 
             migrationBuilder.CreateIndex(
-                name: "UQ_HODEvaluations",
+                name: "UQ_HODEval",
                 schema: "taEvaluation",
                 table: "HODEvaluations",
                 columns: new[] { "EvaluationID", "CriterionID" },
@@ -490,7 +497,7 @@ namespace DataAccess.Migrations
                 column: "StatusID");
 
             migrationBuilder.CreateIndex(
-                name: "UQ__Ratings__F7CF97379B70F7DF",
+                name: "UQ_RatingName",
                 schema: "taEvaluation",
                 table: "Ratings",
                 column: "RatingName",
@@ -515,14 +522,14 @@ namespace DataAccess.Migrations
                 column: "SubmissionID");
 
             migrationBuilder.CreateIndex(
-                name: "UQ__Research__096C98C27DE9011A",
+                name: "UQ__Research__096C98C29B241A88",
                 schema: "taEvaluation",
                 table: "ResearchStatuses",
                 column: "StatusKey",
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "UQ__TASubmis__36AE68D20234AA6E",
+                name: "UQ__TASubmis__36AE68D2799DBF4B",
                 schema: "taEvaluation",
                 table: "TASubmissions",
                 column: "EvaluationID",
@@ -539,12 +546,21 @@ namespace DataAccess.Migrations
                 schema: "taEvaluation",
                 table: "VPGS_Evaluations",
                 column: "EvaluationID",
-                unique: true);
+                unique: true,
+                filter: "[EvaluationID] IS NOT NULL");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "AutoCalculatedScores",
+                schema: "taEvaluation");
+
+            migrationBuilder.DropTable(
+                name: "EvaluationGradeRange",
+                schema: "taEvaluation");
+
             migrationBuilder.DropTable(
                 name: "GSDean_Evaluations",
                 schema: "taEvaluation");

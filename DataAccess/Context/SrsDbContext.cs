@@ -1,10 +1,6 @@
 ﻿using DataAccess.Entities;
-using DataAccess.SeedData;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
 
-namespace DataAccess.Context;
 
 public partial class SrsDbContext : DbContext
 {
@@ -17,7 +13,11 @@ public partial class SrsDbContext : DbContext
     {
     }
 
+    public virtual DbSet<AutoCalculatedScore> AutoCalculatedScores { get; set; }
+
     public virtual DbSet<Evaluation> Evaluations { get; set; }
+
+    public virtual DbSet<EvaluationGradeRange> EvaluationGradeRanges { get; set; }
 
     public virtual DbSet<EvaluationPeriod> EvaluationPeriods { get; set; }
 
@@ -45,19 +45,34 @@ public partial class SrsDbContext : DbContext
 
     public virtual DbSet<VpgsEvaluation> VpgsEvaluations { get; set; }
 
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<AutoCalculatedScore>(entity =>
+        {
+            entity.HasKey(e => e.ScoreId).HasName("PK_SystemScores");
 
-        OnModelCreatingPartial(modelBuilder);
+            entity.ToTable("AutoCalculatedScores", "taEvaluation");
+
+            entity.HasIndex(e => e.EvaluationId, "UQ_AutoCalc_EvaluationID").IsUnique();
+
+            entity.Property(e => e.ScoreId).HasColumnName("ScoreID");
+            entity.Property(e => e.EvaluationId).HasColumnName("EvaluationID");
+
+            entity.HasOne(d => d.Evaluation).WithOne(p => p.AutoCalculatedScore)
+                .HasForeignKey<AutoCalculatedScore>(d => d.EvaluationId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_AutoCalculatedScores_Evaluations");
+        });
+
         modelBuilder.Entity<Evaluation>(entity =>
         {
-            entity.HasKey(e => e.EvaluationId).HasName("PK__Evaluati__36AE68D3DC67C19C");
+            entity.HasKey(e => e.EvaluationId).HasName("PK__Evaluati__36AE68D38FC7B59C");
 
             entity.ToTable("Evaluations", "taEvaluation");
 
-            entity.Property(e => e.EvaluationId).HasColumnName("EvaluationID");
+            entity.Property(e => e.EvaluationId)
+                .ValueGeneratedOnAdd()
+                .HasColumnName("EvaluationID");
             entity.Property(e => e.DeanReturnComment).HasColumnName("Dean_ReturnComment");
             entity.Property(e => e.FinalGrade).HasMaxLength(50);
             entity.Property(e => e.HodReturnComment).HasColumnName("HOD_ReturnComment");
@@ -65,8 +80,8 @@ public partial class SrsDbContext : DbContext
             entity.Property(e => e.HodWeaknesses).HasColumnName("HOD_Weaknesses");
             entity.Property(e => e.PeriodId).HasColumnName("PeriodID");
             entity.Property(e => e.StatusId).HasColumnName("StatusID");
-            entity.Property(e => e.StudentSurveyScore).HasColumnType("decimal(4, 2)");
             entity.Property(e => e.TaEmployeeId).HasColumnName("TA_EmployeeID");
+            entity.Property(e => e.TotalScore).HasColumnType("decimal(6, 2)");
 
             entity.HasOne(d => d.Period).WithMany(p => p.Evaluations)
                 .HasForeignKey(d => d.PeriodId)
@@ -79,13 +94,25 @@ public partial class SrsDbContext : DbContext
                 .HasConstraintName("FK_Evaluations_StatusID");
         });
 
+        modelBuilder.Entity<EvaluationGradeRange>(entity =>
+        {
+            entity.HasKey(e => e.RangeId).HasName("PK__Evaluati__6899CAF40A26F490");
+
+            entity.ToTable("EvaluationGradeRange", "taEvaluation");
+
+            entity.Property(e => e.RangeId).HasColumnName("RangeID");
+            entity.Property(e => e.Description).HasMaxLength(20);
+            entity.Property(e => e.MaxGrade).HasColumnType("decimal(6, 2)");
+            entity.Property(e => e.MinGrade).HasColumnType("decimal(6, 2)");
+        });
+
         modelBuilder.Entity<EvaluationPeriod>(entity =>
         {
-            entity.HasKey(e => e.PeriodId).HasName("PK__Evaluati__E521BB36E10D5CDC");
+            entity.HasKey(e => e.PeriodId).HasName("PK__Evaluati__E521BB36B76F7D95");
 
             entity.ToTable("EvaluationPeriods", "taEvaluation");
 
-            entity.HasIndex(e => e.PeriodName, "UQ__Evaluati__D748F8F21DD95950").IsUnique();
+            entity.HasIndex(e => e.PeriodName, "UQ_EvaluationPeriods").IsUnique();
 
             entity.Property(e => e.PeriodId).HasColumnName("PeriodID");
             entity.Property(e => e.PeriodName).HasMaxLength(100);
@@ -93,11 +120,11 @@ public partial class SrsDbContext : DbContext
 
         modelBuilder.Entity<EvaluationStatus>(entity =>
         {
-            entity.HasKey(e => e.StatusId).HasName("PK__Evaluati__C8EE20437A4A7778");
+            entity.HasKey(e => e.StatusId).HasName("PK__Evaluati__C8EE2043B4D1D470");
 
             entity.ToTable("EvaluationStatuses", "taEvaluation");
 
-            entity.HasIndex(e => e.StatusName, "UQ__Evaluati__05E7698A9628677D").IsUnique();
+            entity.HasIndex(e => e.StatusName, "UQ_StatusName").IsUnique();
 
             entity.Property(e => e.StatusId).HasColumnName("StatusID");
             entity.Property(e => e.StatusDescription).HasMaxLength(255);
@@ -121,7 +148,7 @@ public partial class SrsDbContext : DbContext
             entity.Property(e => e.StatusId).HasColumnName("StatusID");
 
             entity.HasOne(d => d.EvaluationPeriod)
-                  .WithMany(p => p.GsdeanEvaluations)  // <- plural collection
+                  .WithMany(p => p.GsdeanEvaluations) 
                   .HasForeignKey(d => d.EvaluationPeriodId)
                   .OnDelete(DeleteBehavior.ClientSetNull)
                   .HasConstraintName("FK_GSDean_Evaluations_EvaluationPeriodID");
@@ -132,13 +159,16 @@ public partial class SrsDbContext : DbContext
                   .OnDelete(DeleteBehavior.ClientSetNull)
                   .HasConstraintName("FK_GSDean_Evaluations_StatusID");
         });
+
         modelBuilder.Entity<Hodevaluation>(entity =>
         {
-            entity.HasKey(e => e.HodevalId).HasName("PK__HODEvalu__6A4AF4FAEBE6B771");
+            entity.HasKey(e => e.HodevalId).HasName("PK__HODEvalu__6A4AF4FA7D98075F");
 
             entity.ToTable("HODEvaluations", "taEvaluation");
 
-            entity.HasIndex(e => new { e.EvaluationId, e.CriterionId }, "UQ_HODEvaluations").IsUnique();
+            entity.HasIndex(e => new { e.EvaluationId, e.CriterionId }, "UQ_HODEval").IsUnique();
+
+            entity.Property(e => e.StatusId).HasColumnName("StatusID");//new realtion added into my fluentapi 
 
             entity.Property(e => e.HodevalId).HasColumnName("HODEvalID");
             entity.Property(e => e.CriterionId).HasColumnName("CriterionID");
@@ -159,11 +189,19 @@ public partial class SrsDbContext : DbContext
                 .HasForeignKey(d => d.RatingId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_HODEvaluations_RatingID");
+
+
+            entity.HasOne(d => d.Status)
+            .WithMany(p => p.Hodevaluations)              // or .WithMany() if you skipped the nav
+            .HasForeignKey(d => d.StatusId)
+            .OnDelete(DeleteBehavior.ClientSetNull)       // or Restrict, up to you
+            .HasConstraintName("FK_HODEvaluations_StatusID");
         });
+        DataAccess.SeedData.HodEvaluationCriterionSeed.SeedCriteria(modelBuilder);
 
         modelBuilder.Entity<HodevaluationCriterion>(entity =>
         {
-            entity.HasKey(e => e.CriterionId).HasName("PK__HODEvalu__647C3BD119DF663C");
+            entity.HasKey(e => e.CriterionId).HasName("PK__HODEvalu__647C3BD120762426");
 
             entity.ToTable("HODEvaluation_Criteria", "taEvaluation");
 
@@ -174,7 +212,7 @@ public partial class SrsDbContext : DbContext
 
         modelBuilder.Entity<Notification>(entity =>
         {
-            entity.HasKey(e => e.NotificationId).HasName("PK__Notifica__20CF2E3254FA65A4");
+            entity.HasKey(e => e.NotificationId).HasName("PK__Notifica__20CF2E32770FC71F");
 
             entity.ToTable("Notifications", "taEvaluation");
 
@@ -186,7 +224,7 @@ public partial class SrsDbContext : DbContext
 
         modelBuilder.Entity<ProfessorCourseEvaluation>(entity =>
         {
-            entity.HasKey(e => e.ProfEvalId).HasName("PK__Professo__DACBBA35DF4A614E");
+            entity.HasKey(e => e.ProfEvalId).HasName("PK__Professo__DACBBA357239488F");
 
             entity.ToTable("ProfessorCourseEvaluations", "taEvaluation");
 
@@ -194,38 +232,42 @@ public partial class SrsDbContext : DbContext
             entity.Property(e => e.CourseCode).HasMaxLength(20);
             entity.Property(e => e.CourseName).HasMaxLength(255);
             entity.Property(e => e.EvaluationPeriodId).HasColumnName("EvaluationPeriodID");
-            entity.Property(e => e.TaEmployeeId).HasColumnName("TA_EmployeeID");
             entity.Property(e => e.HodReturnComment).HasColumnName("HOD_ReturnComment");
             entity.Property(e => e.ProfessorEmployeeId).HasColumnName("Professor_EmployeeID");
             entity.Property(e => e.StatusId).HasColumnName("StatusID");
+            entity.Property(e => e.TaEmployeeId)
+                .HasMaxLength(10)
+                .IsFixedLength()
+                .HasColumnName("TA_EmployeeID");
             entity.Property(e => e.TotalScore).HasComputedColumnSql("(([OfficeHoursScore]+[AttendanceScore])+[PerformanceScore])", false);
 
             entity.HasOne(d => d.EvaluationPeriod).WithMany(p => p.ProfessorCourseEvaluations)
                 .HasForeignKey(d => d.EvaluationPeriodId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_ProfessorCourseEvaluations_EvaluationPeriodID");
+                .HasConstraintName("FK_ProfessorCourseEvaluations_EvaluationPeriods");
 
             entity.HasOne(d => d.Status).WithMany(p => p.ProfessorCourseEvaluations)
                 .HasForeignKey(d => d.StatusId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_ProfessorCourseEvaluations_StatusID");
+                .HasConstraintName("FK_ProfessorCourseEvaluations_EvaluationStatuses");
         });
 
         modelBuilder.Entity<Rating>(entity =>
         {
-            entity.HasKey(e => e.RatingId).HasName("PK__Ratings__FCCDF85C285DEC07");
+            entity.HasKey(e => e.RatingId).HasName("PK__Ratings__FCCDF85CD6813305");
 
             entity.ToTable("Ratings", "taEvaluation");
 
-            entity.HasIndex(e => e.RatingName, "UQ__Ratings__F7CF97379B70F7DF").IsUnique();
+            entity.HasIndex(e => e.RatingName, "UQ_RatingName").IsUnique();
 
             entity.Property(e => e.RatingId).HasColumnName("RatingID");
             entity.Property(e => e.RatingName).HasMaxLength(50);
         });
+        DataAccess.SeedData.RatingSeed.SeedRatings(modelBuilder);
 
         modelBuilder.Entity<ReminderLog>(entity =>
         {
-            entity.HasKey(e => e.LogId).HasName("PK__Reminder__5E5499A80E5A40CB");
+            entity.HasKey(e => e.LogId).HasName("PK__Reminder__5E5499A89B61C1AD");
 
             entity.ToTable("ReminderLogs", "taEvaluation");
 
@@ -244,7 +286,7 @@ public partial class SrsDbContext : DbContext
 
         modelBuilder.Entity<ResearchActivity>(entity =>
         {
-            entity.HasKey(e => e.ActivityId).HasName("PK__Research__45F4A7F1C12D163E");
+            entity.HasKey(e => e.ActivityId).HasName("PK__Research__45F4A7F1FF725F51");
 
             entity.ToTable("ResearchActivities", "taEvaluation");
 
@@ -271,11 +313,11 @@ public partial class SrsDbContext : DbContext
 
         modelBuilder.Entity<ResearchStatus>(entity =>
         {
-            entity.HasKey(e => e.StatusId).HasName("PK__Research__C8EE20431C47CE6C");
+            entity.HasKey(e => e.StatusId).HasName("PK__Research__C8EE204312F7CC6C");
 
             entity.ToTable("ResearchStatuses", "taEvaluation");
 
-            entity.HasIndex(e => e.StatusKey, "UQ__Research__096C98C27DE9011A").IsUnique();
+            entity.HasIndex(e => e.StatusKey, "UQ__Research__096C98C29B241A88").IsUnique();
 
             entity.Property(e => e.StatusId).HasColumnName("StatusID");
             entity.Property(e => e.StatusKey)
@@ -287,11 +329,11 @@ public partial class SrsDbContext : DbContext
 
         modelBuilder.Entity<Tasubmission>(entity =>
         {
-            entity.HasKey(e => e.SubmissionId).HasName("PK__TASubmis__449EE105411A67B0");
+            entity.HasKey(e => e.SubmissionId).HasName("PK__TASubmis__449EE1055BF179B8");
 
             entity.ToTable("TASubmissions", "taEvaluation");
 
-            entity.HasIndex(e => e.EvaluationId, "UQ__TASubmis__36AE68D20234AA6E").IsUnique();
+            entity.HasIndex(e => e.EvaluationId, "UQ__TASubmis__36AE68D2799DBF4B").IsUnique();
 
             entity.Property(e => e.SubmissionId).HasColumnName("SubmissionID");
             entity.Property(e => e.EvaluationId).HasColumnName("EvaluationID");
@@ -318,12 +360,13 @@ public partial class SrsDbContext : DbContext
             entity.HasOne(d => d.Status).WithMany(p => p.VpgsEvaluations)
                 .HasForeignKey(d => d.StatusId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_VPGS_Evaluations_StatusID");
+                .HasConstraintName("FK_VPGS_Evaluations_EvaluationStatuses");
         });
-        HodEvaluationCriterionSeed.SeedCriteria(modelBuilder);
-        RatingSeed.SeedRatings(modelBuilder);
+
+        OnModelCreatingPartial(modelBuilder);
     }
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
-
 }
+
+

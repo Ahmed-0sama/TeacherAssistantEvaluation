@@ -7,10 +7,11 @@ public partial class ProfessorCourseEvaluation
 {
     public int ProfEvalId { get; set; }
     public int EvaluationPeriodId { get; set; }
-    public int TaEmployeeId { get; set; }
+    public int TaEmployeeId { get; set; }//the same should be string or int?
     public int ProfessorEmployeeId { get; set; }
     public string CourseCode { get; set; } = null!;
     public string CourseName { get; set; } = null!;
+    public string SemesterName { get; set; }
     public int OfficeHoursScore { get; set; }
     public int AttendanceScore { get; set; }
     public int PerformanceScore { get; set; }

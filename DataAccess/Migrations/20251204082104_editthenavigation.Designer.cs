@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccess.Migrations
 {
     [DbContext(typeof(SrsDbContext))]
-    partial class SrsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251204082104_editthenavigation")]
+    partial class editthenavigation
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -296,18 +299,12 @@ namespace DataAccess.Migrations
                         .HasColumnType("int")
                         .HasColumnName("RatingID");
 
-                    b.Property<int>("StatusId")
-                        .HasColumnType("int")
-                        .HasColumnName("StatusID");
-
                     b.HasKey("HodevalId")
                         .HasName("PK__HODEvalu__6A4AF4FA7D98075F");
 
                     b.HasIndex("CriterionId");
 
                     b.HasIndex("RatingId");
-
-                    b.HasIndex("StatusId");
 
                     b.HasIndex(new[] { "EvaluationId", "CriterionId" }, "UQ_HODEval")
                         .IsUnique();
@@ -338,122 +335,6 @@ namespace DataAccess.Migrations
                         .HasName("PK__HODEvalu__647C3BD120762426");
 
                     b.ToTable("HODEvaluation_Criteria", "taEvaluation");
-
-                    b.HasData(
-                        new
-                        {
-                            CriterionId = 1,
-                            CriterionName = "إعداد مذكرات للجزء العملي/تدريبات",
-                            CriterionType = "DirectTeaching"
-                        },
-                        new
-                        {
-                            CriterionId = 2,
-                            CriterionName = "إعداد مساعدات تعليمية وتدريسية جديدة",
-                            CriterionType = "DirectTeaching"
-                        },
-                        new
-                        {
-                            CriterionId = 3,
-                            CriterionName = "المساعدة في إعداد التجارب العملية/التمارين",
-                            CriterionType = "DirectTeaching"
-                        },
-                        new
-                        {
-                            CriterionId = 4,
-                            CriterionName = "المشاركة في تنظيم وإدارة دورات تدريسية/مؤتمرات",
-                            CriterionType = "DirectTeaching"
-                        },
-                        new
-                        {
-                            CriterionId = 5,
-                            CriterionName = "أي نشاط تعليمي آخر مكلف به",
-                            CriterionType = "DirectTeaching"
-                        },
-                        new
-                        {
-                            CriterionId = 6,
-                            CriterionName = "لجنة الإرشاد الأكاديمي",
-                            CriterionType = "Administrative"
-                        },
-                        new
-                        {
-                            CriterionId = 7,
-                            CriterionName = "لجنة الجدولة",
-                            CriterionType = "Administrative"
-                        },
-                        new
-                        {
-                            CriterionId = 8,
-                            CriterionName = "لجنة أعمال الجودة",
-                            CriterionType = "Administrative"
-                        },
-                        new
-                        {
-                            CriterionId = 9,
-                            CriterionName = "لجنة التجهيزات المعملية",
-                            CriterionType = "Administrative"
-                        },
-                        new
-                        {
-                            CriterionId = 10,
-                            CriterionName = "لجنة تنظيم امتحانات",
-                            CriterionType = "Administrative"
-                        },
-                        new
-                        {
-                            CriterionId = 11,
-                            CriterionName = "لجان النشاط الاجتماعي أو الرياضي",
-                            CriterionType = "Administrative"
-                        },
-                        new
-                        {
-                            CriterionId = 12,
-                            CriterionName = "نشاط رياضي",
-                            CriterionType = "StudentActivities"
-                        },
-                        new
-                        {
-                            CriterionId = 13,
-                            CriterionName = "نشاط اجتماعي",
-                            CriterionType = "StudentActivities"
-                        },
-                        new
-                        {
-                            CriterionId = 14,
-                            CriterionName = "نشاط ثقافي",
-                            CriterionType = "StudentActivities"
-                        },
-                        new
-                        {
-                            CriterionId = 15,
-                            CriterionName = "التعاون والعمل الجماعي",
-                            CriterionType = "PersonalTraits"
-                        },
-                        new
-                        {
-                            CriterionId = 16,
-                            CriterionName = "الالتزام بالمواعيد",
-                            CriterionType = "PersonalTraits"
-                        },
-                        new
-                        {
-                            CriterionId = 17,
-                            CriterionName = "المظهر العام",
-                            CriterionType = "PersonalTraits"
-                        },
-                        new
-                        {
-                            CriterionId = 18,
-                            CriterionName = "المبادرة وتحمل المسؤولية",
-                            CriterionType = "PersonalTraits"
-                        },
-                        new
-                        {
-                            CriterionId = 19,
-                            CriterionName = "إدارة الوقت",
-                            CriterionType = "PersonalTraits"
-                        });
                 });
 
             modelBuilder.Entity("DataAccess.Entities.Notification", b =>
@@ -534,10 +415,6 @@ namespace DataAccess.Migrations
                         .HasColumnType("int")
                         .HasColumnName("Professor_EmployeeID");
 
-                    b.Property<string>("SemesterName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<int>("StatusId")
                         .HasColumnType("int")
                         .HasColumnName("StatusID");
@@ -587,38 +464,6 @@ namespace DataAccess.Migrations
                         .IsUnique();
 
                     b.ToTable("Ratings", "taEvaluation");
-
-                    b.HasData(
-                        new
-                        {
-                            RatingId = 1,
-                            RatingName = "ممتاز",
-                            ScoreValue = 5
-                        },
-                        new
-                        {
-                            RatingId = 2,
-                            RatingName = "جيد جداً",
-                            ScoreValue = 4
-                        },
-                        new
-                        {
-                            RatingId = 3,
-                            RatingName = "جيد",
-                            ScoreValue = 3
-                        },
-                        new
-                        {
-                            RatingId = 4,
-                            RatingName = "مقبول",
-                            ScoreValue = 2
-                        },
-                        new
-                        {
-                            RatingId = 5,
-                            RatingName = "ضعيف",
-                            ScoreValue = 1
-                        });
                 });
 
             modelBuilder.Entity("DataAccess.Entities.ReminderLog", b =>
@@ -911,19 +756,11 @@ namespace DataAccess.Migrations
                         .IsRequired()
                         .HasConstraintName("FK_HODEvaluations_RatingID");
 
-                    b.HasOne("DataAccess.Entities.EvaluationStatus", "Status")
-                        .WithMany("Hodevaluations")
-                        .HasForeignKey("StatusId")
-                        .IsRequired()
-                        .HasConstraintName("FK_HODEvaluations_StatusID");
-
                     b.Navigation("Criterion");
 
                     b.Navigation("Evaluation");
 
                     b.Navigation("Rating");
-
-                    b.Navigation("Status");
                 });
 
             modelBuilder.Entity("DataAccess.Entities.ProfessorCourseEvaluation", b =>
@@ -1031,8 +868,6 @@ namespace DataAccess.Migrations
                     b.Navigation("Evaluations");
 
                     b.Navigation("GsdeanEvaluations");
-
-                    b.Navigation("Hodevaluations");
 
                     b.Navigation("ProfessorCourseEvaluations");
 

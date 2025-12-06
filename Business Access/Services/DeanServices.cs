@@ -1,5 +1,4 @@
 ﻿using Business_Access.Interfaces;
-using DataAccess.Context;
 using DataAccess.Entities;
 using Microsoft.EntityFrameworkCore;
 using Shared.Dtos.DeanDto;
@@ -40,51 +39,86 @@ namespace Business_Access.Services
                 .Include(e => e.Tasubmission)
                     .ThenInclude(t => t.ResearchActivities)
                         .ThenInclude(r => r.Status)
+                .Include(e => e.EvaluationNavigation) // VpgsEvaluation for scientific score
                 .FirstOrDefaultAsync(e => e.EvaluationId == evaluationId);
 
             if (evaluation == null)
                 return null;
 
-            var hodEval = evaluation.Hodevaluations?.FirstOrDefault();
-
-            // ⭐ Calculate scores by category from HOD evaluations
             var hodEvaluations = evaluation.Hodevaluations?.ToList() ?? new List<Hodevaluation>();
+            var hodEval = hodEvaluations.FirstOrDefault();
 
-            // Calculate Direct Teaching Score (criterion IDs 1-5) - Weight 50%
-            var directTeachingScore = hodEvaluations
+            // ⭐ ONLY show the HOD's evaluated scores - display them exactly as HOD rated them
+            // Get all HOD evaluation scores by category (don't recalculate)
+            var directTeachingScores = hodEvaluations
                 .Where(h => h.CriterionId >= 1 && h.CriterionId <= 5)
-                .Sum(h => h.Rating?.ScoreValue ?? 0);
+                .Select(h => h.Rating?.ScoreValue ?? 0)
+                .ToList();
+            var directTeachingScore = directTeachingScores.Any()
+                ? directTeachingScores.Average()
+                : 0;
 
-            // Calculate Administrative Score (criterion IDs 6-11) - Weight 10%
-            var administrativeScore = hodEvaluations
+            var administrativeScores = hodEvaluations
                 .Where(h => h.CriterionId >= 6 && h.CriterionId <= 11)
-                .Sum(h => h.Rating?.ScoreValue ?? 0);
+                .Select(h => h.Rating?.ScoreValue ?? 0)
+                .ToList();
+            var administrativeScore = administrativeScores.Any()
+                ? administrativeScores.Average()
+                : 0;
 
-            // Calculate Student Activities Score (criterion IDs 12-14) - Weight 10%
-            var studentActivitiesScore = hodEvaluations
+            var studentActivitiesScores = hodEvaluations
                 .Where(h => h.CriterionId >= 12 && h.CriterionId <= 14)
-                .Sum(h => h.Rating?.ScoreValue ?? 0);
+                .Select(h => h.Rating?.ScoreValue ?? 0)
+                .ToList();
+            var studentActivitiesScore = studentActivitiesScores.Any()
+                ? studentActivitiesScores.Average()
+                : 0;
 
-            // Calculate Personal Traits Score (criterion IDs 15-19) - Weight 10%
-            var personalTraitsScore = hodEvaluations
+            var personalTraitsScores = hodEvaluations
                 .Where(h => h.CriterionId >= 15 && h.CriterionId <= 19)
-                .Sum(h => h.Rating?.ScoreValue ?? 0);
+                .Select(h => h.Rating?.ScoreValue ?? 0)
+                .ToList();
+            var personalTraitsScore = personalTraitsScores.Any()
+                ? personalTraitsScores.Average()
+                : 0;
 
-            // Student Survey Score - Weight 5%
+            // ⭐ Get other scores from submission data
             var studentSurveyScore = evaluation.StudentSurveyScore ?? 0;
 
-            // Academic Advising Score - Weight 5%
-            // This comes from TaSubmission.AdvisedStudentCount
-            var academicAdvisingScore = 0m; // Will be calculated based on advised students count
+            var advisedStudentCount = evaluation.Tasubmission?.AdvisedStudentCount ?? 0;
+            var academicAdvisingScore = Math.Min(advisedStudentCount, 10);
 
-            // Scientific Activity Score - Weight 10%
-            // This comes from ResearchActivities (published papers, conferences, etc.)
-            var scientificScore = 0m; // Will be calculated based on research activities
+            // Get Scientific Activity Score from VpgsEvaluation
+            decimal scientificScore = 0;
+            if (evaluation.EvaluationNavigation?.ScientificScore > 0)
+            {
+                scientificScore = evaluation.EvaluationNavigation.ScientificScore;
+            }
+            else
+            {
+                var researchActivityCount = evaluation.Tasubmission?.ResearchActivities?.Count ?? 0;
+                scientificScore = Math.Min(researchActivityCount * 2, 10);
+            }
 
-            // Calculate total score
-            var totalScore = directTeachingScore + administrativeScore +
-                             studentActivitiesScore + personalTraitsScore +
-                             studentSurveyScore + academicAdvisingScore + scientificScore;
+            // ⭐ Calculate weighted total using HOD's scores
+            const decimal directTeachingWeight = 0.50m;
+            const decimal administrativeWeight = 0.10m;
+            const decimal studentActivitiesWeight = 0.10m;
+            const decimal personalTraitsWeight = 0.10m;
+            const decimal studentSurveyWeight = 0.05m;
+            const decimal academicAdvisingWeight = 0.05m;
+            const decimal scientificActivityWeight = 0.10m;
+
+            var weightedTotal =
+                (decimal)directTeachingScore * directTeachingWeight +
+                (decimal)administrativeScore * administrativeWeight +
+                (decimal)studentActivitiesScore * studentActivitiesWeight +
+                (decimal)personalTraitsScore * personalTraitsWeight +
+                (decimal)studentSurveyScore * studentSurveyWeight +
+                (decimal)academicAdvisingScore * academicAdvisingWeight +
+                (decimal)scientificScore * scientificActivityWeight;
+
+            var totalScore = Math.Round(weightedTotal, 2);
 
             return new DeanEvaluationDetailDto
             {
@@ -115,26 +149,31 @@ namespace Business_Access.Services
                 DateSubmitted = evaluation.DateSubmitted,
                 DateApproved = evaluation.DateApproved,
 
-                // ⭐ NEW: Calculated Scores
-                EducationalActivityScore = directTeachingScore,      // Direct Teaching (1-5)
-                ScientificActivityScore = scientificScore,           // Research Activities
-                AdministrativeActivityScore = administrativeScore,   // Administrative (6-11)
-                StudentActivitiesScore = studentActivitiesScore,     // Student Activities (12-14)
-                AcademicAdvisingScore = academicAdvisingScore,       // Based on advised students
-                PersonalTraitsScore = personalTraitsScore,           // Personal Traits (15-19)
+                // ⭐ Component Scores - DIRECTLY FROM HOD EVALUATION
+                EducationalActivityScore = Math.Round((decimal)directTeachingScore, 2),
+                AdministrativeActivityScore = Math.Round((decimal)administrativeScore, 2),
+                StudentActivitiesScore = Math.Round((decimal)studentActivitiesScore, 2),
+                PersonalTraitsScore = Math.Round((decimal)personalTraitsScore, 2),
+                ScientificActivityScore = Math.Round((decimal)scientificScore, 2),
+                AcademicAdvisingScore = Math.Round((decimal)academicAdvisingScore, 2),
+
+                // ⭐ Total Score (0-10 scale)
                 TotalScore = totalScore,
 
-                // Detailed HOD evaluation (first record)
-                HodEvaluations = hodEval != null
+                // ⭐ Detailed HOD Evaluations - Show ALL individual HOD ratings
+                HodEvaluations = hodEvaluations.Any()
                     ? new HodEvaluationDto
                     {
-                        HodevalId = hodEval.HodevalId,
-                        EvaluationId = hodEval.EvaluationId,
-                        CriterionId = hodEval.CriterionId,
-                        ScoreValue = hodEval.Rating?.ScoreValue ?? 0,
+                        HodevalId = hodEval?.HodevalId ?? 0,
+                        EvaluationId = hodEval?.EvaluationId ?? 0,
+                        CriterionId = hodEval?.CriterionId ?? 0,
+                        CriterionName = hodEval?.Criterion?.CriterionName ?? "",
+                        CriterionType = hodEval?.Criterion?.CriterionType ?? "",
+                        RatingId = hodEval?.RatingId ?? 0,
+                        RatingName = hodEval?.Rating?.RatingName ?? "",
+                        ScoreValue = hodEval?.Rating?.ScoreValue ?? 0,
                     }
                     : new HodEvaluationDto(),
-
                 // TA Submission
                 TaSubmission = evaluation.Tasubmission != null
                     ? new TASubmissionResponseDto
@@ -168,14 +207,14 @@ namespace Business_Access.Services
                                 ActivityId = r.ActivityId,
                                 Title = r.Title,
                                 Journal = r.Journal,
-                                StatusId = r.StatusId,  // Fixed: Changed from StatusName to StatusId
+                                StatusId = r.StatusId,
                                 ActivityDate = r.ActivityDate
                             }).ToList() ?? new List<ResearchActivityResponseDto>(),
                     }
                     : null
             };
         }
-
+       
         public async Task<DeanActionResponseDto> AcceptEvaluationAsync(AcceptEvaluationDto dto)
         {
             using (var transaction = await _db.Database.BeginTransactionAsync())

@@ -9,7 +9,7 @@ public partial class Tasubmission
 
     public int EvaluationId { get; set; }
 
-    public int ActualTeachingLoad { get; set; }
+    public int ActualTeachingLoad { get; set; }//still and they should be goes to the auto calculatedscore table?
 
     public int ExpectedTeachingLoad { get; set; }
 
