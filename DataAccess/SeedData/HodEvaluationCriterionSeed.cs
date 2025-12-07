@@ -38,7 +38,9 @@ namespace DataAccess.SeedData
                 new HodevaluationCriterion { CriterionId = 16, CriterionName = "الالتزام بالمواعيد", CriterionType = "PersonalTraits" },
                 new HodevaluationCriterion { CriterionId = 17, CriterionName = "المظهر العام", CriterionType = "PersonalTraits" },
                 new HodevaluationCriterion { CriterionId = 18, CriterionName = "المبادرة وتحمل المسؤولية", CriterionType = "PersonalTraits" },
-                new HodevaluationCriterion { CriterionId = 19, CriterionName = "إدارة الوقت", CriterionType = "PersonalTraits" }
+                new HodevaluationCriterion { CriterionId = 19, CriterionName = "إدارة الوقت", CriterionType = "PersonalTraits" },
+                new HodevaluationCriterion { CriterionId = 20, CriterionName = "تقييم المشاركة في اللجان", CriterionType = "AdministrativeTotal" }
+
             );
         }
     }

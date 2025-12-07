@@ -193,48 +193,54 @@
                 </div>
             </div>
 
-            <div class="card shadow-sm mb-4" dir="rtl">
-                <div class="card-body">
-                    <h5 class="card-title mb-4">انشطة علمية اخري</h5>
-                    <div class="row g-3">
-                        <div class="col-md-4">
-                            <div class="form-check form-check-rtl">
-                                <input type="checkbox"
-                                       class="form-check-input"
-                                       id="technicalReports"
-                                       @bind="otherActivities.HasTechnicalReportsOrArticles" disabled="@IsReadOnly"/>
-                                <label class="form-check-label" for="technicalReports">
-                                    تقارير فنية او مقالات منشور(دون ان تكون ورقة بحثية)
-                                </label>
-                            </div>
+        <div class="card shadow-sm mb-4" dir="rtl">
+            <div class="card-body">
+                <h5 class="card-title mb-4">انشطة علمية اخري</h5>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="form-check form-check-rtl">
+                            <input type="checkbox"
+                                   class="form-check-input"
+                                   id="technicalReports"
+                                   checked="@otherActivities.HasTechnicalReportsOrArticles"
+                                   @onchange="@(e => UpdateOtherActivity(nameof(otherActivities.HasTechnicalReportsOrArticles), e))"
+                                   disabled="@IsReadOnly" />
+                            <label class="form-check-label" for="technicalReports">
+                                تقارير فنية او مقالات منشور(دون ان تكون ورقة بحثية)
+                            </label>
                         </div>
+                    </div>
 
-                        <div class="col-md-4">
-                            <div class="form-check form-check-rtl">
-                                <input type="checkbox"
-                                       class="form-check-input"
-                                       id="lectures"
-                                   @bind="otherActivities.HasGivenLecturesOrSeminars" disabled="@IsReadOnly" />
-                                <label class="form-check-label" for="lectures">
-                                    القاء محاضرات في ندوات او لقاءات
-                                </label>
-                            </div>
+                    <div class="col-md-4">
+                        <div class="form-check form-check-rtl">
+                            <input type="checkbox"
+                                   class="form-check-input"
+                                   id="lectures"
+                                   checked="@otherActivities.HasGivenLecturesOrSeminars"
+                                   @onchange="@(e => UpdateOtherActivity(nameof(otherActivities.HasGivenLecturesOrSeminars), e))"
+                                   disabled="@IsReadOnly" />
+                            <label class="form-check-label" for="lectures">
+                                القاء محاضرات في ندوات او لقاءات
+                            </label>
                         </div>
+                    </div>
 
-                        <div class="col-md-4">
-                            <div class="form-check form-check-rtl">
-                                <input type="checkbox"
-                                       class="form-check-input"
-                                       id="seminars"
-                                   @bind="otherActivities.HasAttendedScientificSeminars" disabled="@IsReadOnly" />
-                                <label class="form-check-label" for="seminars">
-                                    حضور ندوات علمية ودورات تدريبية علمية
-                                </label>
-                            </div>
+                    <div class="col-md-4">
+                        <div class="form-check form-check-rtl">
+                            <input type="checkbox"
+                                   class="form-check-input"
+                                   id="seminars"
+                                   checked="@otherActivities.HasAttendedScientificSeminars"
+                                   @onchange="@(e => UpdateOtherActivity(nameof(otherActivities.HasAttendedScientificSeminars), e))"
+                                   disabled="@IsReadOnly" />
+                            <label class="form-check-label" for="seminars">
+                                حضور ندوات علمية ودورات تدريبية علمية
+                            </label>
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
         
     </div>
 </div>
@@ -508,7 +514,31 @@
             StateHasChanged();
         }
     }
+    private async Task UpdateOtherActivity(string propertyName, ChangeEventArgs e)
+    {
+        bool isChecked = (bool)(e.Value ?? false);
 
+        switch (propertyName)
+        {
+            case nameof(otherActivities.HasTechnicalReportsOrArticles):
+                otherActivities.HasTechnicalReportsOrArticles = isChecked;
+                break;
+            case nameof(otherActivities.HasGivenLecturesOrSeminars):
+                otherActivities.HasGivenLecturesOrSeminars = isChecked;
+                break;
+            case nameof(otherActivities.HasAttendedScientificSeminars):
+                otherActivities.HasAttendedScientificSeminars = isChecked;
+                break;
+        }
+
+        Console.WriteLine($"✅ Other Activity Updated: {propertyName} = {isChecked}");
+        Console.WriteLine($"  - HasTechnicalReportsOrArticles: {otherActivities.HasTechnicalReportsOrArticles}");
+        Console.WriteLine($"  - HasGivenLecturesOrSeminars: {otherActivities.HasGivenLecturesOrSeminars}");
+        Console.WriteLine($"  - HasAttendedScientificSeminars: {otherActivities.HasAttendedScientificSeminars}");
+
+        await SendDataToParent();
+        StateHasChanged();
+    }
     private async Task DeletePaper(int id)
     {
         var paper = researchPapers.FirstOrDefault(p => p.Id == id);

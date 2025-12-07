@@ -14,9 +14,8 @@ namespace Business_Access.Services
 {
     public class DeanServices : IDean
     {
-        private const int STATUS_PENDING_DEAN_APPROVAL = 3;
-        private const int STATUS_APPROVED_BY_DEAN = 4;
-        private const int STATUS_RETURNED_BY_DEAN = 5;
+        private const int STATUS_APPROVED_BY_DEAN = 5;
+        private const int STATUS_RETURNED_BY_DEAN = 6;
 
         private readonly SrsDbContext _db;
         public DeanServices(SrsDbContext db)
@@ -135,7 +134,7 @@ namespace Business_Access.Services
                 PeriodEndDate = evaluation.Period?.EndDate ?? default,
 
                 // Status
-                StatusName = evaluation.Status?.StatusName ?? "",
+                StatusName = evaluation.StatusId,
                 StatusId = evaluation.StatusId,
 
                 // HOD Review
@@ -286,7 +285,7 @@ namespace Business_Access.Services
                         };
                     }
 
-                    if (evaluation.StatusId != STATUS_PENDING_DEAN_APPROVAL)
+                    if (evaluation.StatusId != STATUS_APPROVED_BY_DEAN)
                     {
                         await transaction.RollbackAsync();
                         return new DeanActionResponseDto

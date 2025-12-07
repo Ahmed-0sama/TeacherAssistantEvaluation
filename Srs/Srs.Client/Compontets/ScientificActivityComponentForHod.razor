@@ -314,15 +314,42 @@
         </div>
      </div>
      </div>
-        <div class="card bg-primary bg-opacity-10 shadow-sm mx-auto mt-3 mb-4" style="max-width: 800px;">
-            <div class="card-body text-center py-4">
-            <h5 class="text-primary fw-semibold mb-2">اتقييم المشاركة في اللجان</h5>
-                <p class="text-primary fw-bold fs-3 mb-0">
-                    @(administrativeData.TotalAdministrativeActivityScore) / 10
-                </p>
-            </div>
+    <div class="card bg-primary bg-opacity-10 shadow-sm mx-auto mt-3 mb-4" style="max-width: 800px;">
+        <div class="card-body text-center py-4">
+            <h5 class="text-primary fw-semibold mb-2">
+                تقييم المشاركة في اللجان
+            </h5>
+
+            @if (IsViewMode)
+            {
+                <!-- View Mode: Display the score -->
+                <div class="d-flex justify-content-center align-items-center gap-2">
+                    <span class="form-control form-control-lg text-center bg-light fw-bold text-primary"
+                          style="max-width: 100px; font-size: 2rem;">
+                        @GetAdministrativeScoreValue()
+                    </span>
+                    <span class="text-primary fw-bold fs-3">/ 10</span>
+                </div>
+            }
+            else
+            {
+                <!-- Edit Mode: Number input 0-10 -->
+                <div class="d-flex justify-content-center align-items-center gap-2">
+                    <input type="number"
+                           class="form-control text-center fw-bold"
+                           style="width: 120px; font-size: 1.5rem;"
+                           min="0"
+                           max="10"
+                           @bind="administrativeCommitteeScore"
+                           @bind:event="oninput"
+                           @onchange="() => UpdateAdministrativeRating(20, administrativeCommitteeScore)" />
+
+                    <span class="text-primary fw-bold fs-3">/ 10</span>
+                </div>
+            }
         </div>
-   </div>
+    </div>
+    </div>
 @code {
     MastersDto mastersData = new MastersDto();
     private bool isLoading = true;
@@ -334,6 +361,7 @@
     [Parameter] public EventCallback<Dictionary<int, int>> OnRatingsChanged { get; set; }
     [Parameter] public bool IsViewMode { get; set; }
     [Parameter] public Dictionary<int, int>? ExistingRatings { get; set; }
+    private int administrativeCommitteeScore = 0;
 
     private Dictionary<int, int> administrativeRatings = new();
 
@@ -352,9 +380,12 @@
     // update them to send ratings back like this:
     private void UpdateAdministrativeRating(int criterionId, int ratingValue)
     {
-        if (ratingValue > 0)
+        // Map the score (0-10) to the corresponding RatingId (6-16)
+        int ratingId = ratingValue + 6; // RatingId 6 = score 0, RatingId 16 = score 10
+
+        if (ratingValue >= 0 && ratingValue <= 10)
         {
-            administrativeRatings[criterionId] = ratingValue;
+            administrativeRatings[criterionId] = ratingId;
         }
         else
         {
@@ -380,8 +411,21 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadActivityData();
+        if (ExistingRatings != null && ExistingRatings.ContainsKey(20))
+        {
+            int ratingId = ExistingRatings[20];
+            administrativeCommitteeScore = ratingId - 6; 
+        }
     }
-
+    private int GetAdministrativeScoreValue()
+    {
+        if (ExistingRatings != null && ExistingRatings.ContainsKey(20))
+        {
+            int ratingId = ExistingRatings[20];
+            return ratingId - 6;
+        }
+        return 0;
+    }
     private async Task LoadActivityData()
     {
         isLoading = true;
@@ -528,27 +572,37 @@
 
             if (response.IsSuccessStatusCode)
             {
-                // The API returns TASubmissionResponseDto, not a direct list
                 var submissionData = await response.Content.ReadFromJsonAsync<TASubmissionResponseDto>();
 
-                if (submissionData?.ResearchActivities != null && submissionData.ResearchActivities.Any())
+                if (submissionData != null)
                 {
-                    // Map ResearchActivityResponseDto to ResearchPaperDto
-                    researchPapers = submissionData.ResearchActivities.Select(activity => new ResearchPaperDto
+                    // Map research papers
+                    if (submissionData.ResearchActivities != null && submissionData.ResearchActivities.Any())
                     {
-                        Title = activity.Title,
-                        ConferenceOrJournal = activity.Journal,
-                        Location = activity.Location,
-                        PageCount = activity.PageCount,
-                        Date = activity.ActivityDate,
-                        Status = activity.StatusId  // Fixed: Changed from StatusName to StatusId
-                    }).ToList();
+                        researchPapers = submissionData.ResearchActivities.Select(activity => new ResearchPaperDto
+                        {
+                            Title = activity.Title,
+                            ConferenceOrJournal = activity.Journal,
+                            Location = activity.Location,
+                            PageCount = activity.PageCount,
+                            Date = activity.ActivityDate,
+                            Status = activity.StatusId
+                        }).ToList();
+                    }
+                    else
+                    {
+                        researchPapers = new List<ResearchPaperDto>();
+                    }
+
+                    // Map other activities - ALWAYS set these values
                     otherActivities = new OtherActivitiesDto
                     {
                         HasTechnicalReportsOrArticles = submissionData.HasTechnicalReports,
                         HasGivenLecturesOrSeminars = submissionData.HasSeminarLectures,
                         HasAttendedScientificSeminars = submissionData.HasAttendingSeminars
                     };
+
+                    // Map administrative data - ALWAYS set these values
                     administrativeData = new AdminstrativeActivityDto
                     {
                         IsAcademicGuidanceCommittee = submissionData.IsInAcademicAdvisingCommittee,
@@ -557,35 +611,36 @@
                         IsLaboratoryEquipmentCommittee = submissionData.IsInLabEquipmentCommittee,
                         IsExaminationsOrganizingCommittee = submissionData.IsInExamOrganizationCommittee,
                         IsSocialOrSportsActivityCommittees = submissionData.IsInSocialOrSportsCommittee,
-                        TotalAdministrativeActivityScore = 5 // <-- add this
-
+                       // TotalAdministrativeActivityScore = submissionData
                     };
 
                     Console.WriteLine($"✅ Successfully loaded {researchPapers.Count} research papers");
-
-                    foreach (var paper in researchPapers)
-                    {
-                        Console.WriteLine($"  - Paper: {paper.Title}, Status: {paper.Status}, Date: {paper.Date}");
-                    }
+                    Console.WriteLine($"✅ Other Activities - Technical Reports: {otherActivities.HasTechnicalReportsOrArticles}");
+                    Console.WriteLine($"✅ Administrative - Academic Guidance: {administrativeData.IsAcademicGuidanceCommittee}");
                 }
                 else
                 {
-                    Console.WriteLine("ℹ️ No research activities found in submission");
-                    researchPapers = new List<ResearchPaperDto>();
+                    Console.WriteLine("⚠️ Submission data is null");
                 }
             }
             else
             {
                 var errorContent = await response.Content.ReadAsStringAsync();
                 Console.WriteLine($"❌ Error Response: {errorContent}");
-                researchPapers = new List<ResearchPaperDto>();
             }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"❌ Exception loading papers: {ex.Message}");
             Console.WriteLine($"Stack trace: {ex.StackTrace}");
-            researchPapers = new List<ResearchPaperDto>();
+        }
+        finally
+        {
+            // Ensure we always have initialized objects
+            if (researchPapers == null)
+                researchPapers = new List<ResearchPaperDto>();
+
+            StateHasChanged(); // Force UI update
         }
     }
 

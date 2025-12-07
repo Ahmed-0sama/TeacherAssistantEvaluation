@@ -88,9 +88,12 @@ namespace Business_Access.Services
                 RatingName = h.Rating.RatingName,
                 ScoreValue = h.Rating.ScoreValue
             }).ToList();
-            var totalScore = hodEvaluations.Sum(h => h.ScoreValue);
-            var maxScore = hodEvaluations.Count * hodEvaluations.Max(h => h.ScoreValue);
-            
+
+            // Calculate scores only if there are evaluations
+            var totalScore = hodEvaluations.Any() ? hodEvaluations.Sum(h => h.ScoreValue) : 0;
+            var maxScore = hodEvaluations.Any() ? hodEvaluations.Count * hodEvaluations.Max(h => h.ScoreValue) : 0;
+            var adminScore = hodEvaluations.FirstOrDefault(h => h.CriterionId == 20)?.ScoreValue ?? 0;
+
 
             return new HodEvaluationResponseDto
             {
@@ -99,12 +102,13 @@ namespace Business_Access.Services
                 TaEmployeeId = evaluation.TaEmployeeId,
                 PeriodName = evaluation.Period.PeriodName,
                 StatusName = evaluation.Status.StatusName,
-                StatusId = evaluation.StatusId,
+                StatusId = evaluation.StatusId,  
                 Evaluations = hodEvaluations,
                 HodStrengths = evaluation.HodStrengths,
                 HodWeaknesses = evaluation.HodWeaknesses,
                 TotalScore = totalScore,
                 MaxScore = maxScore,
+                AdministrativeCommitteeScore = adminScore
             };
         }
 
