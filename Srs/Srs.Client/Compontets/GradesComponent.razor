@@ -193,8 +193,8 @@
         </div>
         <div class="border-top pt-3">
             <p class="text-end fw-semibold mb-0">
-                إجمالي تقييم الأنشطة الطلابية:
-                @CalculateStudentActivitiesTotal() / 10
+                إجمالي تقييم السمات الشخصية:
+                @CalculatePersonalTraitsTotal() / 10
             </p>
         </div>
     </div>
@@ -212,11 +212,11 @@
 
     private List<GradeOption> gradeOptions = new List<GradeOption>
     {
-        new GradeOption { Value = 0, Label = "ضعيف" },
-        new GradeOption { Value = 1, Label = "مقبول" },
-        new GradeOption { Value = 1, Label = "جيد" },
-        new GradeOption { Value = 2, Label = "جيد جداً" },
-        new GradeOption { Value = 2, Label = "ممتاز" }
+        new GradeOption { Value = 0, Label = "ضعيف (0)" },
+        new GradeOption { Value = 1, Label = "مقبول (1)" },
+        new GradeOption { Value = 1, Label = "جيد (1)" },
+        new GradeOption { Value = 2, Label = "جيد جداً (2)" },
+        new GradeOption { Value = 2, Label = "ممتاز (2)" }
     };
     private List<GradeOption> ActivitiesgradeOptions = new List<GradeOption>
     {
@@ -224,9 +224,12 @@
         new GradeOption { Value = 1, Label = "مقبول" },
         new GradeOption { Value = 2, Label = "جيد" },
         new GradeOption { Value = 3, Label = "جيد جداً" },
-        new GradeOption { Value = 3, Label = "ممتاز" }
+        new GradeOption { Value = 4, Label = "ممتاز" }
     };
-
+    private int CalculatePersonalTraitsTotal()
+    {
+        return personalTraitsRatings.Values.Sum();
+    }
     protected override void OnParametersSet()
     {
         if (ExistingPersonalTraits != null && ExistingPersonalTraits.Any())

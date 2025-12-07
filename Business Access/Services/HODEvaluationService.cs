@@ -33,7 +33,6 @@ namespace Business_Access.Services
 
                 if (existingEval)
                     throw new Exception("HOD evaluation already exists for this evaluation");
-
                 // Create HOD evaluations for each criterion
                 foreach (var criterionRating in dto.CriterionRatings)
                 {
@@ -41,13 +40,13 @@ namespace Business_Access.Services
                     {
                         EvaluationId = dto.EvaluationId,
                         CriterionId = criterionRating.CriterionId,
-                        RatingId = criterionRating.RatingId,
-                        StatusId = 5
+                        RatingId = criterionRating.RatingId
+                        
                     };
 
                     _db.Hodevaluations.Add(hodEval);
                 }
-
+                evaluation.StatusId = 5; // Assuming 5 is the status for completed HOD evaluation
                 // Update evaluation with HOD comments
                 evaluation.HodStrengths = dto.HodStrengths;
                 evaluation.HodWeaknesses = dto.HodWeaknesses;
@@ -88,7 +87,7 @@ namespace Business_Access.Services
                 RatingName = h.Rating.RatingName,
                 ScoreValue = h.Rating.ScoreValue
             }).ToList();
-
+            
             // Calculate scores only if there are evaluations
             var totalScore = hodEvaluations.Any() ? hodEvaluations.Sum(h => h.ScoreValue) : 0;
             var maxScore = hodEvaluations.Any() ? hodEvaluations.Count * hodEvaluations.Max(h => h.ScoreValue) : 0;
@@ -135,15 +134,13 @@ namespace Business_Access.Services
                     CriterionType = h.Criterion.CriterionType,
                     RatingId = h.RatingId,
                     RatingName = h.Rating.RatingName,
-                    ScoreValue = h.Rating.ScoreValue,
-                    statusid = h.StatusId  
+                    ScoreValue = h.Rating.ScoreValue
                 }).ToList();
 
                 var totalScore = hodEvaluations.Any() ? hodEvaluations.Sum(h => h.ScoreValue) : 0;
                 var maxScore = hodEvaluations.Any()
                     ? hodEvaluations.Count * hodEvaluations.Max(h => h.ScoreValue)
                     : 0;
-
                 return new HodEvaluationResponseDto
                 {
                     EvaluationId = evaluation.EvaluationId,

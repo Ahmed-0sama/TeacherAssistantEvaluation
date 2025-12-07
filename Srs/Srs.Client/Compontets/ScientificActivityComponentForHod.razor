@@ -360,11 +360,16 @@
     private decimal vpg ;
     [Parameter] public EventCallback<Dictionary<int, int>> OnRatingsChanged { get; set; }
     [Parameter] public bool IsViewMode { get; set; }
+    [Parameter] public EventCallback<int> OnScientificTotalChanged { get; set; }
     [Parameter] public Dictionary<int, int>? ExistingRatings { get; set; }
     private int administrativeCommitteeScore = 0;
 
     private Dictionary<int, int> administrativeRatings = new();
-
+    private async Task NotifyScientificTotal()
+    {
+        int total = (int)(scientificScore + mastersData.GradeGivenbySupervisor);
+        await OnScientificTotalChanged.InvokeAsync(total);
+    }
     // In OnParametersSet or OnInitialized, load existing ratings
     protected override void OnParametersSet()
     {
@@ -381,11 +386,9 @@
     private void UpdateAdministrativeRating(int criterionId, int ratingValue)
     {
         // Map the score (0-10) to the corresponding RatingId (6-16)
-        int ratingId = ratingValue + 6; // RatingId 6 = score 0, RatingId 16 = score 10
-
         if (ratingValue >= 0 && ratingValue <= 10)
         {
-            administrativeRatings[criterionId] = ratingId;
+            administrativeRatings[criterionId] = ratingValue; // Store actual score, not mapped RatingId
         }
         else
         {
@@ -411,6 +414,7 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadActivityData();
+        await NotifyScientificTotal();
         if (ExistingRatings != null && ExistingRatings.ContainsKey(20))
         {
             int ratingId = ExistingRatings[20];
