@@ -129,7 +129,7 @@
                 Id = h.TaEmployeeId,
 
                 // Status comes from HODEvaluationResponse
-				statusid = h.Evaluations.First().statusid,
+				statusid = (h.Evaluations != null && h.Evaluations.Any()) ? 5 : 1,
                 
                 // There IS a HOD evaluation because this DTO exists
                 HasHodEvaluation = true,

@@ -17,7 +17,7 @@ namespace Shared.Dtos.DeanDto
         public string PeriodName { get; set; }
         public DateOnly PeriodStartDate { get; set; }
         public DateOnly PeriodEndDate { get; set; }
-        public string StatusName { get; set; }
+        public int StatusName { get; set; }
         public int StatusId { get; set; }
         public string? HodStrengths { get; set; }
         public string? HodWeaknesses { get; set; }

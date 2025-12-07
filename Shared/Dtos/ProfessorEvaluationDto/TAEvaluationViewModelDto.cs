@@ -28,6 +28,7 @@ namespace Shared.Dtos.ProfessorEvaluationDto
 
         public string CourseCode { get; set; } = string.Empty;
         public string CourseName { get; set; } = string.Empty;
+        public string SemesterName { get; set; } = string.Empty;
         public int NumberOfClasses { get; set; }
 
         // From Professor Evaluation (if exists)

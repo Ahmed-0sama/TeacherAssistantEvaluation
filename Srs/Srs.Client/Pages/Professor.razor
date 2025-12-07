@@ -113,6 +113,9 @@
                             <p class="mb-2"><strong>عدد الحصص:</strong> @selectedEvaluation.NumberOfClasses</p>
                         </div>
                         <div class="col-6">
+                            <p class="mb-2"><strong>الفصل الدراسي</strong> @selectedEvaluation.SemesterName</p>
+                        </div>
+                        <div class="col-6">
                             <p class="mb-2"><strong>الفترة:</strong> @selectedEvaluation.PeriodName</p>
                         </div>
                     </div>
@@ -370,10 +373,10 @@
                             StatusId = profEval.StatusId,
                             StatusName = profEval.StatusName ?? "قيد الانتظار",
                             CanEdit = profEval.StatusId <= 6,
-
+                            SemesterName = profEval.SemesterName,
                             TAName = $"TA #{taEmployeeId}", // TODO: Get actual name
-                            CourseCode = profEval.CourseCode ?? "CS100",
-                            CourseName = profEval.CourseName ?? "ComputerScience",
+                            CourseCode = profEval.CourseCode ?? "CS10002",
+                            CourseName = profEval.CourseName ?? "ComputerScience24",
                             NumberOfClasses = 12, // Default
 
                             ProfessorEvaluationTotal = profEval.TotalScore
@@ -395,11 +398,14 @@
                         PeriodName = evaluation.periodName ?? "فترة غير معروفة",
                         StatusId = 1,
                         StatusName = "قيد الانتظار",
+                        SemesterName="FirstSemester2025",
                         CanEdit = true,
-
+                       
+                        
                         TAName = $"TA #{taEmployeeId}", // TODO: Get actual name
-                        CourseCode = "CS101",
-                        CourseName = "ComputerScience",
+                        CourseCode = "CS10012",
+                        CourseName = "ComputerScience23",
+                        
                         NumberOfClasses = 12,
 
                         ProfessorEvaluationTotal = null
@@ -446,11 +452,12 @@
                 EvaluationPeriodId = eval.EvaluationPeriodId,
                 TaEmployeeId = eval.TAEmployeeId,
                 ProfessorEmployeeId = currentProfessorId,
-                CourseCode = "CS100",
-                CourseName = "ComputerScience",
+                CourseCode = "CS10023",
+                CourseName = "ComputerScience23",
                 OfficeHoursScore = 0,
                 AttendanceScore = 0,
                 PerformanceScore = 0,
+                SemesterName = eval.SemesterName,
                 Comments = "",
                 StatusId = 1
             };
@@ -590,6 +597,7 @@
                 var updateDto = new UpdateProfessorEvaluationDto
                 {
                     CourseCode = currentProfEval.CourseCode,
+                    SemesterName = currentProfEval.SemesterName,
                     CourseName = currentProfEval.CourseName,
                     OfficeHoursScore = currentProfEval.OfficeHoursScore,
                     AttendanceScore = currentProfEval.AttendanceScore,
@@ -624,6 +632,7 @@
                 {
                     EvaluationPeriodId = currentProfEval.EvaluationPeriodId,
                     TaEmployeeId = currentProfEval.TaEmployeeId,
+                    SemesterName = currentProfEval.SemesterName,
                     ProfessorEmployeeId = currentProfessorId,
                     CourseCode = currentProfEval.CourseCode,
                     CourseName = currentProfEval.CourseName,

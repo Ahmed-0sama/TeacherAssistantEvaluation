@@ -13,7 +13,7 @@
                         @onchange="e => UpdateRating(12, e.Value?.ToString(), true)"
                         disabled="@IsViewMode">
                     <option value="">اختر</option>
-                    @foreach (var option in gradeOptions)
+                    @foreach (var option in ActivitiesgradeOptions)
                     {
                         <option value="@option.Value">@option.Label</option>
                     }
@@ -31,7 +31,7 @@
                         @onchange="e => UpdateRating(13, e.Value?.ToString(), true)"
                         disabled="@IsViewMode">
                     <option value="">اختر</option>
-                    @foreach (var option in gradeOptions)
+                    @foreach (var option in ActivitiesgradeOptions)
                     {
                         <option value="@option.Value">@option.Label</option>
                     }
@@ -49,7 +49,7 @@
                         @onchange="e => UpdateRating(14, e.Value?.ToString(), true)"
                         disabled="@IsViewMode">
                     <option value="">اختر</option>
-                    @foreach (var option in gradeOptions)
+                    @foreach (var option in ActivitiesgradeOptions)
                     {
                         <option value="@option.Value">@option.Label</option>
                     }
@@ -212,11 +212,19 @@
 
     private List<GradeOption> gradeOptions = new List<GradeOption>
     {
-        new GradeOption { Value = 1, Label = "ضعيف" },
-        new GradeOption { Value = 2, Label = "مقبول" },
-        new GradeOption { Value = 3, Label = "جيد" },
-        new GradeOption { Value = 4, Label = "جيد جداً" },
-        new GradeOption { Value = 5, Label = "ممتاز" }
+        new GradeOption { Value = 0, Label = "ضعيف" },
+        new GradeOption { Value = 1, Label = "مقبول" },
+        new GradeOption { Value = 1, Label = "جيد" },
+        new GradeOption { Value = 2, Label = "جيد جداً" },
+        new GradeOption { Value = 2, Label = "ممتاز" }
+    };
+    private List<GradeOption> ActivitiesgradeOptions = new List<GradeOption>
+    {
+        new GradeOption { Value = 0, Label = "ضعيف" },
+        new GradeOption { Value = 1, Label = "مقبول" },
+        new GradeOption { Value = 2, Label = "جيد" },
+        new GradeOption { Value = 3, Label = "جيد جداً" },
+        new GradeOption { Value = 3, Label = "ممتاز" }
     };
 
     protected override void OnParametersSet()
@@ -261,7 +269,7 @@
         return targetDictionary.TryGetValue(criterionId, out var ratingId) ? ratingId.ToString() : "";
     }
 
-    private decimal CalculateStudentActivitiesTotal()
+    private int CalculateStudentActivitiesTotal()
     {
         return studentActivitiesRatings.Values.Sum();
     }

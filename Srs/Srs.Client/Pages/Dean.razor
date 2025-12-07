@@ -87,7 +87,6 @@
                             <th>الرقم الوظيفي</th>
                             <th>القسم</th>
                             <th>الفترة</th>
-                            <th>التقدير</th>
                             <th>الحالة</th>
                             <th class="text-center">إجراء</th>
                         </tr>
@@ -101,13 +100,8 @@
                                 <td>@(eval.statusName ?? "غير محدد")</td>
                                 <td>@(eval.periodName ?? "غير محدد")</td>
                                 <td>
-                                    <span class="@GetGradeBadgeClass(eval.statusName)">
-                                        @(eval.statusName ?? "غير محدد")
-                                    </span>
-                                </td>
-                                <td>
-                                    <span class="@GetStatusBadgeClass(eval.statusName)">
-                                        @(eval.statusName ?? "غير محدد")
+                                    <span class="@GetStatusBadgeClass(eval.statusId)">
+                                        @GetStatusDisplayName(eval.statusId)
                                     </span>
                                 </td>
                                 <td class="text-center">
@@ -520,8 +514,8 @@
         }
         catch (Exception ex)
         {
-DetailError = $"خطأ: {ex.Message}";
-ShowToast(DetailError, "error");
+        DetailError = $"خطأ: {ex.Message}";
+        ShowToast(DetailError, "error");
         }
         finally
         {
@@ -672,12 +666,13 @@ ShowToast(DetailError, "error");
 
     private bool IsPendingApproval()
     {
-        return SelectedData?.StatusName == "PendingDean";
+        return SelectedData?.StatusName ==2;
     }
 
     private void UpdatePermissions()
     {
-        if (IsPendingApproval())
+        // Only allow approve/return if status is "ReviewedByDean" (5)
+        if (SelectedData?.StatusId == 2)
         {
             Permissions = new DeanPermissions
             {
@@ -725,5 +720,35 @@ ShowToast(DetailError, "error");
                 OpenModal(eval);
             }
         }
+    }
+    private string GetStatusDisplayName(int statusId)
+    {
+        return statusId switch
+        {
+            1 => "مسودة",
+            2 => "مقدم",
+            3 => "تمت المراجعة من رئيس القسم",
+            4 => "مرتجع من رئيس القسم",
+            5 => "تمت المراجعة من العميد",
+            6 => "مرتجع من العميد",
+            7 => "معتمد",
+            _ => "غير محدد"
+        };
+    }
+
+    // Fixed status badge class based on statusId
+    private string GetStatusBadgeClass(int statusId)
+    {
+        return statusId switch
+        {
+            1 => "badge bg-secondary",      // Draft
+            2 => "badge bg-info",           // Submitted
+            3 => "badge bg-primary",        // ReviewedByHOD
+            4 => "badge bg-warning text-dark", // ReturnedByHOD
+            5 => "badge bg-primary",        // ReviewedByDean (pending approval)
+            6 => "badge bg-danger",         // ReturnedByDean
+            7 => "badge bg-success",        // Approved
+            _ => "badge bg-secondary"
+        };
     }
 }

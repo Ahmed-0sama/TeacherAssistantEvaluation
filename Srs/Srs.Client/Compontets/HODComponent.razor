@@ -202,14 +202,13 @@
                                                                          TaEmployeeId="SelectedTA.Id"
                                                                          OnRatingsChanged="OnScientificActivityRatingsChanged"
                                                                          IsViewMode="@IsViewMode"
-                                                                         ExistingRatings="@GetExistingRatings("Administrative")" />
+                                                                         ExistingRatings="@GetAdministrativeRatings()" />
 
                 <Srs.Client.Compontets.GradesComponent OnPersonalTraitsChanged="OnPersonalTraitsRatingsChanged"
                                                        OnStudentActivitiesChanged="OnStudentActivitiesRatingsChanged"
                                                        IsViewMode="@IsViewMode"
                                                        ExistingPersonalTraits="@GetExistingRatings("PersonalTraits")"
                                                        ExistingStudentActivities="@GetExistingRatings("StudentActivities")" />
-
                 <!-- Comments Section -->
                 <div class="border rounded p-3 bg-light mb-3">
                     <h5 class="mb-3 text-primary">الملاحظات والتعليقات</h5>
@@ -381,7 +380,16 @@
             isLoadingModal = false;
         }
     }
+    private Dictionary<int, int> GetAdministrativeRatings()
+    {
+        if (hodEvaluationData?.Evaluations == null)
+            return new Dictionary<int, int>();
 
+        // Include BOTH "Administrative" (6-11) AND "AdministrativeTotal" (20)
+        return hodEvaluationData.Evaluations
+            .Where(e => e.CriterionType == "Administrative" || e.CriterionType == "AdministrativeTotal")
+            .ToDictionary(e => e.CriterionId, e => e.RatingId);
+    }
     private void OnTeachingActivitiesRatingsChanged(Dictionary<int, int> ratings)
     {
         teachingActivitiesRatings = ratings;

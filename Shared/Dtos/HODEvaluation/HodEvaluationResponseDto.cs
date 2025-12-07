@@ -20,5 +20,6 @@ namespace Shared.Dtos.HODEvaluation
         public int TotalScore { get; set; }
         public int MaxScore { get; set; }
         public DateTime? CreatedDate { get; set; }
+        public int AdministrativeCommitteeScore { get; set; }
     }
 }
