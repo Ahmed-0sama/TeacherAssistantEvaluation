@@ -148,7 +148,6 @@
                 }
                 else
                 {
-                    @* ãÚáæãÇÊ ÚÇãÉ *@
                     <div class="info-section mb-4">
                         <div class="row g-3">
                             <div class="col-md-6">
@@ -666,13 +665,13 @@
 
     private bool IsPendingApproval()
     {
-        return SelectedData?.StatusName ==2;
+        return SelectedData?.StatusName == 5;
     }
 
     private void UpdatePermissions()
     {
         // Only allow approve/return if status is "ReviewedByDean" (5)
-        if (SelectedData?.StatusId == 2)
+        if (SelectedData?.StatusId == 5)
         {
             Permissions = new DeanPermissions
             {
@@ -727,9 +726,9 @@
         {
             1 => "مسودة",
             2 => "مقدم",
-            3 => "تمت المراجعة من رئيس القسم",
+            5 => "تمت المراجعة من رئيس القسم",
             4 => "مرتجع من رئيس القسم",
-            5 => "تمت المراجعة من العميد",
+            //5 => "تمت المراجعة من العميد",
             6 => "مرتجع من العميد",
             7 => "معتمد",
             _ => "غير محدد"
@@ -743,9 +742,9 @@
         {
             1 => "badge bg-secondary",      // Draft
             2 => "badge bg-info",           // Submitted
-            3 => "badge bg-primary",        // ReviewedByHOD
+            5 => "badge bg-primary",        // ReviewedByHOD
             4 => "badge bg-warning text-dark", // ReturnedByHOD
-            5 => "badge bg-primary",        // ReviewedByDean (pending approval)
+            //5 => "badge bg-primary",        // ReviewedByDean (pending approval)
             6 => "badge bg-danger",         // ReturnedByDean
             7 => "badge bg-success",        // Approved
             _ => "badge bg-secondary"
