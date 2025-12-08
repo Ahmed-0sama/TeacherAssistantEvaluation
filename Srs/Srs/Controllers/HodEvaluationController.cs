@@ -64,7 +64,7 @@ namespace Srs.Controllers
         {
             try
             {
-                var result = await _hodEvaluationService.GetHodEvaluationByEvaluationIdAsync(evaluationId);
+                var result = await _hodEvaluationService.GetHodEvaluationAsync(evaluationId);
                 if (result == null)
                     return NotFound(new { message = $"No HOD evaluation found for evaluation ID {evaluationId}" });
 

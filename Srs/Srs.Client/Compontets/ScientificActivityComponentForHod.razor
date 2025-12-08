@@ -383,19 +383,21 @@
 
     // If you have any input fields for administrative activities (criteria 6-11),
     // update them to send ratings back like this:
-    private void UpdateAdministrativeRating(int criterionId, int ratingValue)
+    private void UpdateAdministrativeRating(int criterionId, int scoreValue)
     {
-        // Map the score (0-10) to the corresponding RatingId (6-16)
-        if (ratingValue >= 0 && ratingValue <= 10)
+        // Map the score (0-10) to the corresponding RatingId (16-26)
+        // RatingId 16 = 0, RatingId 17 = 1, ..., RatingId 26 = 10
+        if (scoreValue >= 0 && scoreValue <= 10)
         {
-            administrativeRatings[criterionId] = ratingValue; // Store actual score, not mapped RatingId
+            int ratingId = scoreValue + 16; // Convert score to RatingId
+            administrativeRatings[criterionId] = ratingId;
         }
         else
-        {
-            administrativeRatings.Remove(criterionId);
+     {
+ administrativeRatings.Remove(criterionId);
         }
 
-        OnRatingsChanged.InvokeAsync(administrativeRatings);
+    OnRatingsChanged.InvokeAsync(administrativeRatings);
     }
 
     [Parameter]
@@ -417,19 +419,22 @@
         await NotifyScientificTotal();
         if (ExistingRatings != null && ExistingRatings.ContainsKey(20))
         {
-            int ratingId = ExistingRatings[20];
-            administrativeCommitteeScore = ratingId - 6; 
+     int ratingId = ExistingRatings[20];
+  // Convert RatingId (16-26) to score (0-10)
+            administrativeCommitteeScore = ratingId >= 16 && ratingId <= 26 ? ratingId - 16 : 0;
         }
     }
     private int GetAdministrativeScoreValue()
     {
         if (ExistingRatings != null && ExistingRatings.ContainsKey(20))
-        {
-            int ratingId = ExistingRatings[20];
-            return ratingId - 6;
+      {
+ int ratingId = ExistingRatings[20];
+        // Convert RatingId (16-26) to score (0-10)
+    return ratingId >= 16 && ratingId <= 26 ? ratingId - 16 : 0;
         }
-        return 0;
+    return 0;
     }
+
     private async Task LoadActivityData()
     {
         isLoading = true;

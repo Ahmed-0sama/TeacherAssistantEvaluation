@@ -123,7 +123,7 @@
             taList = hodEvaluations.Select(h => new UserDataDto
             {
                 Name = h.TaName ?? $"TA #{h.TaEmployeeId}",
-                Department = h.PeriodName,
+                Department = h.TaName,
                 EmployeeNumber = h.TaEmployeeId,
                 EvaluationId = h.EvaluationId,
                 Id = h.TaEmployeeId,

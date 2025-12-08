@@ -10,8 +10,8 @@ namespace Business_Access.Interfaces
     public interface IHODEvaluation
     {
         Task<int> CreateHodEvaluationAsync(CreateHodEvaluationDto dto);
-        Task UpdateHodEvaluationAsync(int evaluationId, UpdateHodEvaluationDto dto);
-        Task<HodEvaluationResponseDto?> GetHodEvaluationByEvaluationIdAsync(int evaluationId);
+        Task<bool> UpdateHodEvaluationAsync(int evaluationId, UpdateHodEvaluationDto dto);
+        Task<HodEvaluationResponseDto> GetHodEvaluationAsync(int evaluationId);
         Task<List<HodEvaluationResponseDto>> GetHodEvaluationsByPeriodAsync(int periodId);
         Task<bool> HasHodEvaluationAsync(int evaluationId);
 

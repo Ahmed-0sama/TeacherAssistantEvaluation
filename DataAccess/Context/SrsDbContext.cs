@@ -1,4 +1,5 @@
 ﻿using DataAccess.Entities;
+using DataAccess.SeedData;
 using Microsoft.EntityFrameworkCore;
 
 
@@ -130,6 +131,7 @@ public partial class SrsDbContext : DbContext
             entity.Property(e => e.StatusDescription).HasMaxLength(255);
             entity.Property(e => e.StatusName).HasMaxLength(100);
         });
+        DataAccess.SeedData.SeedEvaluationStatus.SeedCriteria(modelBuilder);
 
         modelBuilder.Entity<GsdeanEvaluation>(entity =>
         {
@@ -318,6 +320,7 @@ public partial class SrsDbContext : DbContext
                 .IsFixedLength();
             entity.Property(e => e.StatusName).HasMaxLength(100);
         });
+        ResearchStatusSeed.Seed(modelBuilder);
 
         modelBuilder.Entity<Tasubmission>(entity =>
         {

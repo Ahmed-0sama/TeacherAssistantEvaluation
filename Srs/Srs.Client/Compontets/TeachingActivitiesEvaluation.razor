@@ -1,4 +1,4 @@
-﻿@* TeachingActivitiesEvaluation.razor *@
+﻿@* TeachingActivitiesEvaluation.razor - FIXED SCORING *@
 <div class="card shadow-sm mx-auto" style="max-width: 1100px;">
     <div class="card-body p-4">
         <h5 class="text-end text-dark mb-4">1-2 الأنشطة التعليمية المباشرة والمعادلة (10%)</h5>
@@ -113,56 +113,91 @@
 
 @code {
     [Parameter] public double TeachingLoadScore { get; set; }
-    [Parameter] public EventCallback<Dictionary<int, int>> OnRatingsChanged { get; set; }
+    [Parameter] public EventCallback<(Dictionary<int, int> Ratings, decimal Total)> OnRatingsChanged { get; set; }
     [Parameter] public bool IsViewMode { get; set; }
     [Parameter] public Dictionary<int, int>? ExistingRatings { get; set; }
 
     private Dictionary<int, int> ratings = new();
 
+    // Each criterion is worth 2 points (5 criteria × 2 = 10 points total)
+    // Values shown are ScoreValue (0-4), which map to RatingId (1-5)
     private List<GradeOption> gradeOptions = new List<GradeOption>
     {
-        new GradeOption { Value = 0, Label = "ضعيف" },
-        new GradeOption { Value = 1, Label = "مقبول" },
-        new GradeOption { Value = 1, Label = "جيد" },
-        new GradeOption { Value = 2, Label = "جيد جداً" },
-        new GradeOption { Value = 2, Label = "ممتاز" }
+        new GradeOption { Value = 0, Label = "ضعيف (0)" },
+        new GradeOption { Value = 1, Label = "مقبول (0.5)" },
+        new GradeOption { Value = 2, Label = "جيد (1)" },
+        new GradeOption { Value = 3, Label = "جيد جداً (1.5)" },
+     new GradeOption { Value = 4, Label = "ممتاز (2)" }
     };
 
     protected override void OnParametersSet()
     {
         if (ExistingRatings != null && ExistingRatings.Any())
         {
-            ratings = new Dictionary<int, int>(ExistingRatings);
+            // Convert RatingId to ScoreValue for display
+     ratings = new Dictionary<int, int>();
+         foreach (var kvp in ExistingRatings)
+       {
+     // RatingId 1-5 maps to ScoreValue 0-4
+    int scoreValue = ConvertRatingIdToScoreValue(kvp.Value);
+  ratings[kvp.Key] = scoreValue;
+            }
         }
     }
 
     private void UpdateRating(int criterionId, string? value)
     {
-        if (int.TryParse(value, out int ratingId) && ratingId > 0)
-        {
-            ratings[criterionId] = ratingId;
+        if (int.TryParse(value, out int scoreValue) && scoreValue >= 0)
+    {
+    ratings[criterionId] = scoreValue;
         }
         else
-        {
+   {
             ratings.Remove(criterionId);
         }
 
-        OnRatingsChanged.InvokeAsync(ratings);
+        // Convert ScoreValue to RatingId before sending to parent
+        var ratingsWithRatingIds = ConvertToRatingIds(ratings);
+        var total = CalculateTotal();
+        OnRatingsChanged.InvokeAsync((ratingsWithRatingIds, total));
     }
 
     private string GetRatingValue(int criterionId)
     {
-        return ratings.TryGetValue(criterionId, out var ratingId) ? ratingId.ToString() : "";
+   return ratings.TryGetValue(criterionId, out var scoreValue) ? scoreValue.ToString() : "";
     }
 
     private decimal CalculateTotal()
     {
-        return ratings.Values.Sum();
+        // Sum: Value 0=0, 1=0.5, 2=1.0, 3=1.5, 4=2.0
+return ratings.Values.Sum(v => v * 0.5m);
+    }
+
+    // Convert ScoreValue (0-4) to RatingId (1-5) for Teaching Activities
+    private Dictionary<int, int> ConvertToRatingIds(Dictionary<int, int> scoreValues)
+    {
+      var result = new Dictionary<int, int>();
+ 
+        foreach (var kvp in scoreValues)
+        {
+          // Teaching Activities: ScoreValue 0-4 maps to RatingId 1-5
+ int ratingId = kvp.Value + 1;
+            result[kvp.Key] = ratingId;
+}
+        
+        return result;
+    }
+
+    // Convert RatingId (1-5) to ScoreValue (0-4) for display
+    private int ConvertRatingIdToScoreValue(int ratingId)
+    {
+        // Teaching Activities: RatingId 1-5 maps to ScoreValue 0-4
+        return ratingId >= 1 && ratingId <= 5 ? ratingId - 1 : 0;
     }
 
     public class GradeOption
     {
-        public int Value { get; set; }
-        public string Label { get; set; } = string.Empty;
+  public int Value { get; set; }
+      public string Label { get; set; } = string.Empty;
     }
 }

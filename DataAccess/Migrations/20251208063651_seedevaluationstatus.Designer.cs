@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccess.Migrations
 {
     [DbContext(typeof(SrsDbContext))]
-    partial class SrsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251208063651_seedevaluationstatus")]
+    partial class seedevaluationstatus
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -636,157 +639,97 @@ namespace DataAccess.Migrations
                         new
                         {
                             RatingId = 1,
-                            RatingName = "TA_ضعيف",
-                            ScoreValue = 0
+                            RatingName = "ممتاز",
+                            ScoreValue = 5
                         },
                         new
                         {
                             RatingId = 2,
-                            RatingName = "TA_مقبول",
-                            ScoreValue = 1
-                        },
-                        new
-                        {
-                            RatingId = 3,
-                            RatingName = "TA_جيد",
-                            ScoreValue = 2
-                        },
-                        new
-                        {
-                            RatingId = 4,
-                            RatingName = "TA_جيد جداً",
-                            ScoreValue = 3
-                        },
-                        new
-                        {
-                            RatingId = 5,
-                            RatingName = "TA_ممتاز",
+                            RatingName = "جيد جداً",
                             ScoreValue = 4
                         },
                         new
                         {
+                            RatingId = 3,
+                            RatingName = "جيد",
+                            ScoreValue = 3
+                        },
+                        new
+                        {
+                            RatingId = 4,
+                            RatingName = "مقبول",
+                            ScoreValue = 2
+                        },
+                        new
+                        {
+                            RatingId = 5,
+                            RatingName = "ضعيف",
+                            ScoreValue = 1
+                        },
+                        new
+                        {
                             RatingId = 6,
-                            RatingName = "SA_ضعيف",
+                            RatingName = "0",
                             ScoreValue = 0
                         },
                         new
                         {
                             RatingId = 7,
-                            RatingName = "SA_مقبول",
+                            RatingName = "1",
                             ScoreValue = 1
                         },
                         new
                         {
                             RatingId = 8,
-                            RatingName = "SA_جيد",
+                            RatingName = "2",
                             ScoreValue = 2
                         },
                         new
                         {
                             RatingId = 9,
-                            RatingName = "SA_جيد جداً",
+                            RatingName = "3",
                             ScoreValue = 3
                         },
                         new
                         {
                             RatingId = 10,
-                            RatingName = "SA_ممتاز",
+                            RatingName = "4",
                             ScoreValue = 4
                         },
                         new
                         {
                             RatingId = 11,
-                            RatingName = "PT_ضعيف",
-                            ScoreValue = 0
-                        },
-                        new
-                        {
-                            RatingId = 12,
-                            RatingName = "PT_مقبول",
-                            ScoreValue = 1
-                        },
-                        new
-                        {
-                            RatingId = 13,
-                            RatingName = "PT_جيد",
-                            ScoreValue = 2
-                        },
-                        new
-                        {
-                            RatingId = 14,
-                            RatingName = "PT_جيد جداً",
-                            ScoreValue = 3
-                        },
-                        new
-                        {
-                            RatingId = 15,
-                            RatingName = "PT_ممتاز",
-                            ScoreValue = 4
-                        },
-                        new
-                        {
-                            RatingId = 16,
-                            RatingName = "Admin_0",
-                            ScoreValue = 0
-                        },
-                        new
-                        {
-                            RatingId = 17,
-                            RatingName = "Admin_1",
-                            ScoreValue = 1
-                        },
-                        new
-                        {
-                            RatingId = 18,
-                            RatingName = "Admin_2",
-                            ScoreValue = 2
-                        },
-                        new
-                        {
-                            RatingId = 19,
-                            RatingName = "Admin_3",
-                            ScoreValue = 3
-                        },
-                        new
-                        {
-                            RatingId = 20,
-                            RatingName = "Admin_4",
-                            ScoreValue = 4
-                        },
-                        new
-                        {
-                            RatingId = 21,
-                            RatingName = "Admin_5",
+                            RatingName = "5",
                             ScoreValue = 5
                         },
                         new
                         {
-                            RatingId = 22,
-                            RatingName = "Admin_6",
+                            RatingId = 12,
+                            RatingName = "6",
                             ScoreValue = 6
                         },
                         new
                         {
-                            RatingId = 23,
-                            RatingName = "Admin_7",
+                            RatingId = 13,
+                            RatingName = "7",
                             ScoreValue = 7
                         },
                         new
                         {
-                            RatingId = 24,
-                            RatingName = "Admin_8",
+                            RatingId = 14,
+                            RatingName = "8",
                             ScoreValue = 8
                         },
                         new
                         {
-                            RatingId = 25,
-                            RatingName = "Admin_9",
+                            RatingId = 15,
+                            RatingName = "9",
                             ScoreValue = 9
                         },
                         new
                         {
-                            RatingId = 26,
-                            RatingName = "Admin_10",
+                            RatingId = 16,
+                            RatingName = "10",
                             ScoreValue = 10
                         });
                 });

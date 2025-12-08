@@ -1,7 +1,6 @@
-﻿@* GradesComponent.razor *@
-<div class="card shadow-sm mx-auto" style="max-width: 1100px;">
+﻿<div class="card shadow-sm mx-auto" style="max-width: 1100px;">
     <div class="card-body p-4">
-        <h5 class="text-end text-dark mb-4">1-2 رابعاً: الأنشطة الطلابية</h5>
+        <h5 class="text-end text-dark mb-4">رابعاً: الأنشطة الطلابية</h5>
 
         <div class="row mb-3 align-items-center">
             <div class="col-md-8 text-end">
@@ -9,11 +8,11 @@
             </div>
             <div class="col-md-4">
                 <select class="form-select"
-                        value="@GetRatingValue(12, true)"
-                        @onchange="e => UpdateRating(12, e.Value?.ToString(), true)"
+                        value="@GetRatingValue(12, isStudentActivity: true)"
+                        @onchange="e => UpdateRating(12, e.Value?.ToString(), isStudentActivity: true)"
                         disabled="@IsViewMode">
                     <option value="">اختر</option>
-                    @foreach (var option in ActivitiesgradeOptions)
+                    @foreach (var option in studentActivitiesGradeOptions)
                     {
                         <option value="@option.Value">@option.Label</option>
                     }
@@ -27,11 +26,11 @@
             </div>
             <div class="col-md-4">
                 <select class="form-select"
-                        value="@GetRatingValue(13, true)"
-                        @onchange="e => UpdateRating(13, e.Value?.ToString(), true)"
+                        value="@GetRatingValue(13, isStudentActivity: true)"
+                        @onchange="e => UpdateRating(13, e.Value?.ToString(), isStudentActivity: true)"
                         disabled="@IsViewMode">
                     <option value="">اختر</option>
-                    @foreach (var option in ActivitiesgradeOptions)
+                    @foreach (var option in studentActivitiesGradeOptions)
                     {
                         <option value="@option.Value">@option.Label</option>
                     }
@@ -45,11 +44,11 @@
             </div>
             <div class="col-md-4">
                 <select class="form-select"
-                        value="@GetRatingValue(14, true)"
-                        @onchange="e => UpdateRating(14, e.Value?.ToString(), true)"
+                        value="@GetRatingValue(14, isStudentActivity: true)"
+                        @onchange="e => UpdateRating(14, e.Value?.ToString(), isStudentActivity: true)"
                         disabled="@IsViewMode">
                     <option value="">اختر</option>
-                    @foreach (var option in ActivitiesgradeOptions)
+                    @foreach (var option in studentActivitiesGradeOptions)
                     {
                         <option value="@option.Value">@option.Label</option>
                     }
@@ -65,15 +64,13 @@
         </div>
     </div>
 </div>
+
 <div class="container mt-4">
     <div class="card shadow-sm">
         <div class="card-body">
-            <!-- Section title -->
             <h5 class="card-title text-primary fw-bold">
                 خامساً: استقصاء الطلاب (النتيجة تجلب تلقائياً)
             </h5>
-
-            <!-- Final result -->
             <div class="mt-3 p-3 border rounded bg-light d-flex justify-content-between align-items-center">
                 <span class="fw-semibold">النتيجة النهائية:</span>
                 <span class="badge bg-success fs-6">4 / 5</span>
@@ -85,12 +82,9 @@
 <div class="container mt-4">
     <div class="card shadow-sm">
         <div class="card-body">
-            <!-- Section title -->
             <h5 class="card-title text-primary fw-bold">
                 سادسا: الارشاد الاكاديمي (النتيجة تجلب تلقائياً)
             </h5>
-
-            <!-- Final result -->
             <div class="mt-3 p-3 border rounded bg-light d-flex justify-content-between align-items-center">
                 <span class="fw-semibold">النتيجة النهائية:</span>
                 <span class="badge bg-success fs-6">4 / 5</span>
@@ -98,6 +92,7 @@
         </div>
     </div>
 </div>
+
 <div class="card shadow-sm mx-auto mb-4 mt-4" style="max-width: 1100px;">
     <div class="card-body p-4">
         <h5 class="text-end text-dark mb-4">السمات الشخصية</h5>
@@ -108,11 +103,11 @@
             </div>
             <div class="col-md-4">
                 <select class="form-select"
-                        value="@GetRatingValue(15, false)"
-                        @onchange="e => UpdateRating(15, e.Value?.ToString(), false)"
+                        value="@GetRatingValue(15, isStudentActivity: false)"
+                        @onchange="e => UpdateRating(15, e.Value?.ToString(), isStudentActivity: false)"
                         disabled="@IsViewMode">
                     <option value="">اختر</option>
-                    @foreach (var option in gradeOptions)
+                    @foreach (var option in personalTraitsGradeOptions)
                     {
                         <option value="@option.Value">@option.Label</option>
                     }
@@ -126,11 +121,11 @@
             </div>
             <div class="col-md-4">
                 <select class="form-select"
-                        value="@GetRatingValue(16, false)"
-                        @onchange="e => UpdateRating(16, e.Value?.ToString(), false)"
+                        value="@GetRatingValue(16, isStudentActivity: false)"
+                        @onchange="e => UpdateRating(16, e.Value?.ToString(), isStudentActivity: false)"
                         disabled="@IsViewMode">
                     <option value="">اختر</option>
-                    @foreach (var option in gradeOptions)
+                    @foreach (var option in personalTraitsGradeOptions)
                     {
                         <option value="@option.Value">@option.Label</option>
                     }
@@ -144,11 +139,11 @@
             </div>
             <div class="col-md-4">
                 <select class="form-select"
-                        value="@GetRatingValue(17, false)"
-                        @onchange="e => UpdateRating(17, e.Value?.ToString(), false)"
+                        value="@GetRatingValue(17, isStudentActivity: false)"
+                        @onchange="e => UpdateRating(17, e.Value?.ToString(), isStudentActivity: false)"
                         disabled="@IsViewMode">
                     <option value="">اختر</option>
-                    @foreach (var option in gradeOptions)
+                    @foreach (var option in personalTraitsGradeOptions)
                     {
                         <option value="@option.Value">@option.Label</option>
                     }
@@ -162,11 +157,11 @@
             </div>
             <div class="col-md-4">
                 <select class="form-select"
-                        value="@GetRatingValue(18, false)"
-                        @onchange="e => UpdateRating(18, e.Value?.ToString(), false)"
+                        value="@GetRatingValue(18, isStudentActivity: false)"
+                        @onchange="e => UpdateRating(18, e.Value?.ToString(), isStudentActivity: false)"
                         disabled="@IsViewMode">
                     <option value="">اختر</option>
-                    @foreach (var option in gradeOptions)
+                    @foreach (var option in personalTraitsGradeOptions)
                     {
                         <option value="@option.Value">@option.Label</option>
                     }
@@ -176,21 +171,22 @@
 
         <div class="row mb-3 align-items-center">
             <div class="col-md-8 text-end">
-                <label class="form-label mb-0">ادارة الوقت</label>
+                <label class="form-label mb-0">إدارة الوقت</label>
             </div>
             <div class="col-md-4">
                 <select class="form-select"
-                        value="@GetRatingValue(19, false)"
-                        @onchange="e => UpdateRating(19, e.Value?.ToString(), false)"
+                        value="@GetRatingValue(19, isStudentActivity: false)"
+                        @onchange="e => UpdateRating(19, e.Value?.ToString(), isStudentActivity: false)"
                         disabled="@IsViewMode">
                     <option value="">اختر</option>
-                    @foreach (var option in gradeOptions)
+                    @foreach (var option in personalTraitsGradeOptions)
                     {
                         <option value="@option.Value">@option.Label</option>
                     }
                 </select>
             </div>
         </div>
+
         <div class="border-top pt-3">
             <p class="text-end fw-semibold mb-0">
                 إجمالي تقييم السمات الشخصية:
@@ -210,36 +206,52 @@
     private Dictionary<int, int> personalTraitsRatings = new();
     private Dictionary<int, int> studentActivitiesRatings = new();
 
-    private List<GradeOption> gradeOptions = new List<GradeOption>
+    // Personal Traits (5 criteria × 2 points = 10 points)
+    // Value 0 = 0, 1 = 0.5, 2 = 1.0, 3 = 1.5, 4 = 2.0
+    private List<GradeOption> personalTraitsGradeOptions = new()
+    {
+        new GradeOption { Value = 0, Label = "ضعيف (0)" },
+        new GradeOption { Value = 1, Label = "مقبول (0.5)" },
+        new GradeOption { Value = 2, Label = "جيد (1)" },
+        new GradeOption { Value = 3, Label = "جيد جداً (1.5)" },
+        new GradeOption { Value = 4, Label = "ممتاز (2)" }
+    };
+
+    // Student Activities (3 criteria, scaled to 10 points)
+    // Value 0=0, 1=1, 2=2, 3=3, 4≈3.33
+    private List<GradeOption> studentActivitiesGradeOptions = new()
     {
         new GradeOption { Value = 0, Label = "ضعيف (0)" },
         new GradeOption { Value = 1, Label = "مقبول (1)" },
-        new GradeOption { Value = 1, Label = "جيد (1)" },
-        new GradeOption { Value = 2, Label = "جيد جداً (2)" },
-        new GradeOption { Value = 2, Label = "ممتاز (2)" }
+        new GradeOption { Value = 2, Label = "جيد (2)" },
+        new GradeOption { Value = 3, Label = "جيد جداً (3)" },
+        new GradeOption { Value = 4, Label = "ممتاز (3.33)" }
     };
-    private List<GradeOption> ActivitiesgradeOptions = new List<GradeOption>
-    {
-        new GradeOption { Value = 0, Label = "ضعيف" },
-        new GradeOption { Value = 1, Label = "مقبول" },
-        new GradeOption { Value = 2, Label = "جيد" },
-        new GradeOption { Value = 3, Label = "جيد جداً" },
-        new GradeOption { Value = 4, Label = "ممتاز" }
-    };
-    private int CalculatePersonalTraitsTotal()
-    {
-        return personalTraitsRatings.Values.Sum();
-    }
+
     protected override void OnParametersSet()
     {
         if (ExistingPersonalTraits != null && ExistingPersonalTraits.Any())
         {
-            personalTraitsRatings = new Dictionary<int, int>(ExistingPersonalTraits);
+            // Convert RatingId to ScoreValue for display
+            personalTraitsRatings = new Dictionary<int, int>();
+            foreach (var kvp in ExistingPersonalTraits)
+            {
+                // RatingId 11-15 maps to ScoreValue 0-4
+                int scoreValue = ConvertRatingIdToScoreValue(kvp.Value, isPersonalTrait: true);
+                personalTraitsRatings[kvp.Key] = scoreValue;
+            }
         }
 
         if (ExistingStudentActivities != null && ExistingStudentActivities.Any())
         {
-            studentActivitiesRatings = new Dictionary<int, int>(ExistingStudentActivities);
+            // Convert RatingId to ScoreValue for display
+            studentActivitiesRatings = new Dictionary<int, int>();
+            foreach (var kvp in ExistingStudentActivities)
+            {
+                // RatingId 6-10 maps to ScoreValue 0-4
+                int scoreValue = ConvertRatingIdToScoreValue(kvp.Value, isPersonalTrait: false);
+                studentActivitiesRatings[kvp.Key] = scoreValue;
+            }
         }
     }
 
@@ -247,34 +259,102 @@
     {
         var targetDictionary = isStudentActivity ? studentActivitiesRatings : personalTraitsRatings;
 
-        if (int.TryParse(value, out int ratingId) && ratingId > 0)
+        if (int.TryParse(value, out int scoreValue) && scoreValue >= 0)
         {
-            targetDictionary[criterionId] = ratingId;
+            targetDictionary[criterionId] = scoreValue;
         }
         else
         {
             targetDictionary.Remove(criterionId);
         }
 
+        // Convert ScoreValue to RatingId before sending to parent
+        var ratingsWithRatingIds = ConvertToRatingIds(targetDictionary, isStudentActivity);
+
         if (isStudentActivity)
         {
-            OnStudentActivitiesChanged.InvokeAsync(studentActivitiesRatings);
+            OnStudentActivitiesChanged.InvokeAsync(ratingsWithRatingIds);
         }
         else
         {
-            OnPersonalTraitsChanged.InvokeAsync(personalTraitsRatings);
+            OnPersonalTraitsChanged.InvokeAsync(ratingsWithRatingIds);
         }
     }
 
     private string GetRatingValue(int criterionId, bool isStudentActivity)
     {
         var targetDictionary = isStudentActivity ? studentActivitiesRatings : personalTraitsRatings;
-        return targetDictionary.TryGetValue(criterionId, out var ratingId) ? ratingId.ToString() : "";
+        return targetDictionary.TryGetValue(criterionId, out var scoreValue)
+            ? scoreValue.ToString()
+            : string.Empty;
     }
 
-    private int CalculateStudentActivitiesTotal()
+    private decimal CalculatePersonalTraitsTotal()
     {
-        return studentActivitiesRatings.Values.Sum();
+        // 5 criteria × max 2 points = 10
+        // Value 0=0, 1=0.5, 2=1.0, 3=1.5, 4=2.0
+        return personalTraitsRatings.Values.Sum(v => v * 0.5m);
+    }
+
+    private decimal CalculateStudentActivitiesTotal()
+    {
+        // 3 criteria, scaled to ~10 points
+        // Value 0=0, 1=1, 2=2, 3=3, 4≈3.33
+        decimal total = 0;
+
+        foreach (var value in studentActivitiesRatings.Values)
+        {
+            total += value switch
+            {
+                0 => 0m,
+                1 => 1m,
+                2 => 2m,
+                3 => 3m,
+                4 => 3.33m,
+                _ => 0m
+            };
+        }
+
+        return Math.Round(total, 2);
+    }
+
+    // Convert ScoreValue (0-4) to RatingId
+    private Dictionary<int, int> ConvertToRatingIds(Dictionary<int, int> scoreValues, bool isStudentActivity)
+    {
+        var result = new Dictionary<int, int>();
+
+        foreach (var kvp in scoreValues)
+        {
+            int ratingId;
+            if (isStudentActivity)
+            {
+                // Student Activities: ScoreValue 0-4 maps to RatingId 6-10
+                ratingId = kvp.Value + 6;
+            }
+            else
+            {
+                // Personal Traits: ScoreValue 0-4 maps to RatingId 11-15
+                ratingId = kvp.Value + 11;
+            }
+            result[kvp.Key] = ratingId;
+        }
+
+        return result;
+    }
+
+    // Convert RatingId to ScoreValue (0-4) for display
+    private int ConvertRatingIdToScoreValue(int ratingId, bool isPersonalTrait)
+    {
+        if (isPersonalTrait)
+        {
+            // Personal Traits: RatingId 11-15 maps to ScoreValue 0-4
+            return ratingId >= 11 && ratingId <= 15 ? ratingId - 11 : 0;
+        }
+        else
+        {
+            // Student Activities: RatingId 6-10 maps to ScoreValue 0-4
+            return ratingId >= 6 && ratingId <= 10 ? ratingId - 6 : 0;
+        }
     }
 
     public class GradeOption

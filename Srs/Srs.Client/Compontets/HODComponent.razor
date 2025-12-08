@@ -417,28 +417,28 @@
                         hodStrengths = hodEvaluationData.HodStrengths ?? string.Empty;
                         hodWeaknesses = hodEvaluationData.HodWeaknesses ?? string.Empty;
 
-                        // Populate the ratings dictionaries from existing data
+                        // ✅ FIXED: Populate the ratings dictionaries with RatingId (NOT ScoreValue)
                         foreach (var eval in hodEvaluationData.Evaluations)
                         {
                             if (eval.CriterionType == "DirectTeaching") // Criteria 1-5
                             {
-                                teachingActivitiesRatings[eval.CriterionId] = eval.ScoreValue;
+                                teachingActivitiesRatings[eval.CriterionId] = eval.RatingId; // ✅ Use RatingId
                             }
                             else if (eval.CriterionType == "Administrative" || eval.CriterionType == "AdministrativeTotal") // Criterion 20
                             {
-                                scientificActivityRatings[eval.CriterionId] = eval.ScoreValue;
+                                scientificActivityRatings[eval.CriterionId] = eval.RatingId; // ✅ Use RatingId
                             }
                             else if (eval.CriterionType == "StudentActivities") // Criteria 12, 13, 14
                             {
-                                studentActivitiesRatings[eval.CriterionId] = eval.ScoreValue;
+                                studentActivitiesRatings[eval.CriterionId] = eval.RatingId; // ✅ Use RatingId
                             }
                             else if (eval.CriterionType == "PersonalTraits") // Criteria 15-19
                             {
-                                personalTraitsRatings[eval.CriterionId] = eval.ScoreValue;
+                                personalTraitsRatings[eval.CriterionId] = eval.RatingId; // ✅ Use RatingId
                             }
                         }
 
-                        Console.WriteLine($"Loaded ratings - Teaching: {teachingActivitiesRatings.Count}, Admin: {scientificActivityRatings.Count}, Student: {studentActivitiesRatings.Count}, Personal: {personalTraitsRatings.Count}");
+                        Console.WriteLine($"✅ Loaded ratings - Teaching: {teachingActivitiesRatings.Count}, Admin: {scientificActivityRatings.Count}, Student: {studentActivitiesRatings.Count}, Personal: {personalTraitsRatings.Count}");
                     }
                 }
             }
@@ -467,9 +467,9 @@
             .Where(e => e.CriterionType == "Administrative" || e.CriterionType == "AdministrativeTotal")
             .ToDictionary(e => e.CriterionId, e => e.RatingId);
     }
-    private void OnTeachingActivitiesRatingsChanged(Dictionary<int, int> ratings)
+    private void OnTeachingActivitiesRatingsChanged((Dictionary<int, int> Ratings, decimal Total) data)
     {
-        teachingActivitiesRatings = ratings;
+        teachingActivitiesRatings = data.Ratings;
         StateHasChanged();
     }
 
@@ -641,26 +641,71 @@
     private int GetAdministrativeTotal()
     {
         // النشاط الإداري = المشاركة في اللجان (criterion 20)
-        return scientificActivityRatings.ContainsKey(20)
-            ? scientificActivityRatings[20]
-            : 0;
+        if (scientificActivityRatings.ContainsKey(20))
+        {
+        int ratingId = scientificActivityRatings[20];
+            // Convert RatingId (16-26) to score (0-10)
+   return ratingId >= 16 && ratingId <= 26 ? ratingId - 16 : 0;
+    }
+        return 0;
     }
 
     private int GetStudentActivitiesTotal()
     {
         // الأنشطة الطلابية = sum of criteria 12, 13, 14
-        return studentActivitiesRatings.Values.Sum();
+        // RatingId 6-10 maps to points: 0, 1, 2, 3, 3.33
+        decimal total = 0;
+    foreach (var kvp in studentActivitiesRatings)
+        {
+            int ratingId = kvp.Value;
+      // Convert RatingId (6-10) to ScoreValue (0-4)
+            int scoreValue = ratingId >= 6 && ratingId <= 10 ? ratingId - 6 : 0;
+            
+     // Map ScoreValue to points
+            total += scoreValue switch
+    {
+          0 => 0m,
+    1 => 1m,
+     2 => 2m,
+       3 => 3m,
+    4 => 3.33m,
+     _ => 0m
+   };
+        }
+        return (int)Math.Round(total);
     }
 
     private int GetPersonalTraitsTotal()
     {
         // السمات الشخصية = sum of criteria 15, 16, 17, 18, 19
-        return personalTraitsRatings.Values.Sum();
+        // RatingId 11-15 maps to points: 0, 0.5, 1, 1.5, 2
+      decimal total = 0;
+        foreach (var kvp in personalTraitsRatings)
+        {
+            int ratingId = kvp.Value;
+          // Convert RatingId (11-15) to ScoreValue (0-4)
+         int scoreValue = ratingId >= 11 && ratingId <= 15 ? ratingId - 11 : 0;
+            
+        // Map ScoreValue to points (each is worth 0.5)
+    total += scoreValue * 0.5m;
+      }
+  return (int)Math.Round(total);
     }
 
-    private int GetTeachingActivitiesTotal()
+private int GetTeachingActivitiesTotal()
     {
-        // الأنشطة التعليمية = sum of criteria 1, 2, 3, 4, 5
-        return teachingActivitiesRatings.Values.Sum();
-    }
+   // الأنشطة التعليمية = sum of criteria 1-5
+      // RatingId 1-5 maps to points: 0, 0.5, 1, 1.5, 2
+        decimal total = 0;
+        foreach (var kvp in teachingActivitiesRatings)
+        {
+            int ratingId = kvp.Value;
+     // Convert RatingId (1-5) to ScoreValue (0-4)
+ int scoreValue = ratingId >= 1 && ratingId <= 5 ? ratingId - 1 : 0;
+            
+            // Map ScoreValue to points (each is worth 0.5)
+      total += scoreValue * 0.5m;
+     }
+        return (int)Math.Round(total);
+  }
 }
