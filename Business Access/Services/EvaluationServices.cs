@@ -520,11 +520,9 @@ namespace Business_Access.Services
             {
                 1 => "Draft - TA Working",
                 2 => "Submitted - Pending HOD Review",
-                3 => "HOD Reviewed - Pending Professor Evaluation",
-                4 => "Professor Evaluated - Pending Dean Approval",
-                5 => "Dean Approved - Pending VPGS Review",
-                6 => "Returned for Revision",
-                7 => "Completed",
+                5 => "Accepted by HOD",
+                7 => "Returned for Revision",
+                6 => "Completed",
                 _ => "Unknown Status"
             };
         }

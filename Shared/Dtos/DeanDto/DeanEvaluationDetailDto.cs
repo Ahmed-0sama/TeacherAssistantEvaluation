@@ -12,29 +12,37 @@ namespace Shared.Dtos.DeanDto
     {
         public int EvaluationId { get; set; }
         public int TaEmployeeId { get; set; }
-        public string TaName { get; set; }
-        public string TaEmail { get; set; }
-        public string PeriodName { get; set; }
-        public DateOnly PeriodStartDate { get; set; }
-        public DateOnly PeriodEndDate { get; set; }
-        public int StatusName { get; set; }
+        public string TaName { get; set; } = string.Empty;
+        public string? TaEmail { get; set; }
+        public string? PeriodName { get; set; }
+        public string StatusName { get; set; } = string.Empty;
         public int StatusId { get; set; }
+
+        // Section Scores - Match backend property names
+        public decimal TeachingActivitiesTotal { get; set; }
+        public decimal StudentActivitiesTotal { get; set; }
+        public decimal PersonalTraitsTotal { get; set; }
+        public decimal AdministrativeTotal { get; set; }
+        public decimal ScientificActivityScore { get; set; }
+        public decimal StudentSurveyScore { get; set; }
+        public decimal AcademicAdvisingScore { get; set; }
+        public decimal ProfessorAverageCourseScore { get; set; }
+
+        // Aliases for frontend compatibility
+        public int? EducationalActivityScore => (int)Math.Round(TeachingActivitiesTotal);
+        public int? ScientificActivityScore2 => (int)Math.Round(ScientificActivityScore);
+        public int? AdministrativeActivityScore => (int)Math.Round(AdministrativeTotal);
+        public int? StudentActivitiesScore => (int)Math.Round(StudentActivitiesTotal);
+        public int? PersonalTraitsScore => (int)Math.Round(PersonalTraitsTotal);
+
+        // Total and Grade
+        public int TotalScore { get; set; }
+        public string FinalGrade { get; set; } = string.Empty;
+
+        // HOD Comments
         public string? HodStrengths { get; set; }
         public string? HodWeaknesses { get; set; }
         public string? HodReturnComment { get; set; }
         public string? DeanReturnComment { get; set; }
-        public string? FinalGrade { get; set; }
-        public decimal? StudentSurveyScore { get; set; }
-        public DateTime? DateSubmitted { get; set; }
-        public DateTime? DateApproved { get; set; }
-        public HodEvaluationDto HodEvaluations { get; set; } = new();
-        public decimal EducationalActivityScore { get; set; }        // 50%
-        public decimal ScientificActivityScore { get; set; }          // 10%
-        public decimal AdministrativeActivityScore { get; set; }      // 10%
-        public decimal StudentActivitiesScore { get; set; }           // 10%
-        public decimal AcademicAdvisingScore { get; set; }            // 5%
-        public decimal PersonalTraitsScore { get; set; }              // 10%
-        public decimal TotalScore { get; set; }
-        public TASubmissionResponseDto? TaSubmission { get; set; }
     }
 }
