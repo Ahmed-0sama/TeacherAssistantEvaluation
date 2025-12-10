@@ -3,7 +3,6 @@
 @using Shared.Dtos.TASubmissions
 @using Shared.Dtos.DeanDto
 @using System.Net.Http.Json
-
 @inject HttpClient Http
 @inject IJSRuntime JS
 @rendermode InteractiveWebAssembly
@@ -344,7 +343,6 @@
                         disabled="@IsDetailLoading">
                     <i class="bi bi-eye me-2"></i>عرض تقييم رئيس القسم
                 </button>
-
                 @if (IsPendingApproval())
                 {
                     <button type="button"
@@ -391,7 +389,6 @@
                                             OnClose="@HideHodModal"
                                             OnSaveSuccess="@HandleSaveSuccess" />
 }
-
 @code {
     private List<EvaluationApiResponseDto> Evaluations { get; set; } = new();
     private bool IsLoading { get; set; } = true;
@@ -779,7 +776,6 @@
 
         return SelectedData.TotalScore;
     }
-
     // Or if you want to calculate it from individual scores:
     private decimal CalculateTotalScoreDetailed()
     {

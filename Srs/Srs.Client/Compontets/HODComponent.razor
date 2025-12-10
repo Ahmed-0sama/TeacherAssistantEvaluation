@@ -3,13 +3,14 @@
 @inject HttpClient Http
 @inject IJSRuntime JS
 
+<div class="modal-container modal-container-xl">
 <div class="modal-overlay" @onclick="HandleClose">
     <div class="modal-container modal-container-xl" @onclick:stopPropagation="true">
         <div class="modal-header" dir="rtl">
             <h5 class="modal-title">تفاصيل مساعد التدريس</h5>
             <button type="button" class="btn-close btn-close-white ms-0 me-auto" @onclick="HandleClose"></button>
         </div>
-        <div class="modal-body">
+        <div class="modal-body" id="pdfArea">
             @if (isLoadingModal)
             {
                 <div class="text-center p-5">
@@ -22,6 +23,7 @@
             else
             {
                 <div class="border rounded p-3 bg-light mb-3">
+
                     <h5 class="mb-3 text-primary">البيانات الأساسية</h5>
 
                     <div class="row">
@@ -54,7 +56,20 @@
                         </div>
                     </div>
                 </div>
-
+                    @if (statusid == 7)
+                    {
+                        <div class="alert alert-danger" role="alert">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">
+                                    <i class="bi bi-exclamation-triangle-fill me-2"></i>سبب رفض الاعتماد
+                                </label>
+                                <div class="form-control bg-light" readonly style="min-height: 60px;">
+                                    @DeanComments
+                                </div>
+                                <input type="hidden" value="@(DeanComments)" />
+                            </div>
+                        </div>
+                    }
                 <!-- Professor Evaluations -->
                 <div class="border rounded p-3 bg-light mb-3">
                     <h5 class="mb-3 text-primary">تقييم النشاط العلمي</h5>
@@ -302,12 +317,18 @@
             @if (IsViewMode)
             {
                 <button type="button" class="btn btn-secondary" @onclick="HandleClose">إغلاق</button>
+                    <button class="btn btn-primary" @onclick="DownloadPdf">
+                        Export As PDF
+                    </button>
+
+                    //here i want to add the print button 
                 <button type="button"
                         class="btn btn-outline-primary px-4"
                         @onclick="PrintModal"
                         disabled="@isLoadingModal">
                     <i class="bi bi-printer me-2"></i>طباعة التقرير الكامل
                 </button>
+
             }
             else if (!isLoadingModal)
             {
@@ -321,7 +342,7 @@
         </div>
     </div>
 </div>
-
+</div>
 @code {
     // Parameters passed from parent component
     [Parameter] public UserDataDto? SelectedTA { get; set; }
@@ -330,8 +351,10 @@
     [Parameter] public EventCallback OnClose { get; set; }
     [Parameter] public EventCallback OnSaveSuccess { get; set; }
     private int scientificTotal = 0;
+    private int statusid = 0;
     // Internal state
     private bool isLoadingModal = true;
+    private bool isGeneratingPdf = false;
     private bool isSaving = false;
     private TeachingDataDto teachingdto = new TeachingDataDto();
     private List<ProfessorEvaluationResponseDto> profdto = new List<ProfessorEvaluationResponseDto>();
@@ -346,6 +369,8 @@
     // Comments
     private string hodStrengths = string.Empty;
     private string hodWeaknesses = string.Empty;
+    private string DeanComments = string.Empty;
+    private IJSObjectReference? pdfModule;
 
     // Computed properties - العبء التدريسي = Professor evaluations (30) + Teaching load completion (10) + Teaching Activities (10)
     double teachingLoadScore => (CalculateAverageScore()) + (teachingdto.gradegiven ?? 0) + GetTeachingActivitiesTotal();
@@ -416,6 +441,8 @@
                     {
                         hodStrengths = hodEvaluationData.HodStrengths ?? string.Empty;
                         hodWeaknesses = hodEvaluationData.HodWeaknesses ?? string.Empty;
+                        DeanComments = hodEvaluationData.DeanReturnComments ?? string.Empty;
+                        statusid = hodEvaluationData.StatusId;
 
                         // ✅ FIXED: Populate the ratings dictionaries with RatingId (NOT ScoreValue)
                         foreach (var eval in hodEvaluationData.Evaluations)
@@ -550,7 +577,11 @@
                 RatingId = kvp.Value
             }).ToList();
 
-            if (IsViewMode && hodEvaluationData != null)
+            // ✅ FIX: Check if evaluation exists (not just IsViewMode)
+            // An evaluation exists if hodEvaluationData is not null OR statusId is 7 (returned from dean)
+            bool evaluationExists = hodEvaluationData != null || statusid == 7;
+
+            if (evaluationExists)
             {
                 // Update existing evaluation
                 var updateDto = new UpdateHodEvaluationDto
@@ -577,7 +608,7 @@
             }
             else
             {
-                // Create new evaluation
+                // Create new evaluation (only if truly doesn't exist)
                 var createDto = new CreateHodEvaluationDto
                 {
                     EvaluationId = SelectedTA.EvaluationId,
@@ -609,7 +640,6 @@
         {
             isSaving = false;
         }
-
     }
     private async Task PrintModal()
     {
@@ -663,14 +693,14 @@
             
      // Map ScoreValue to points
             total += scoreValue switch
-    {
-          0 => 0m,
-    1 => 1m,
-     2 => 2m,
-       3 => 3m,
-    4 => 3.33m,
-     _ => 0m
-   };
+            {
+                  0 => 0m,
+            1 => 1m,
+             2 => 2m,
+               3 => 3m,
+            4 => 3.33m,
+             _ => 0m
+           };
         }
         return (int)Math.Round(total);
     }
@@ -708,4 +738,28 @@ private int GetTeachingActivitiesTotal()
      }
         return (int)Math.Round(total);
   }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            pdfModule = await JS.InvokeAsync<IJSObjectReference>("import", "/JavaScript.js");
+        }
+    }
+
+    private async Task DownloadPdf()
+    {
+        try
+        {
+            isGeneratingPdf = true;
+            StateHasChanged();
+
+            // Now generate PDF
+            await pdfModule.InvokeVoidAsync("saveElementAsPdf", "pdfArea", "evaluation-report.pdf");
+        }
+        finally
+        {
+            isGeneratingPdf = false;
+            StateHasChanged();
+        }
+    }
 }

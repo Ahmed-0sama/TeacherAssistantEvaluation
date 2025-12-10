@@ -123,7 +123,7 @@ namespace Business_Access.Services
                 EvaluationId = evaluationId,
                 TaName = $"TA #{evaluation.TaEmployeeId}",
                 TaEmployeeId = evaluation.TaEmployeeId,
-                StatusId=evaluation.StatusId,
+                StatusId = evaluation.StatusId,
                 Evaluations = evaluationDtos,
                 TeachingActivitiesTotal = teachingActivitiesTotal,
                 StudentActivitiesTotal = studentActivitiesTotal,
@@ -133,7 +133,8 @@ namespace Business_Access.Services
                             personalTraitsTotal + administrativeTotal,
                 MaxScore = 40, // 10 + 10 + 10 + 10
                 HodStrengths = evaluation.HodStrengths,
-                HodWeaknesses = evaluation.HodWeaknesses
+                HodWeaknesses = evaluation.HodWeaknesses,
+                DeanReturnComments = evaluation.DeanReturnComment
             };
 
             return response;
@@ -218,16 +219,41 @@ namespace Business_Access.Services
             await using var transaction = await _db.Database.BeginTransactionAsync();
             try
             {
-                // Remove existing evaluations
+                // ✅ 1. Validate evaluation exists
+                var evaluation = await _db.Evaluations.FindAsync(evaluationId);
+                if (evaluation == null)
+                    throw new Exception("Evaluation not found");
+
+                // ✅ 2. Validate that HOD evaluation exists (should exist for update)
                 var existingEvaluations = await _db.Hodevaluations
                     .Where(h => h.EvaluationId == evaluationId)
                     .ToListAsync();
 
-                _db.Hodevaluations.RemoveRange(existingEvaluations);
+                if (!existingEvaluations.Any())
+                    throw new Exception("HOD evaluation not found. Cannot update non-existent evaluation.");
 
-                // Add new evaluations
+                // ✅ 3. Remove existing evaluations
+                _db.Hodevaluations.RemoveRange(existingEvaluations);
+                await _db.SaveChangesAsync(); // Save deletion before adding new ones
+
+                // ✅ 4. Validate all criteria and ratings exist before adding
                 foreach (var criterionRating in dto.CriterionRatings)
                 {
+                    // Validate criterion exists
+                    var criterion = await _db.HodevaluationCriteria
+                        .FindAsync(criterionRating.CriterionId);
+
+                    if (criterion == null)
+                        throw new Exception($"Criterion {criterionRating.CriterionId} not found");
+
+                    // Validate rating exists
+                    var rating = await _db.Ratings
+                        .FindAsync(criterionRating.RatingId);
+
+                    if (rating == null)
+                        throw new Exception($"Rating {criterionRating.RatingId} not found");
+
+                    // Add new evaluation
                     var hodEval = new Hodevaluation
                     {
                         EvaluationId = evaluationId,
@@ -238,23 +264,36 @@ namespace Business_Access.Services
                     _db.Hodevaluations.Add(hodEval);
                 }
 
-                // Update comments
-                var evaluation = await _db.Evaluations.FindAsync(evaluationId);
-                if (evaluation != null)
+                // ✅ 5. Update evaluation status and comments
+                evaluation.HodStrengths = dto.HodStrengths;
+                evaluation.HodWeaknesses = dto.HodWeaknesses;
+
+                // ✅ 6. Handle status logic properly
+                // If evaluation was returned (status 7), update it back to completed (status 5)
+                // Otherwise, keep status 5 if it was already completed
+                if (evaluation.StatusId == 7 || evaluation.StatusId == 5)
                 {
-                    evaluation.HodStrengths = dto.HodStrengths;
-                    evaluation.HodWeaknesses = dto.HodWeaknesses;
+                    evaluation.StatusId = 5; // Completed HOD evaluation
                 }
 
+                // Clear dean return comments when updating after return
+                if (evaluation.StatusId == 7)
+                {
+                    evaluation.DeanReturnComment = null;
+                }
+
+                // ✅ 7. Save all changes
                 await _db.SaveChangesAsync();
                 await transaction.CommitAsync();
 
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                throw;
+                // Log the error for debugging
+                Console.WriteLine($"Error updating HOD evaluation: {ex.Message}");
+                throw new Exception($"Failed to update HOD evaluation: {ex.Message}", ex);
             }
         }
         public async Task<bool> HasHodEvaluationAsync(int evaluationId)

@@ -21,5 +21,6 @@ namespace Shared.Dtos.HODEvaluation
         public decimal MaxScore { get; set; }
         public string HodStrengths { get; set; }
         public string HodWeaknesses { get; set; }
+        public string? DeanReturnComments { get; set; }
     }
 }
