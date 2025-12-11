@@ -418,7 +418,6 @@
             // Load teaching data
             if (SelectedTA.EvaluationId != 0)
             {
-                // TODO: Replace with actual API call
                 teachingdto = new TeachingDataDto
                 {
                     ActualTeachingLoad = 12,
@@ -444,28 +443,32 @@
                         DeanComments = hodEvaluationData.DeanReturnComments ?? string.Empty;
                         statusid = hodEvaluationData.StatusId;
 
-                        // ✅ FIXED: Populate the ratings dictionaries with RatingId (NOT ScoreValue)
+                        // ✅ FIX: Populate ALL rating dictionaries with existing data
                         foreach (var eval in hodEvaluationData.Evaluations)
                         {
-                            if (eval.CriterionType == "DirectTeaching") // Criteria 1-5
+                            if (eval.CriterionType == "DirectTeaching")
                             {
-                                teachingActivitiesRatings[eval.CriterionId] = eval.RatingId; // ✅ Use RatingId
+                                teachingActivitiesRatings[eval.CriterionId] = eval.RatingId;
                             }
-                            else if (eval.CriterionType == "Administrative" || eval.CriterionType == "AdministrativeTotal") // Criterion 20
+                            else if (eval.CriterionType == "Scientific")
                             {
-                                scientificActivityRatings[eval.CriterionId] = eval.RatingId; // ✅ Use RatingId
+                                scientificActivityRatings[eval.CriterionId] = eval.RatingId;
                             }
-                            else if (eval.CriterionType == "StudentActivities") // Criteria 12, 13, 14
+                            else if (eval.CriterionType == "Administrative" || eval.CriterionType == "AdministrativeTotal")
                             {
-                                studentActivitiesRatings[eval.CriterionId] = eval.RatingId; // ✅ Use RatingId
+                                scientificActivityRatings[eval.CriterionId] = eval.RatingId;
                             }
-                            else if (eval.CriterionType == "PersonalTraits") // Criteria 15-19
+                            else if (eval.CriterionType == "StudentActivities")
                             {
-                                personalTraitsRatings[eval.CriterionId] = eval.RatingId; // ✅ Use RatingId
+                                studentActivitiesRatings[eval.CriterionId] = eval.RatingId;
+                            }
+                            else if (eval.CriterionType == "PersonalTraits")
+                            {
+                                personalTraitsRatings[eval.CriterionId] = eval.RatingId;
                             }
                         }
 
-                        Console.WriteLine($"✅ Loaded ratings - Teaching: {teachingActivitiesRatings.Count}, Admin: {scientificActivityRatings.Count}, Student: {studentActivitiesRatings.Count}, Personal: {personalTraitsRatings.Count}");
+                        Console.WriteLine($"✅ Loaded ratings - Teaching: {teachingActivitiesRatings.Count}, Scientific: {scientificActivityRatings.Count}, Student: {studentActivitiesRatings.Count}, Personal: {personalTraitsRatings.Count}");
                     }
                 }
             }
@@ -496,25 +499,41 @@
     }
     private void OnTeachingActivitiesRatingsChanged((Dictionary<int, int> Ratings, decimal Total) data)
     {
-        teachingActivitiesRatings = data.Ratings;
+        // Merge new ratings with existing ones
+        foreach (var rating in data.Ratings)
+        {
+            teachingActivitiesRatings[rating.Key] = rating.Value;
+        }
         StateHasChanged();
     }
 
     private void OnScientificActivityRatingsChanged(Dictionary<int, int> ratings)
     {
-        scientificActivityRatings = ratings;
+        // Merge new ratings with existing ones
+        foreach (var rating in ratings)
+        {
+            scientificActivityRatings[rating.Key] = rating.Value;
+        }
         StateHasChanged();
     }
 
     private void OnPersonalTraitsRatingsChanged(Dictionary<int, int> ratings)
     {
-        personalTraitsRatings = ratings;
+        // Merge new ratings with existing ones
+        foreach (var rating in ratings)
+        {
+            personalTraitsRatings[rating.Key] = rating.Value;
+        }
         StateHasChanged();
     }
 
     private void OnStudentActivitiesRatingsChanged(Dictionary<int, int> ratings)
     {
-        studentActivitiesRatings = ratings;
+        // Merge new ratings with existing ones
+        foreach (var rating in ratings)
+        {
+            studentActivitiesRatings[rating.Key] = rating.Value;
+        }
         StateHasChanged();
     }
 
@@ -577,19 +596,23 @@
                 RatingId = kvp.Value
             }).ToList();
 
-            // ✅ FIX: Check if evaluation exists (not just IsViewMode)
-            // An evaluation exists if hodEvaluationData is not null OR statusId is 7 (returned from dean)
-            bool evaluationExists = hodEvaluationData != null || statusid == 7;
+            // ✅ FIXED: Check if evaluation exists by checking hodEvaluationData.HodEvaluationId
+            // An evaluation truly exists if it has an ID in the database
+            bool evaluationExists = hodEvaluationData?.EvaluationId > 0;
+
+            Console.WriteLine($"🔍 Evaluation exists: {evaluationExists}, HodEvaluationId: {hodEvaluationData?.EvaluationId}, StatusId: {statusid}");
 
             if (evaluationExists)
             {
-                // Update existing evaluation
+                // ✅ Update existing evaluation
                 var updateDto = new UpdateHodEvaluationDto
                 {
                     CriterionRatings = criterionRatings,
                     HodStrengths = hodStrengths,
                     HodWeaknesses = hodWeaknesses
                 };
+
+                Console.WriteLine($"📤 Updating evaluation {SelectedTA.EvaluationId} with {criterionRatings.Count} ratings");
 
                 var response = await Http.PutAsJsonAsync(
                     $"api/HodEvaluation/UpdateHodEvaluation/{SelectedTA.EvaluationId}",
@@ -598,17 +621,19 @@
                 if (response.IsSuccessStatusCode)
                 {
                     await JS.InvokeVoidAsync("alert", "تم تحديث التقييم بنجاح");
+                    await LoadData(); // ✅ Reload data after save
                     await OnSaveSuccess.InvokeAsync();
                 }
                 else
                 {
                     var error = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"❌ Update failed: {error}");
                     await JS.InvokeVoidAsync("alert", $"فشل تحديث التقييم: {error}");
                 }
             }
             else
             {
-                // Create new evaluation (only if truly doesn't exist)
+                // ✅ Create new evaluation
                 var createDto = new CreateHodEvaluationDto
                 {
                     EvaluationId = SelectedTA.EvaluationId,
@@ -617,23 +642,27 @@
                     HodWeaknesses = hodWeaknesses
                 };
 
+                Console.WriteLine($"📤 Creating new evaluation for {SelectedTA.EvaluationId} with {criterionRatings.Count} ratings");
+
                 var response = await Http.PostAsJsonAsync("api/HodEvaluation/create", createDto);
 
                 if (response.IsSuccessStatusCode)
                 {
                     await JS.InvokeVoidAsync("alert", "تم حفظ التقييم بنجاح");
+                    await LoadData(); // ✅ Reload data after save
                     await OnSaveSuccess.InvokeAsync();
                 }
                 else
                 {
                     var error = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"❌ Create failed: {error}");
                     await JS.InvokeVoidAsync("alert", $"فشل حفظ التقييم: {error}");
                 }
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error saving evaluation: {ex}");
+            Console.WriteLine($"❌ Error saving evaluation: {ex}");
             await JS.InvokeVoidAsync("alert", $"حدث خطأ أثناء الحفظ: {ex.Message}");
         }
         finally

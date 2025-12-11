@@ -195,7 +195,6 @@
         </div>
     </div>
 </div>
-
 @code {
     [Parameter] public EventCallback<Dictionary<int, int>> OnPersonalTraitsChanged { get; set; }
     [Parameter] public EventCallback<Dictionary<int, int>> OnStudentActivitiesChanged { get; set; }
@@ -206,8 +205,11 @@
     private Dictionary<int, int> personalTraitsRatings = new();
     private Dictionary<int, int> studentActivitiesRatings = new();
 
+    // ✅ FIXED: Track previous values to detect changes
+    private Dictionary<int, int>? previousPersonalTraits = null;
+    private Dictionary<int, int>? previousStudentActivities = null;
+
     // Personal Traits (5 criteria × 2 points = 10 points)
-    // Value 0 = 0, 1 = 0.5, 2 = 1.0, 3 = 1.5, 4 = 2.0
     private List<GradeOption> personalTraitsGradeOptions = new()
     {
         new GradeOption { Value = 0, Label = "ضعيف (0)" },
@@ -218,7 +220,6 @@
     };
 
     // Student Activities (3 criteria, scaled to 10 points)
-    // Value 0=0, 1=1, 2=2, 3=3, 4≈3.33
     private List<GradeOption> studentActivitiesGradeOptions = new()
     {
         new GradeOption { Value = 0, Label = "ضعيف (0)" },
@@ -230,29 +231,61 @@
 
     protected override void OnParametersSet()
     {
-        if (ExistingPersonalTraits != null && ExistingPersonalTraits.Any())
+        // ✅ FIXED: Only reload Personal Traits if they changed
+        if (ExistingPersonalTraits != null && !AreRatingsDictionariesEqual(ExistingPersonalTraits, previousPersonalTraits))
         {
-            // Convert RatingId to ScoreValue for display
+            Console.WriteLine($"🔄 Loading {ExistingPersonalTraits.Count} existing Personal Traits ratings");
+
             personalTraitsRatings = new Dictionary<int, int>();
             foreach (var kvp in ExistingPersonalTraits)
             {
                 // RatingId 11-15 maps to ScoreValue 0-4
                 int scoreValue = ConvertRatingIdToScoreValue(kvp.Value, isPersonalTrait: true);
                 personalTraitsRatings[kvp.Key] = scoreValue;
+                Console.WriteLine($"  Criterion {kvp.Key}: RatingId {kvp.Value} → ScoreValue {scoreValue}");
             }
+
+            previousPersonalTraits = new Dictionary<int, int>(ExistingPersonalTraits);
+
+            // ✅ Notify parent immediately after loading
+            var ratingsWithRatingIds = ConvertToRatingIds(personalTraitsRatings, isStudentActivity: false);
+            OnPersonalTraitsChanged.InvokeAsync(ratingsWithRatingIds);
         }
 
-        if (ExistingStudentActivities != null && ExistingStudentActivities.Any())
+        // ✅ FIXED: Only reload Student Activities if they changed
+        if (ExistingStudentActivities != null && !AreRatingsDictionariesEqual(ExistingStudentActivities, previousStudentActivities))
         {
-            // Convert RatingId to ScoreValue for display
+            Console.WriteLine($"🔄 Loading {ExistingStudentActivities.Count} existing Student Activities ratings");
+
             studentActivitiesRatings = new Dictionary<int, int>();
             foreach (var kvp in ExistingStudentActivities)
             {
                 // RatingId 6-10 maps to ScoreValue 0-4
                 int scoreValue = ConvertRatingIdToScoreValue(kvp.Value, isPersonalTrait: false);
                 studentActivitiesRatings[kvp.Key] = scoreValue;
+                Console.WriteLine($"  Criterion {kvp.Key}: RatingId {kvp.Value} → ScoreValue {scoreValue}");
             }
+
+            previousStudentActivities = new Dictionary<int, int>(ExistingStudentActivities);
+
+            // ✅ Notify parent immediately after loading
+            var ratingsWithRatingIds = ConvertToRatingIds(studentActivitiesRatings, isStudentActivity: true);
+            OnStudentActivitiesChanged.InvokeAsync(ratingsWithRatingIds);
         }
+    }
+
+    private bool AreRatingsDictionariesEqual(Dictionary<int, int>? dict1, Dictionary<int, int>? dict2)
+    {
+        if (dict1 == null && dict2 == null) return true;
+        if (dict1 == null || dict2 == null) return false;
+        if (dict1.Count != dict2.Count) return false;
+
+        foreach (var kvp in dict1)
+        {
+            if (!dict2.TryGetValue(kvp.Key, out var value) || value != kvp.Value)
+                return false;
+        }
+        return true;
     }
 
     private void UpdateRating(int criterionId, string? value, bool isStudentActivity)
@@ -262,14 +295,18 @@
         if (int.TryParse(value, out int scoreValue) && scoreValue >= 0)
         {
             targetDictionary[criterionId] = scoreValue;
+            Console.WriteLine($"✏️ Updated {(isStudentActivity ? "Student Activity" : "Personal Trait")} Criterion {criterionId} to ScoreValue {scoreValue}");
         }
         else
         {
             targetDictionary.Remove(criterionId);
+            Console.WriteLine($"🗑️ Removed {(isStudentActivity ? "Student Activity" : "Personal Trait")} Criterion {criterionId}");
         }
 
         // Convert ScoreValue to RatingId before sending to parent
         var ratingsWithRatingIds = ConvertToRatingIds(targetDictionary, isStudentActivity);
+
+        Console.WriteLine($"📤 Sending {ratingsWithRatingIds.Count} {(isStudentActivity ? "Student Activity" : "Personal Trait")} ratings to parent");
 
         if (isStudentActivity)
         {
@@ -299,7 +336,6 @@
     private decimal CalculateStudentActivitiesTotal()
     {
         // 3 criteria, scaled to ~10 points
-        // Value 0=0, 1=1, 2=2, 3=3, 4≈3.33
         decimal total = 0;
 
         foreach (var value in studentActivitiesRatings.Values)
