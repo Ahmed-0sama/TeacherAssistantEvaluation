@@ -296,6 +296,52 @@ namespace Business_Access.Services
                 throw new Exception($"Failed to update HOD evaluation: {ex.Message}", ex);
             }
         }
+        public async Task<bool>ReturnToTaAsync(ReturnEvaluationHODDto dto)
+        {
+            await using var transaction = await _db.Database.BeginTransactionAsync();
+            try
+            {
+                // Validate evaluation exists
+                var evaluation = await _db.Evaluations.FindAsync(dto.EvaluationId);
+                if (evaluation == null)
+                    throw new Exception("Evaluation not found");
+                // Update evaluation status and comments
+                evaluation.StatusId = 3; // Returned by HOD
+                evaluation.HodReturnComment = dto.Comments;
+                await _db.SaveChangesAsync();
+                await transaction.CommitAsync();
+                return true;
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw new Exception("Faild to Return the Evaluation To TA");
+            }
+        }
+        public async Task<bool>ReturnToProfessorAsync(ReturnToProfessor dto)
+        {
+            await using var transaction = await _db.Database.BeginTransactionAsync();
+            try
+            {
+                var ProfessorEvaluation = await _db.ProfessorCourseEvaluations.Where(s => s.EvaluationPeriodId == dto.EvaluationPeriodId
+                && s.TaEmployeeId == dto.TAId && s.ProfessorEmployeeId == dto.ProfessorId).FirstOrDefaultAsync();
+                if (ProfessorEvaluation == null)
+                    throw new Exception("Professor Evaluation not found");
+               ProfessorEvaluation.HodReturnComment = dto.HodComments;
+                ProfessorEvaluation.IsReturned = true;
+                ProfessorEvaluation.StatusId = 3; // Returned by HOD
+                await _db.SaveChangesAsync();
+                await transaction.CommitAsync();
+                return true;
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw new Exception("Faild to Return the Evaluation To Professor");
+            }
+
+        }
+
         public async Task<bool> HasHodEvaluationAsync(int evaluationId)
         {
             return await _db.Hodevaluations

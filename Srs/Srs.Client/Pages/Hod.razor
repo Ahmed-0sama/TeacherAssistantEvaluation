@@ -60,6 +60,10 @@
                                             {
                                                 <span class="badge bg-danger">مرتجع من العمييد</span>
                                             }
+                                            else if (ta.statusid == 3||ta.statusid==4)
+                                            {
+                                                <span class="badge bg-danger">تم الارجاع</span>
+                                            }
                                             else 
                                             {
                                                 <span class="badge bg-warning text-dark">بانتظار التقييم</span>
@@ -67,7 +71,7 @@
 
                                         </td>
                                         <td>
-                                            @if (ta.statusid == 5||ta.statusid==6)
+                                            @if (ta.statusid == 5||ta.statusid==6||ta.statusid==3||ta.statusid==4)
                                             {
                                                 <button class="btn btn-sm btn-primary" @onclick="() => OpenModal(ta)">
                                                     عرض التقييم
@@ -166,7 +170,7 @@
     private void OpenModal(UserDataDto ta)
     {
         selectedTA = ta;
-        isViewMode = ta.statusid==5||ta.statusid==6;
+        isViewMode = ta.statusid==5||ta.statusid==6||ta.statusid==3||ta.statusid==4;
         showModal = true;
     }
 

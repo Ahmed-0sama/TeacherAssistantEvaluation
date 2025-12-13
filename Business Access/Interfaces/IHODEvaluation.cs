@@ -14,6 +14,10 @@ namespace Business_Access.Interfaces
         Task<HodEvaluationResponseDto> GetHodEvaluationAsync(int evaluationId);
         Task<List<HodEvaluationResponseDto>> GetHodEvaluationsByPeriodAsync(int periodId);
         Task<bool> HasHodEvaluationAsync(int evaluationId);
+        Task<bool> ReturnToTaAsync(ReturnEvaluationHODDto dto);
+        Task<bool> ReturnToProfessorAsync(ReturnToProfessor dto);
+
+
 
     }
 }
