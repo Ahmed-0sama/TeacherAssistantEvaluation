@@ -35,7 +35,7 @@ namespace DataAccess.SeedData
                 {
                     StatusId = 4,
                     StatusName = "ReturnedByHOD",
-                    StatusDescription = "HOD returned the evaluation to the Proffessor for corrections"
+                    StatusDescription = "HOD returned the evaluation to the Professor for corrections"
                 },
                 new EvaluationStatus
                 {

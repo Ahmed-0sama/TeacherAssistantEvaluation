@@ -64,7 +64,7 @@ namespace Business_Access.Services
                     IsReturned = false,
                     HodReturnComment = null,
                     //to be added to get the status of the professor added to the ta
-                    StatusId = 4// Submitted by Professor
+                    StatusId = 2// Submitted
                 };
 
                 _db.ProfessorCourseEvaluations.Add(profEvaluation);
@@ -134,6 +134,7 @@ namespace Business_Access.Services
                     throw new InvalidOperationException("Cannot update evaluation after HOD review stage");
 
                 // Update fields
+                profEvaluation.StatusId = 2; // Reset status to Submitted upon update
                 profEvaluation.CourseCode = evaluationDto.CourseCode.Trim();
                 profEvaluation.CourseName = evaluationDto.CourseName.Trim();
                 profEvaluation.SemesterName = evaluationDto.SemesterName;
@@ -144,7 +145,6 @@ namespace Business_Access.Services
                                            evaluationDto.AttendanceScore +
                                            evaluationDto.PerformanceScore;
                 profEvaluation.Comments = evaluationDto.Comments?.Trim();
-                //to be added later
                // profEvaluation.StatusId = evaluationDto.StatusId;  // NEW - allow status update
 
                 _db.ProfessorCourseEvaluations.Update(profEvaluation);
@@ -210,7 +210,7 @@ namespace Business_Access.Services
             return new ProfessorEvaluationResponseDto
             {
                 ProfEvalId = profEvaluation.ProfEvalId,
-                EvaluationPeriodId = profEvaluation.EvaluationPeriodId,  // CHANGED from EvaluationId
+                EvaluationPeriodId = profEvaluation.EvaluationPeriodId,  
                 TaEmployeeId = profEvaluation.TaEmployeeId,              // NEW
                 ProfessorEmployeeId = profEvaluation.ProfessorEmployeeId,
                 ProfessorName = professorName,
@@ -224,9 +224,9 @@ namespace Business_Access.Services
                 Comments = profEvaluation.Comments,
                 IsReturned = profEvaluation.IsReturned,
                 HodReturnComment = profEvaluation.HodReturnComment,
-                StatusId = profEvaluation.StatusId,                      // NEW
-                PeriodName = profEvaluation.EvaluationPeriod?.PeriodName, // NEW - Optional
-                StatusName = profEvaluation.Status?.StatusName,          // NEW - Optional
+                StatusId = profEvaluation.StatusId,                     
+                PeriodName = profEvaluation.EvaluationPeriod?.PeriodName, 
+                StatusName = profEvaluation.Status?.StatusName,          
                 IsSubmitted = true,
                 SubmittedDate = DateTime.Now.Date
             };

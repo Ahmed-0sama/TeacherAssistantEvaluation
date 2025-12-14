@@ -50,6 +50,17 @@
                 </div>
             </div>
         }
+        @if (!string.IsNullOrEmpty(ReturnMessage))
+        {
+            <div class="w-75 mb-4">
+                <div class="alert alert-info shadow-sm" role="alert">
+                    <h5 class="alert-heading">
+                        <i class="bi bi-lock-fill"></i> تم الارجاع من رئيس القسم
+                    </h5>
+                    <p>@ReturnMessage</p>
+                </div>
+            </div>
+        }
 
         @* 1. Personal Data Card *@
         <div class="w-75 mb-4 shadow-sm">
@@ -179,7 +190,7 @@
     private string? errorMessage;
     private string? successMessage;
     private bool viewonly = false;
-
+    private string ReturnMessage = "";
     private List<ResearchPaperDto> researchPapers = new List<ResearchPaperDto>();
     private OtherActivitiesDto otherActivities = new OtherActivitiesDto();
     private AdminstrativeActivityDto administrativeData = new AdminstrativeActivityDto();
@@ -230,9 +241,9 @@
         {
             userData = new Shared.Dtos.UserDataDto
             {
-                Id = 1022,
+                Id = 11,
                 Name = "علياء احمد",
-                EmployeeNumber = 1033,
+                EmployeeNumber = 11,
                 Qualification = "ماجستير في علوم الحاسب",
                 Department = "قسم علوم الحاسب",
                 College = "AASTMT"
@@ -278,10 +289,15 @@
                     Console.WriteLine("ℹ️ No existing submission found - new evaluation");
                 }
 
-                if (result.StatusId >= 2)
+                if (result.StatusId == 3)
+                {
+                    ReturnMessage = result.HodRetrunMessage;
+                    viewonly = false;
+                }
+                else if (result.StatusId >= 2)
                 {
                     viewonly = true;
-                    Console.WriteLine($"🔒 View-only mode enabled (StatusId: {result.StatusId})");
+                    Console.WriteLine($"View-only mode enabled (StatusId: {result.StatusId})");
                 }
 
                 StateHasChanged();

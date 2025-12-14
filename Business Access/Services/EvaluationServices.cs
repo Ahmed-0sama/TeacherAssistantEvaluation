@@ -510,6 +510,7 @@ namespace Business_Access.Services
                 StudentSurveyScore = evaluation.StudentSurveyScore,
                 CanEdit = evaluation.StatusId == 1 || evaluation.StatusId == 6, // Draft or Returned
                 CurrentStage = GetCurrentStage(evaluation.StatusId),
+                HodRetrunMessage = evaluation.HodReturnComment ?? "",
                 PendingActions = GetPendingActions(evaluation.StatusId)
             };
         }

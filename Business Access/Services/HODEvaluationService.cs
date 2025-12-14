@@ -271,7 +271,8 @@ namespace Business_Access.Services
                 // ✅ 6. Handle status logic properly
                 // If evaluation was returned (status 7), update it back to completed (status 5)
                 // Otherwise, keep status 5 if it was already completed
-                if (evaluation.StatusId == 7 || evaluation.StatusId == 5)
+                //2 maybe returned from ta
+                if (evaluation.StatusId == 7 || evaluation.StatusId == 5||evaluation.StatusId==2)
                 {
                     evaluation.StatusId = 5; // Completed HOD evaluation
                 }
@@ -327,9 +328,14 @@ namespace Business_Access.Services
                 && s.TaEmployeeId == dto.TAId && s.ProfessorEmployeeId == dto.ProfessorId).FirstOrDefaultAsync();
                 if (ProfessorEvaluation == null)
                     throw new Exception("Professor Evaluation not found");
-               ProfessorEvaluation.HodReturnComment = dto.HodComments;
+                var evaluation = await _db.Evaluations.FirstOrDefaultAsync(e => e.EvaluationId == dto.evaluationId);
+                if(evaluation != null)
+                {
+                    evaluation.StatusId = 4;
+                }
+                ProfessorEvaluation.HodReturnComment = dto.HodComments;
                 ProfessorEvaluation.IsReturned = true;
-                ProfessorEvaluation.StatusId = 3; // Returned by HOD
+                ProfessorEvaluation.StatusId = 4; // Returned by HOD
                 await _db.SaveChangesAsync();
                 await transaction.CommitAsync();
                 return true;

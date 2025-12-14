@@ -18,7 +18,7 @@ namespace Shared.Dtos.TASubmissions
         public DateTime? DateApproved { get; set; }
         public string FinalGrade { get; set; }
         public decimal? StudentSurveyScore { get; set; }
-
+        public string?HodRetrunMessage { get; set; }
         // Computed
         public bool CanEdit { get; set; }
         public string CurrentStage { get; set; }
