@@ -133,6 +133,9 @@ namespace Business_Access.Services
                 if (profEvaluation.StatusId > 6) // After HOD review
                     throw new InvalidOperationException("Cannot update evaluation after HOD review stage");
 
+                var evaluation= await _db.Evaluations.FirstOrDefaultAsync(p=>p.EvaluationId == evaluationDto.EvalId);
+                if (evaluation != null)
+                    evaluation.StatusId = 2;
                 // Update fields
                 profEvaluation.StatusId = 2; // Reset status to Submitted upon update
                 profEvaluation.CourseCode = evaluationDto.CourseCode.Trim();
@@ -146,7 +149,7 @@ namespace Business_Access.Services
                                            evaluationDto.PerformanceScore;
                 profEvaluation.Comments = evaluationDto.Comments?.Trim();
                // profEvaluation.StatusId = evaluationDto.StatusId;  // NEW - allow status update
-
+                
                 _db.ProfessorCourseEvaluations.Update(profEvaluation);
                 await _db.SaveChangesAsync();
                 await transaction.CommitAsync();

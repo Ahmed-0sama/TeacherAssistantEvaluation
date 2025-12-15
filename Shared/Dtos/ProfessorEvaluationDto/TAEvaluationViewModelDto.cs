@@ -8,6 +8,7 @@ namespace Shared.Dtos.ProfessorEvaluationDto
 {
     public class TAEvaluationViewModelDto
     {
+        public int? EvaluationId { get; set; }
         // From Evaluation API
         public int EvaluationPeriodId { get; set; }
         public int PeriodId { get; set; }

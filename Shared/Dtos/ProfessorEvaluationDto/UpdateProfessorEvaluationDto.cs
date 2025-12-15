@@ -9,6 +9,7 @@ namespace Shared.Dtos.ProfessorEvaluationDto
 {
     public class UpdateProfessorEvaluationDto
     {
+            public int EvalId { get; set; }
 
            [Required(ErrorMessage = "Course code is required")]
             [StringLength(20)]

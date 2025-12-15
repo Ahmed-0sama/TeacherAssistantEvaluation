@@ -401,19 +401,22 @@
                     {
                         var viewModel = new TAEvaluationViewModelDto
                         {
+                            EvaluationId=evaluation.evaluationId,
                             ProfEvalId = profEval.ProfEvalId,
                             EvaluationPeriodId = currentEvaluationPeriodId,
                             TAEmployeeId = taEmployeeId,
                             PeriodId = currentEvaluationPeriodId,
                             PeriodName = evaluation.periodName ?? "فترة غير معروفة",
-                            StatusId = evaluation.statusId,
+
+                            StatusId = profEval.StatusId,
                             StatusName = profEval.StatusName ?? "قيد الانتظار",
-                            CanEdit = (evaluation.statusId==4),
+                            CanEdit = (profEval.StatusId == 4),
+
                             SemesterName = profEval.SemesterName,
-                            TAName = $"TA #{taEmployeeId}", // TODO: Get actual name
+                            TAName = $"TA #{taEmployeeId}",
                             CourseCode = profEval.CourseCode ?? "CS1010",
                             CourseName = profEval.CourseName ?? "ComputerScience1",
-                            NumberOfClasses = 12, // Default
+                            NumberOfClasses = 12,
                             ReturnComments = profEval.HodReturnComment,
                             ProfessorEvaluationTotal = profEval.TotalScore
                         };
@@ -432,16 +435,16 @@
                         TAEmployeeId = taEmployeeId,
                         PeriodId = currentEvaluationPeriodId,
                         PeriodName = evaluation.periodName ?? "فترة غير معروفة",
-                        CanEdit = (evaluation.statusId == 4),
-                        StatusName = "قيد الانتظار",
-                        SemesterName="FirstSemester2025",
 
-                        TAName = $"TA #{taEmployeeId}", // TODO: Get actual name
+                        StatusId = 0,
+                        StatusName = "قيد الانتظار",
+                        CanEdit = true,
+
+                        SemesterName = "FirstSemester2025",
+                        TAName = $"TA #{taEmployeeId}",
                         CourseCode = "css",
                         CourseName = "cs1",
-
                         NumberOfClasses = 12,
-
                         ProfessorEvaluationTotal = null
                     };
 
@@ -647,6 +650,7 @@
                 // Update existing evaluation
                 var updateDto = new UpdateProfessorEvaluationDto
                 {
+					EvalId = currentProfEval.ProfEvalId,
                     CourseCode = currentProfEval.CourseCode,
                     SemesterName = currentProfEval.SemesterName,
                     CourseName = currentProfEval.CourseName,
