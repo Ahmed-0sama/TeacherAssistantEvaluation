@@ -36,7 +36,7 @@ namespace Business_Access.Services
                 var existingEvaluation = await _db.ProfessorCourseEvaluations
                     .FirstOrDefaultAsync(pe =>
                         pe.EvaluationPeriodId == evaluationDto.EvaluationPeriodId &&
-                        pe.ProfessorEmployeeId == evaluationDto.ProfessorEmployeeId &&
+                        pe.TaEmployeeId == evaluationDto.TaEmployeeId &&
                         pe.CourseCode == evaluationDto.CourseCode.Trim());
 
                 if (existingEvaluation != null)

@@ -199,7 +199,7 @@
                             <div class="card bg-primary bg-opacity-10 shadow-sm mx-auto mt-4" style="max-width: 600px; border-radius: 12px;">
                                 <div class="card-body text-center py-4">
                                     <h3 class="text-primary fw-semibold mb-2" style="direction: rtl; font-size: 18px;">المجموع الكلي للعبء التدريسي</h3>
-                                    <p class="text-primary fw-bold fs-4 mb-0" style="direction: ltr;">@(teachingLoadScore) / 40</p>
+                                    <p class="text-primary fw-bold fs-4 mb-0" style="direction: ltr;">@(y) / 40</p>
                                 </div>
                             </div>
                         }
@@ -207,7 +207,7 @@
                 </div>
 
                 <!-- Child Components -->
-                <Srs.Client.Compontets.TeachingActivitiesEvaluation TeachingLoadScore="@teachingLoadScore"
+                <Srs.Client.Compontets.TeachingActivitiesEvaluation TeachingLoadScore="@y"
                                                                     OnRatingsChanged="OnTeachingActivitiesRatingsChanged"
                                                                     IsViewMode="@IsViewMode"
                                                                     ExistingRatings="@GetExistingRatings("DirectTeaching")" />
@@ -247,7 +247,7 @@
                             <div class="row text-center g-3">
                                 <div class="col-md-2">
                                     <small class="text-muted d-block">العبء التدريسي</small>
-                                    <span class="badge bg-light text-dark">@((int)Math.Round(teachingLoadScore)) / 50</span>
+                                    <span class="badge bg-light text-dark">@(teachingLoadScore) / 50</span>
                                     <div class="mt-1" style="font-size: 0.7rem;">
                                         <small class="text-muted d-block">تقييم الأساتذة: @CalculateAverageScore()</small>
                                         <small class="text-muted d-block">اكتمال النصاب: @(teachingdto.gradegiven ?? 0)</small>
@@ -475,7 +475,7 @@
     [Parameter] public bool IsViewMode { get; set; } = false;
     [Parameter] public EventCallback OnClose { get; set; }
     [Parameter] public EventCallback OnSaveSuccess { get; set; }
-    private int scientificTotal = 0;
+    private decimal scientificTotal = 0;
     private int statusid = 0;
     // Internal state
     private bool isLoadingModal = true;
@@ -485,7 +485,7 @@
     private TeachingDataDto teachingdto = new TeachingDataDto();
     private List<ProfessorEvaluationResponseDto> profdto = new List<ProfessorEvaluationResponseDto>();
     private HodEvaluationResponseDto? hodEvaluationData;
-
+    double y => (CalculateAverageScore()) + (teachingdto.gradegiven ?? 0);
     // Ratings dictionaries
     private Dictionary<int, int> teachingActivitiesRatings = new();
     private Dictionary<int, int> scientificActivityRatings = new();
@@ -502,7 +502,7 @@
     private IJSObjectReference? pdfModule;
 
     // Computed properties - العبء التدريسي = Professor evaluations (30) + Teaching load completion (10) + Teaching Activities (10)
-    double teachingLoadScore => (CalculateAverageScore()) + (teachingdto.gradegiven ?? 0) + GetTeachingActivitiesTotal();
+    decimal teachingLoadScore => (CalculateAverageScore()) + (teachingdto.gradegiven ?? 0) + GetTeachingActivitiesTotal();
 
     protected override async Task OnParametersSetAsync()
     {
@@ -930,10 +930,10 @@
         Console.WriteLine("🔵 Printing entire modal");
         await JS.InvokeVoidAsync("window.print");
     }
-    private int CalculateFinalTotal()
+    private decimal CalculateFinalTotal()
     {
         // Total = 50 (teaching load) + 10 (scientific) + 10 (administrative) + 10 (student activities) + 10 (survey+guidance) + 10 (personal traits) = 100
-        return (int)Math.Round(teachingLoadScore) +  // 50 points
+        return teachingLoadScore +  // 50 points
                GetScientificTotal() +                // 10 points
                GetAdministrativeTotal() +            // 10 points
                GetStudentActivitiesTotal() +         // 10 points
@@ -941,13 +941,13 @@
                4 +                                   // الإرشاد الأكاديمي (4/5)
                GetPersonalTraitsTotal();             // 10 points
     }
-    private void OnScientificTotalReceived(int total)
+    private void OnScientificTotalReceived(decimal total)
     {
         scientificTotal = total;
         StateHasChanged();
     }
 
-    private int GetScientificTotal()
+    private decimal GetScientificTotal()
     {
         return scientificTotal;
     }
@@ -964,7 +964,7 @@
         return 0;
     }
 
-    private int GetStudentActivitiesTotal()
+    private decimal GetStudentActivitiesTotal()
     {
         // الأنشطة الطلابية = sum of criteria 12, 13, 14
         // RatingId 6-10 maps to points: 0, 1, 2, 3, 3.33
@@ -986,10 +986,10 @@
              _ => 0m
            };
         }
-        return (int)Math.Round(total);
+        return total;
     }
 
-    private int GetPersonalTraitsTotal()
+    private decimal GetPersonalTraitsTotal()
     {
         // السمات الشخصية = sum of criteria 15, 16, 17, 18, 19
         // RatingId 11-15 maps to points: 0, 0.5, 1, 1.5, 2
@@ -1003,10 +1003,10 @@
         // Map ScoreValue to points (each is worth 0.5)
     total += scoreValue * 0.5m;
       }
-  return (int)Math.Round(total);
+  return total;
     }
 
-private int GetTeachingActivitiesTotal()
+private decimal GetTeachingActivitiesTotal()
     {
    // الأنشطة التعليمية = sum of criteria 1-5
       // RatingId 1-5 maps to points: 0, 0.5, 1, 1.5, 2
@@ -1020,7 +1020,7 @@ private int GetTeachingActivitiesTotal()
             // Map ScoreValue to points (each is worth 0.5)
       total += scoreValue * 0.5m;
      }
-        return (int)Math.Round(total);
+        return total;
   }
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {

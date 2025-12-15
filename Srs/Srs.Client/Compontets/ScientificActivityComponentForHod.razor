@@ -361,7 +361,7 @@
 
     [Parameter] public EventCallback<Dictionary<int, int>> OnRatingsChanged { get; set; }
     [Parameter] public bool IsViewMode { get; set; }
-    [Parameter] public EventCallback<int> OnScientificTotalChanged { get; set; }
+    [Parameter] public EventCallback<decimal> OnScientificTotalChanged { get; set; }
     [Parameter] public Dictionary<int, int>? ExistingRatings { get; set; }
     [Parameter] public int EvaluationId { get; set; }
     [Parameter] public int EvaluationPeriodId { get; set; }
@@ -426,7 +426,7 @@
 
     private async Task NotifyScientificTotal()
     {
-        int total = (int)(scientificScore + mastersData.GradeGivenbySupervisor);
+        decimal total = (scientificScore + mastersData.GradeGivenbySupervisor??0);
         await OnScientificTotalChanged.InvokeAsync(total);
     }
 

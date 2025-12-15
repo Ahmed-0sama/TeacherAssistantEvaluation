@@ -71,7 +71,7 @@
                                 <td>
                                     @if (eval.StatusId==0)
                                     {
-                                        <span class="badge bg-danger me-2">تم الإرجاع</span>
+                                        //<span class="badge bg-danger me-2">تم الإرجاع</span>
                                         <button type="button"
                                                 class="btn btn-sm btn-primary"
                                                 @onclick="() => OpenModal(eval)">
@@ -437,8 +437,8 @@
                         SemesterName="FirstSemester2025",
 
                         TAName = $"TA #{taEmployeeId}", // TODO: Get actual name
-                        CourseCode = "CS1001",
-                        CourseName = "ComputerScience1",
+                        CourseCode = "css",
+                        CourseName = "cs1",
 
                         NumberOfClasses = 12,
 
@@ -491,8 +491,8 @@
                 EvaluationPeriodId = eval.EvaluationPeriodId,
                 TaEmployeeId = eval.TAEmployeeId,
                 ProfessorEmployeeId = currentProfessorId,
-                CourseCode = "CS1031",
-                CourseName = "ComputerScience31",
+                CourseCode = "cs",
+                CourseName = "ComputerScience321",
                 OfficeHoursScore = 0,
                 AttendanceScore = 0,
                 PerformanceScore = 0,
