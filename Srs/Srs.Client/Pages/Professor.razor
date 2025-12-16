@@ -650,7 +650,8 @@
                 // Update existing evaluation
                 var updateDto = new UpdateProfessorEvaluationDto
                 {
-					EvalId = currentProfEval.ProfEvalId,
+                    
+					EvalId = selectedEvaluation.EvaluationId??0,
                     CourseCode = currentProfEval.CourseCode,
                     SemesterName = currentProfEval.SemesterName,
                     CourseName = currentProfEval.CourseName,
