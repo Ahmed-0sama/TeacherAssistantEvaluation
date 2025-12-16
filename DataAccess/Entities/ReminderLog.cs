@@ -11,9 +11,11 @@ public partial class ReminderLog
 
     public int SentByEmployeeId { get; set; }
 
+    public string SenderRole { get; set; }
+
     public int RecievedByEmployeeId { get; set; }
 
-    public string RecipientDescription { get; set; } = null!;
+    public string RecipientDescription { get; set; }
 
     public DateTime Timestamp { get; set; }
 

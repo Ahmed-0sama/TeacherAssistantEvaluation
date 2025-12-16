@@ -53,6 +53,7 @@ namespace Business_Access.Services
                     .Select(n => new NotificationDto
                     {
                         NotificationId = n.LogId,
+                        SenderTitle =n.SenderRole,
                         SenderId = n.SentByEmployeeId,
                         ReceiverId = n.RecievedByEmployeeId,
                         Message = n.RecipientDescription,
