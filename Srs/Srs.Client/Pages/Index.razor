@@ -2,6 +2,7 @@
 @rendermode InteractiveWebAssembly
 @using Shared.Dtos
 @using Shared.Dtos.EvaluationPeriod
+@using Shared.Dtos.HODEvaluation
 @using Shared.Dtos.ProfessorEvaluationDto
 @using Shared.Dtos.TASubmissions
 @using System.Text.Json
@@ -153,11 +154,11 @@
             <div class="w-75 mb-4">
                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
                     <strong>خطأ!</strong> @errorMessage
-                    <button type="button" class="btn-close" @onclick="@(() => errorMessage = null)"></button>
+                    <button type="button" class="btn btn-close" @onclick="@(() => errorMessage = null)"></button>
                 </div>
             </div>
         }
-        @if(StatusId == 6 && viewonly)
+        @if (StatusId == 6 && viewonly && !isLoading && userData != null && evaluationPeriodId > 0)
         {
             <div class="w-75 mb-4">
                 <div class="alert alert-success shadow-sm text-center" role="alert">
@@ -165,7 +166,7 @@
                         <i class="bi bi-check-circle-fill"></i>تم قبول تقييمك
                     </h5>
                     <p class="mb-3">يمكنك الآن عرض تقييم النهائي</p>
-                    <button class="btn btn-primary" @onclick="() => ShowHodModal = true">
+                    <button class="btn btn-primary" @onclick="OpenHodModal">
                         <i class="bi bi-eye"></i> عرض تقييم
                     </button>
                 </div>
@@ -173,7 +174,7 @@
         }
 
         @*button is clicked *@
-        @if (ShowHodModal)
+        @if (ShowHodModal && userData != null && evaluationPeriodId > 0)
         {
             <Srs.Client.Compontets.HODComponent SelectedTA="@userData"
                                                 EvaluationPeriodId="@evaluationPeriodId"
@@ -220,6 +221,7 @@
     private AdminstrativeActivityDto administrativeData = new AdminstrativeActivityDto();
     private StudentActivityDto studentActivityData = new StudentActivityDto();
     private EducationalActivityDto? educationalData;
+    private HodEvaluationResponseDto? hodEvaluationData;
 
     protected override async Task OnInitializedAsync()
     {
@@ -289,9 +291,9 @@
         {
             userData = new Shared.Dtos.UserDataDto
             {
-                Id = 7,
+                Id = 888,
                 Name = "علياء احمد",
-                EmployeeNumber = 7,
+                EmployeeNumber = 888,
                 Qualification = "ماجستير في علوم الحاسب",
                 Department = "قسم علوم الحاسب",
                 College = "AASTMT"
@@ -664,7 +666,36 @@
             StateHasChanged();
         }
     }
+    private async Task OpenHodModal()
+    {
+        Console.WriteLine($"Opening HOD Modal - userData: {userData?.Name}, evaluationPeriodId: {evaluationPeriodId}");
 
+        if (userData == null || userData.Id == 0)
+        {
+            errorMessage = "بيانات المستخدم غير متوفرة";
+            StateHasChanged();
+            return;
+        }
+
+        if (evaluationPeriodId == 0)
+        {
+            errorMessage = "معرف فترة التقييم غير متوفر";
+            StateHasChanged();
+            return;
+        }
+
+        // Ensure EvaluationId is set in userData
+        if (userData.EvaluationId == 0)
+        {
+            userData.EvaluationId = evaluationId;
+        }
+
+        Console.WriteLine($"✅ Opening HOD modal with EvaluationId: {userData.EvaluationId}");
+
+        ShowHodModal = true;
+        StateHasChanged();
+    }
+    
     private async Task UpdateSubmission(UpdateTASubmissionsDto data)
     {
         try

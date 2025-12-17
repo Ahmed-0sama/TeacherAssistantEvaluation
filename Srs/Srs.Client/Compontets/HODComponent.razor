@@ -504,6 +504,7 @@
     private async Task LoadData()
     {
         isLoadingModal = true;
+        Console.WriteLine($"🔵 Starting LoadData - SelectedTA: {SelectedTA?.Name}, EvaluationId: {SelectedTA?.EvaluationId}, PeriodId: {EvaluationPeriodId}");
 
         // Reset data
         profdto = new List<ProfessorEvaluationResponseDto>();
@@ -517,20 +518,51 @@
 
         try
         {
+            // Validate that we have the required data
+            if (SelectedTA == null)
+            {
+                Console.WriteLine("❌ SelectedTA is null");
+                await JS.InvokeVoidAsync("alert", "خطأ: بيانات المستخدم غير متوفرة");
+                isLoadingModal = false;
+                return;
+            }
+
+            if (SelectedTA.EvaluationId == 0)
+            {
+                Console.WriteLine("❌ EvaluationId is 0");
+                await JS.InvokeVoidAsync("alert", "خطأ: معرف التقييم غير متوفر");
+                isLoadingModal = false;
+                return;
+            }
+
+            if (EvaluationPeriodId == 0)
+            {
+                Console.WriteLine("❌ EvaluationPeriodId is 0");
+                await JS.InvokeVoidAsync("alert", "خطأ: معرف فترة التقييم غير متوفر");
+                isLoadingModal = false;
+                return;
+            }
+
             // Load professor evaluations
             try
             {
+                Console.WriteLine($"📡 Fetching professor evaluations: /api/ProfessorEvaluation/GetByPeriodAndTA/{EvaluationPeriodId}/{SelectedTA.Id}");
                 var profEvaluations = await Http.GetFromJsonAsync<List<ProfessorEvaluationResponseDto>>(
                     $"api/ProfessorEvaluation/GetByPeriodAndTA/{EvaluationPeriodId}/{SelectedTA.Id}");
 
-                if (profEvaluations != null)
+                if (profEvaluations != null && profEvaluations.Any())
                 {
                     profdto = profEvaluations;
+                    Console.WriteLine($"✅ Loaded {profdto.Count} professor evaluations");
+                }
+                else
+                {
+                    Console.WriteLine("⚠️ No professor evaluations found");
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error loading professor evaluations: {ex.Message}");
+                Console.WriteLine($"❌ Error loading professor evaluations: {ex.Message}");
             }
 
             // Load teaching data
@@ -543,66 +575,94 @@
                     ClassCount = 3,
                     gradegiven = 8
                 };
+                Console.WriteLine("✅ Teaching data initialized");
             }
 
             // Try to load existing HOD evaluation
             try
             {
+                Console.WriteLine($"📡 Fetching HOD evaluation: /api/HodEvaluation/HodEvaluationByEvaluationId/{SelectedTA.EvaluationId}");
                 var response = await Http.GetAsync($"api/HodEvaluation/HodEvaluationByEvaluationId/{SelectedTA.EvaluationId}");
+
+                Console.WriteLine($"📥 HOD evaluation response status: {response.StatusCode}");
 
                 if (response.IsSuccessStatusCode)
                 {
                     hodEvaluationData = await response.Content.ReadFromJsonAsync<HodEvaluationResponseDto>();
 
-                    if (hodEvaluationData != null && hodEvaluationData.Evaluations?.Any() == true)
+                    if (hodEvaluationData != null)
                     {
-                        hodStrengths = hodEvaluationData.HodStrengths ?? string.Empty;
-                        hodWeaknesses = hodEvaluationData.HodWeaknesses ?? string.Empty;
-                        DeanComments = hodEvaluationData.DeanReturnComments ?? string.Empty;
-                        statusid = hodEvaluationData.StatusId;
-
-                        // ✅ FIX: Populate ALL rating dictionaries with existing data
-                        foreach (var eval in hodEvaluationData.Evaluations)
+                        Console.WriteLine($"✅ HOD evaluation loaded - StatusId: {hodEvaluationData.StatusId}, Evaluations count: {hodEvaluationData.Evaluations?.Count ?? 0}");
+                        
+                        if (hodEvaluationData.Evaluations?.Any() == true)
                         {
-                            if (eval.CriterionType == "DirectTeaching")
-                            {
-                                teachingActivitiesRatings[eval.CriterionId] = eval.RatingId;
-                            }
-                            else if (eval.CriterionType == "Scientific")
-                            {
-                                scientificActivityRatings[eval.CriterionId] = eval.RatingId;
-                            }
-                            else if (eval.CriterionType == "Administrative" || eval.CriterionType == "AdministrativeTotal")
-                            {
-                                scientificActivityRatings[eval.CriterionId] = eval.RatingId;
-                            }
-                            else if (eval.CriterionType == "StudentActivities")
-                            {
-                                studentActivitiesRatings[eval.CriterionId] = eval.RatingId;
-                            }
-                            else if (eval.CriterionType == "PersonalTraits")
-                            {
-                                personalTraitsRatings[eval.CriterionId] = eval.RatingId;
-                            }
-                        }
+                            hodStrengths = hodEvaluationData.HodStrengths ?? string.Empty;
+                            hodWeaknesses = hodEvaluationData.HodWeaknesses ?? string.Empty;
+                            DeanComments = hodEvaluationData.DeanReturnComments ?? string.Empty;
+                            statusid = hodEvaluationData.StatusId;
 
-                        Console.WriteLine($"✅ Loaded ratings - Teaching: {teachingActivitiesRatings.Count}, Scientific: {scientificActivityRatings.Count}, Student: {studentActivitiesRatings.Count}, Personal: {personalTraitsRatings.Count}");
+                            // ✅ Populate ALL rating dictionaries with existing data
+                            foreach (var eval in hodEvaluationData.Evaluations)
+                            {
+                                if (eval.CriterionType == "DirectTeaching")
+                                {
+                                    teachingActivitiesRatings[eval.CriterionId] = eval.RatingId;
+                                }
+                                else if (eval.CriterionType == "Scientific")
+                                {
+                                    scientificActivityRatings[eval.CriterionId] = eval.RatingId;
+                                }
+                                else if (eval.CriterionType == "Administrative" || eval.CriterionType == "AdministrativeTotal")
+                                {
+                                    scientificActivityRatings[eval.CriterionId] = eval.RatingId;
+                                }
+                                else if (eval.CriterionType == "StudentActivities")
+                                {
+                                    studentActivitiesRatings[eval.CriterionId] = eval.RatingId;
+                                }
+                                else if (eval.CriterionType == "PersonalTraits")
+                                {
+                                    personalTraitsRatings[eval.CriterionId] = eval.RatingId;
+                                }
+                            }
+
+                            Console.WriteLine($"✅ Loaded ratings - Teaching: {teachingActivitiesRatings.Count}, Scientific: {scientificActivityRatings.Count}, Student: {studentActivitiesRatings.Count}, Personal: {personalTraitsRatings.Count}");
+                        }
+                        else
+                        {
+                            Console.WriteLine("⚠️ HOD evaluation exists but has no evaluations");
+                        }
                     }
+                    else
+                    {
+                        Console.WriteLine("⚠️ HOD evaluation response was null");
+                    }
+                }
+                else
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"⚠️ HOD evaluation not found - Status: {response.StatusCode}, Content: {errorContent}");
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error loading HOD evaluation: {ex.Message}");
+                Console.WriteLine($"❌ Error loading HOD evaluation: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
             }
+
+            Console.WriteLine("✅ LoadData completed successfully");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error in LoadData: {ex}");
+            Console.WriteLine($"❌ Critical error in LoadData: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
             await JS.InvokeVoidAsync("alert", $"حدث خطأ: {ex.Message}");
         }
         finally
         {
             isLoadingModal = false;
+            StateHasChanged();
+            Console.WriteLine("🔵 LoadData finished, isLoadingModal = false");
         }
     }
     private Dictionary<int, int> GetAdministrativeRatings()
