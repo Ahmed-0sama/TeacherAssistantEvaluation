@@ -1,6 +1,7 @@
 ﻿@page "/index"
 @rendermode InteractiveWebAssembly
 @using Shared.Dtos
+@using Shared.Dtos.EvaluationPeriod
 @using Shared.Dtos.ProfessorEvaluationDto
 @using Shared.Dtos.TASubmissions
 @using System.Text.Json
@@ -185,6 +186,7 @@
     private UserDataDto userData = new UserDataDto();
     private bool isLoading = true;
     private int evaluationId;
+    private int evaluationPeriodId;
     private int? submissionId;
     private bool isExistingSubmission = false;
     private string? errorMessage;
@@ -199,9 +201,28 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await GetEvaluationPeriod();
         await LoadUserData();
     }
 
+    private async Task GetEvaluationPeriod()
+    {
+        try
+        {
+            var response = await http.GetAsync($"api/EvaluationPeriod/GetActiveEvaluationPeriod");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<GetEvaluationPeriodDto>();
+                evaluationPeriodId = result.PeriodId;
+                Console.WriteLine($"✅ evaluationPeriod retrieved{evaluationPeriodId}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"No Active EvaluationPeriod  {ex.Message}");
+        }
+    }
     private void HandleEducationalData(EducationalActivityDto data)
     {
         educationalData = data;
@@ -269,7 +290,7 @@
     {
         try
         {
-            var response = await http.PostAsync($"/api/Evaluation/getorcreate?taEmployeeId={userData.Id}&periodId=1", null);
+            var response = await http.PostAsync($"/api/Evaluation/getorcreate?taEmployeeId={userData.Id}&periodId={evaluationPeriodId}", null);
 
             if (response.IsSuccessStatusCode)
             {
