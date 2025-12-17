@@ -1,4 +1,4 @@
-﻿@* TeachingActivitiesEvaluation.razor *@
+﻿@* TeachingActivitiesEvaluation.razor - FIXED STATE SYNC *@
 <div class="card shadow-sm mx-auto" style="max-width: 1100px;">
     <div class="card-body p-4">
         <h5 class="text-end text-dark mb-4">1-2 الأنشطة التعليمية المباشرة والمعادلة (10%)</h5>
@@ -113,51 +113,110 @@
 
 @code {
     [Parameter] public double TeachingLoadScore { get; set; }
-    [Parameter] public EventCallback<Dictionary<int, int>> OnRatingsChanged { get; set; }
+    [Parameter] public EventCallback<(Dictionary<int, int> Ratings, decimal Total)> OnRatingsChanged { get; set; }
     [Parameter] public bool IsViewMode { get; set; }
     [Parameter] public Dictionary<int, int>? ExistingRatings { get; set; }
 
     private Dictionary<int, int> ratings = new();
+    private Dictionary<int, int>? previousExistingRatings = null;
 
     private List<GradeOption> gradeOptions = new List<GradeOption>
     {
-        new GradeOption { Value = 0, Label = "ضعيف" },
-        new GradeOption { Value = 1, Label = "مقبول" },
-        new GradeOption { Value = 1, Label = "جيد" },
-        new GradeOption { Value = 2, Label = "جيد جداً" },
-        new GradeOption { Value = 2, Label = "ممتاز" }
+        new GradeOption { Value = 0, Label = "ضعيف (0)" },
+        new GradeOption { Value = 1, Label = "مقبول (0.5)" },
+        new GradeOption { Value = 2, Label = "جيد (1)" },
+        new GradeOption { Value = 3, Label = "جيد جداً (1.5)" },
+        new GradeOption { Value = 4, Label = "ممتاز (2)" }
     };
 
     protected override void OnParametersSet()
     {
-        if (ExistingRatings != null && ExistingRatings.Any())
+        // ✅ FIXED: Only reload if ExistingRatings changed
+        if (ExistingRatings != null && !AreRatingsDictionariesEqual(ExistingRatings, previousExistingRatings))
         {
-            ratings = new Dictionary<int, int>(ExistingRatings);
+            Console.WriteLine($"🔄 Loading {ExistingRatings.Count} existing ratings for Teaching Activities");
+
+            ratings = new Dictionary<int, int>();
+            foreach (var kvp in ExistingRatings)
+            {
+                // RatingId 1-5 maps to ScoreValue 0-4
+                int scoreValue = ConvertRatingIdToScoreValue(kvp.Value);
+                ratings[kvp.Key] = scoreValue;
+                Console.WriteLine($"  Criterion {kvp.Key}: RatingId {kvp.Value} → ScoreValue {scoreValue}");
+            }
+
+            previousExistingRatings = new Dictionary<int, int>(ExistingRatings);
+
+            // ✅ Notify parent immediately after loading
+            var ratingsWithRatingIds = ConvertToRatingIds(ratings);
+            var total = CalculateTotal();
+            OnRatingsChanged.InvokeAsync((ratingsWithRatingIds, total));
         }
+    }
+
+    private bool AreRatingsDictionariesEqual(Dictionary<int, int>? dict1, Dictionary<int, int>? dict2)
+    {
+        if (dict1 == null && dict2 == null) return true;
+        if (dict1 == null || dict2 == null) return false;
+        if (dict1.Count != dict2.Count) return false;
+
+        foreach (var kvp in dict1)
+        {
+            if (!dict2.TryGetValue(kvp.Key, out var value) || value != kvp.Value)
+                return false;
+        }
+        return true;
     }
 
     private void UpdateRating(int criterionId, string? value)
     {
-        if (int.TryParse(value, out int ratingId) && ratingId > 0)
+        if (int.TryParse(value, out int scoreValue) && scoreValue >= 0)
         {
-            ratings[criterionId] = ratingId;
+            ratings[criterionId] = scoreValue;
+            Console.WriteLine($"✏️ Updated Criterion {criterionId} to ScoreValue {scoreValue}");
         }
         else
         {
             ratings.Remove(criterionId);
+            Console.WriteLine($"🗑️ Removed Criterion {criterionId}");
         }
 
-        OnRatingsChanged.InvokeAsync(ratings);
+        // Convert ScoreValue to RatingId before sending to parent
+        var ratingsWithRatingIds = ConvertToRatingIds(ratings);
+        var total = CalculateTotal();
+
+        Console.WriteLine($"📤 Sending {ratingsWithRatingIds.Count} ratings to parent, Total: {total}");
+        OnRatingsChanged.InvokeAsync((ratingsWithRatingIds, total));
     }
 
     private string GetRatingValue(int criterionId)
     {
-        return ratings.TryGetValue(criterionId, out var ratingId) ? ratingId.ToString() : "";
+        return ratings.TryGetValue(criterionId, out var scoreValue) ? scoreValue.ToString() : "";
     }
 
     private decimal CalculateTotal()
     {
-        return ratings.Values.Sum();
+        return ratings.Values.Sum(v => v * 0.5m);
+    }
+
+    private Dictionary<int, int> ConvertToRatingIds(Dictionary<int, int> scoreValues)
+    {
+        var result = new Dictionary<int, int>();
+
+        foreach (var kvp in scoreValues)
+        {
+            // Teaching Activities: ScoreValue 0-4 maps to RatingId 1-5
+            int ratingId = kvp.Value + 1;
+            result[kvp.Key] = ratingId;
+        }
+
+        return result;
+    }
+
+    private int ConvertRatingIdToScoreValue(int ratingId)
+    {
+        // Teaching Activities: RatingId 1-5 maps to ScoreValue 0-4
+        return ratingId >= 1 && ratingId <= 5 ? ratingId - 1 : 0;
     }
 
     public class GradeOption

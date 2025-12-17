@@ -8,6 +8,7 @@ namespace Shared.Dtos.ProfessorEvaluationDto
 {
     public class TAEvaluationViewModelDto
     {
+        public int? EvaluationId { get; set; }
         // From Evaluation API
         public int EvaluationPeriodId { get; set; }
         public int PeriodId { get; set; }
@@ -23,8 +24,7 @@ namespace Shared.Dtos.ProfessorEvaluationDto
 
         // From TA Details API (to be fetched)
         public string TAName { get; set; } = string.Empty;
-
-        // REMOVED: WorkId (redundant - use TAEmployeeId directly)
+        public string ReturnComments { get; set; } = string.Empty;
 
         public string CourseCode { get; set; } = string.Empty;
         public string CourseName { get; set; } = string.Empty;

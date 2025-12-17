@@ -52,6 +52,18 @@
                                             {
                                                 <span class="badge bg-success">تم التقييم</span>
                                             }
+                                            else if (ta.statusid == 6)
+                                            {
+                                                <span class="badge bg-success">تم قبول التقييم من العميد</span>
+                                            }
+                                            else if (ta.statusid == 7)
+                                            {
+                                                <span class="badge bg-danger">مرتجع من العمييد</span>
+                                            }
+                                            else if (ta.statusid == 3||ta.statusid==4)
+                                            {
+                                                <span class="badge bg-danger">تم الارجاع</span>
+                                            }
                                             else 
                                             {
                                                 <span class="badge bg-warning text-dark">بانتظار التقييم</span>
@@ -59,16 +71,22 @@
 
                                         </td>
                                         <td>
-                                            @if (ta.statusid == 5)
+                                            @if (ta.statusid == 5||ta.statusid==6||ta.statusid==3||ta.statusid==4)
                                             {
                                                 <button class="btn btn-sm btn-primary" @onclick="() => OpenModal(ta)">
                                                     عرض التقييم
                                                 </button>
                                             }
+                                            else if (ta.statusid == 7)
+                                            {
+                                                <button class="btn btn-sm btn-primary" @onclick="() => OpenModal(ta)">
+                                                    اعادة التقييم
+                                                </button>
+                                            }
                                             else
                                             {
                                                 <button class="btn btn-sm btn-primary" @onclick="() => OpenModal(ta)">
-                                                    "تقييم"
+                                                    تقييم
                                                 </button>
                                             }
                                         </td>
@@ -123,13 +141,11 @@
             taList = hodEvaluations.Select(h => new UserDataDto
             {
                 Name = h.TaName ?? $"TA #{h.TaEmployeeId}",
-                Department = h.PeriodName,
+                Department = h.TaName,
                 EmployeeNumber = h.TaEmployeeId,
                 EvaluationId = h.EvaluationId,
                 Id = h.TaEmployeeId,
-
-                // Status comes from HODEvaluationResponse
-				statusid = (h.Evaluations != null && h.Evaluations.Any()) ? 5 : 1,
+                statusid = h.StatusId,
                 
                 // There IS a HOD evaluation because this DTO exists
                 HasHodEvaluation = true,
@@ -154,7 +170,7 @@
     private void OpenModal(UserDataDto ta)
     {
         selectedTA = ta;
-        isViewMode = ta.statusid==5;
+        isViewMode = ta.statusid==5||ta.statusid==6||ta.statusid==3||ta.statusid==4;
         showModal = true;
     }
 

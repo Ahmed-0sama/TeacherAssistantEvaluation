@@ -1,4 +1,5 @@
 ﻿using DataAccess.Entities;
+using DataAccess.SeedData;
 using Microsoft.EntityFrameworkCore;
 
 
@@ -130,6 +131,7 @@ public partial class SrsDbContext : DbContext
             entity.Property(e => e.StatusDescription).HasMaxLength(255);
             entity.Property(e => e.StatusName).HasMaxLength(100);
         });
+        DataAccess.SeedData.SeedEvaluationStatus.SeedCriteria(modelBuilder);
 
         modelBuilder.Entity<GsdeanEvaluation>(entity =>
         {
@@ -168,7 +170,6 @@ public partial class SrsDbContext : DbContext
 
             entity.HasIndex(e => new { e.EvaluationId, e.CriterionId }, "UQ_HODEval").IsUnique();
 
-            entity.Property(e => e.StatusId).HasColumnName("StatusID");//new realtion added into my fluentapi 
 
             entity.Property(e => e.HodevalId).HasColumnName("HODEvalID");
             entity.Property(e => e.CriterionId).HasColumnName("CriterionID");
@@ -189,13 +190,6 @@ public partial class SrsDbContext : DbContext
                 .HasForeignKey(d => d.RatingId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_HODEvaluations_RatingID");
-
-
-            entity.HasOne(d => d.Status)
-            .WithMany(p => p.Hodevaluations)              // or .WithMany() if you skipped the nav
-            .HasForeignKey(d => d.StatusId)
-            .OnDelete(DeleteBehavior.ClientSetNull)       // or Restrict, up to you
-            .HasConstraintName("FK_HODEvaluations_StatusID");
         });
         DataAccess.SeedData.HodEvaluationCriterionSeed.SeedCriteria(modelBuilder);
 
@@ -326,6 +320,7 @@ public partial class SrsDbContext : DbContext
                 .IsFixedLength();
             entity.Property(e => e.StatusName).HasMaxLength(100);
         });
+        ResearchStatusSeed.Seed(modelBuilder);
 
         modelBuilder.Entity<Tasubmission>(entity =>
         {

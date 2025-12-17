@@ -12,13 +12,11 @@ public partial class Hodevaluation
     public int CriterionId { get; set; }
 
     public int RatingId { get; set; }
-    public int StatusId { get; set; }
 
     public virtual HodevaluationCriterion Criterion { get; set; } = null!;
 
     public virtual Evaluation Evaluation { get; set; } = null!;
 
     public virtual Rating Rating { get; set; } = null!;
-    public virtual EvaluationStatus Status { get; set; } = null!;
 
 }

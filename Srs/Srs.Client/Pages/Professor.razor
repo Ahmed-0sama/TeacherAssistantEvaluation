@@ -53,7 +53,7 @@
                         {
                             <tr>
                                 <td>@eval.TAName</td>
-                                <td>@eval.CourseName</td>
+                                <td>@eval.StatusId</td>
                                 <td>
                                     @if (eval.ProfessorEvaluationTotal.HasValue)
                                     {
@@ -69,11 +69,34 @@
                                     }
                                 </td>
                                 <td>
-                                    <button type="button"
-                                            class="btn btn-sm @(eval.IsEvaluated ? "btn-info" : "btn-primary")"
-                                            @onclick="() => OpenModal(eval)">
-                                        @(eval.IsEvaluated ? "عرض/تعديل" : "تقييم")
-                                    </button>
+                                    @if (eval.StatusId==0)
+                                    {
+                                        //<span class="badge bg-danger me-2">تم الإرجاع</span>
+                                        <button type="button"
+                                                class="btn btn-sm btn-primary"
+                                                @onclick="() => OpenModal(eval)">
+                                            تققيم
+                                        </button>
+                                    }
+                                    else if (eval.StatusId == 4)
+                                    {
+                                        <span class="badge bg-danger me-2">تم الإرجاع</span>
+                                        <button type="button"
+                                                class="btn btn-sm btn-primary"
+                                                @onclick="() => OpenModal(eval)">
+                                            تعديل التقييم
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success me-2">تم التقييم</span>
+                                        <button type="button"
+                                                class="btn btn-sm btn-info"
+                                                @onclick="() => OpenModal(eval)">
+                                            عرض التقييم
+                                        </button>
+                                    }
+
                                 </td>
                             </tr>
                         }
@@ -93,7 +116,20 @@
                 <h5 class="m-0">تقييم استاذ المقرر</h5>
                 <button type="button" class="btn-close btn-close-white" @onclick="HideModal" aria-label="Close"></button>
             </div>
-
+            @if (selectedEvaluation.StatusId == 4 && !string.IsNullOrEmpty(ReturnComment))
+            {
+                <div class="alert alert-warning border-warning shadow-sm mb-4" role="alert">
+                    <div class="d-flex align-items-start">
+                        <i class="bi bi-arrow-return-right fs-4 me-3 text-warning"></i>
+                        <div class="flex-grow-1">
+                            <h6 class="alert-heading fw-bold mb-2">
+                                تم الإرجاع من رئيس القسم
+                            </h6>
+                            <p class="mb-0 text-dark">@ReturnComment</p>
+                        </div>
+                    </div>
+                </div>
+            }
             <div class="modal-body">
                 <div class="info-section mb-4">
                     <div class="row g-3">
@@ -249,7 +285,7 @@
     private List<TAEvaluationViewModelDto> evaluationsList = new();
     private TAEvaluationViewModelDto? selectedEvaluation;
     private ProfessorEvaluationResponseDto currentProfEval = new();
-
+    private string ReturnComment = string.Empty;
     private bool isLoading = true;
     private bool isModalVisible = false;
     private bool isReadOnly = false;
@@ -365,20 +401,23 @@
                     {
                         var viewModel = new TAEvaluationViewModelDto
                         {
+                            EvaluationId=evaluation.evaluationId,
                             ProfEvalId = profEval.ProfEvalId,
                             EvaluationPeriodId = currentEvaluationPeriodId,
                             TAEmployeeId = taEmployeeId,
                             PeriodId = currentEvaluationPeriodId,
                             PeriodName = evaluation.periodName ?? "فترة غير معروفة",
+
                             StatusId = profEval.StatusId,
                             StatusName = profEval.StatusName ?? "قيد الانتظار",
-                            CanEdit = profEval.StatusId <= 6,
-                            SemesterName = profEval.SemesterName,
-                            TAName = $"TA #{taEmployeeId}", // TODO: Get actual name
-                            CourseCode = profEval.CourseCode ?? "CS10002",
-                            CourseName = profEval.CourseName ?? "ComputerScience24",
-                            NumberOfClasses = 12, // Default
+                            CanEdit = (profEval.StatusId == 4),
 
+                            SemesterName = profEval.SemesterName,
+                            TAName = $"TA #{taEmployeeId}",
+                            CourseCode = profEval.CourseCode ?? "CS1010",
+                            CourseName = profEval.CourseName ?? "ComputerScience1",
+                            NumberOfClasses = 12,
+                            ReturnComments = profEval.HodReturnComment,
                             ProfessorEvaluationTotal = profEval.TotalScore
                         };
 
@@ -396,18 +435,16 @@
                         TAEmployeeId = taEmployeeId,
                         PeriodId = currentEvaluationPeriodId,
                         PeriodName = evaluation.periodName ?? "فترة غير معروفة",
-                        StatusId = 1,
-                        StatusName = "قيد الانتظار",
-                        SemesterName="FirstSemester2025",
-                        CanEdit = true,
-                       
-                        
-                        TAName = $"TA #{taEmployeeId}", // TODO: Get actual name
-                        CourseCode = "CS10012",
-                        CourseName = "ComputerScience23",
-                        
-                        NumberOfClasses = 12,
 
+                        StatusId = 0,
+                        StatusName = "قيد الانتظار",
+                        CanEdit = true,
+
+                        SemesterName = "FirstSemester2025",
+                        TAName = $"TA #{taEmployeeId}",
+                        CourseCode = "css",
+                        CourseName = "cs1",
+                        NumberOfClasses = 12,
                         ProfessorEvaluationTotal = null
                     };
 
@@ -437,7 +474,11 @@
         selectedEvaluation = eval;
         validationErrors.Clear();
         saveMessage = null;
-
+        isReadOnly = (eval.StatusId == 2);
+        if (eval.StatusId == 4)
+        {
+            ReturnComment = eval.ReturnComments ?? "لا توجد ملاحظات";
+        }
         if (eval.IsEvaluated && eval.ProfEvalId.HasValue)
         {
             Console.WriteLine($"Loading existing evaluation with ID: {eval.ProfEvalId}");
@@ -449,17 +490,19 @@
             // New evaluation
             currentProfEval = new ProfessorEvaluationResponseDto
             {
+                
                 EvaluationPeriodId = eval.EvaluationPeriodId,
                 TaEmployeeId = eval.TAEmployeeId,
                 ProfessorEmployeeId = currentProfessorId,
-                CourseCode = "CS10023",
-                CourseName = "ComputerScience23",
+                CourseCode = "cs",
+                CourseName = "ComputerScience321",
                 OfficeHoursScore = 0,
                 AttendanceScore = 0,
                 PerformanceScore = 0,
                 SemesterName = eval.SemesterName,
                 Comments = "",
-                StatusId = 1
+                StatusId = eval.StatusId,
+                HodReturnComment=eval.ReturnComments
             };
             isReadOnly = false;
         }
@@ -483,6 +526,14 @@
                 if (profEvalDetail != null)
                 {
                     currentProfEval = profEvalDetail;
+
+                    // ✅ Load ReturnComment from API if status is 4
+                    if (profEvalDetail.StatusId == 4 && !string.IsNullOrEmpty(profEvalDetail.HodReturnComment))
+                    {
+                        ReturnComment = profEvalDetail.HodReturnComment;
+                        Console.WriteLine($"✅ Loaded ReturnComment from API: {ReturnComment}");
+                    }
+
                     Console.WriteLine($"✅ Loaded existing evaluation successfully");
                 }
                 else
@@ -496,14 +547,16 @@
                 Console.WriteLine($"⚠️ Failed to load evaluation: {response.StatusCode} - {error}");
             }
 
-            isReadOnly = eval.StatusId > 6;
+            // ✅ Fix: Consistent isReadOnly logic - StatusId 2,5,6 are view-only
+            isReadOnly = !(eval.StatusId == 0||eval.StatusId==4);
             StateHasChanged();
         }
         catch (Exception ex)
         {
             Console.WriteLine($"❌ Error loading evaluation: {ex.Message}");
-            
-            isReadOnly = eval.StatusId > 6;
+
+            // ✅ Fix: Consistent isReadOnly logic
+            isReadOnly = !(eval.StatusId==2||eval.StatusId==4);
             StateHasChanged();
         }
     }
@@ -514,6 +567,7 @@
         selectedEvaluation = null;
         validationErrors.Clear();
         saveMessage = null;
+        ReturnComment = string.Empty;
         StateHasChanged();
     }
 
@@ -596,6 +650,8 @@
                 // Update existing evaluation
                 var updateDto = new UpdateProfessorEvaluationDto
                 {
+                    
+					EvalId = selectedEvaluation.EvaluationId??0,
                     CourseCode = currentProfEval.CourseCode,
                     SemesterName = currentProfEval.SemesterName,
                     CourseName = currentProfEval.CourseName,

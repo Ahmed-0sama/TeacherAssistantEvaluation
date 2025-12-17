@@ -64,7 +64,7 @@ namespace Srs.Controllers
         {
             try
             {
-                var result = await _hodEvaluationService.GetHodEvaluationByEvaluationIdAsync(evaluationId);
+                var result = await _hodEvaluationService.GetHodEvaluationAsync(evaluationId);
                 if (result == null)
                     return NotFound(new { message = $"No HOD evaluation found for evaluation ID {evaluationId}" });
 
@@ -86,6 +86,42 @@ namespace Srs.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, new { message = "An error occurred while retrieving HOD evaluations", details = ex.Message });
+            }
+        }
+        [HttpPost("ReturnToProfessor")]
+        public async Task<IActionResult> ReturnToProfessor([FromBody] ReturnToProfessor dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+            try
+            {
+                var success = await _hodEvaluationService.ReturnToProfessorAsync(dto);
+                if (success)
+                    return Ok(new { message = "Evaluation returned to professor successfully" });
+                else
+                    return StatusCode(500, new { message = "Failed to return evaluation to professor" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred while returning the evaluation to professor", details = ex.Message });
+            }
+        }
+        [HttpPost("ReturnToTA")]
+        public async Task<IActionResult> ReturnToTA([FromBody] ReturnEvaluationHODDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+            try
+            {
+                var success = await _hodEvaluationService.ReturnToTaAsync(dto);
+                if (success)
+                    return Ok(new { message = "Evaluation returned to TA successfully" });
+                else
+                    return StatusCode(500, new { message = "Failed to return evaluation to TA" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred while returning the evaluation to TA", details = ex.Message });
             }
         }
     }

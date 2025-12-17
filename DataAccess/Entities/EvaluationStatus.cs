@@ -14,6 +14,5 @@ public partial class EvaluationStatus
     public virtual ICollection<GsdeanEvaluation> GsdeanEvaluations { get; set; } = new List<GsdeanEvaluation>();
     public virtual ICollection<ProfessorCourseEvaluation> ProfessorCourseEvaluations { get; set; } = new List<ProfessorCourseEvaluation>();
     public virtual ICollection<VpgsEvaluation> VpgsEvaluations { get; set; } = new List<VpgsEvaluation>();
-    public virtual ICollection<Hodevaluation> Hodevaluations { get; set; } = new List<Hodevaluation>();
 
 }

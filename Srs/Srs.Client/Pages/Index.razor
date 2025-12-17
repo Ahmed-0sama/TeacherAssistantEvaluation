@@ -1,6 +1,7 @@
 ﻿@page "/index"
 @rendermode InteractiveWebAssembly
 @using Shared.Dtos
+@using Shared.Dtos.EvaluationPeriod
 @using Shared.Dtos.ProfessorEvaluationDto
 @using Shared.Dtos.TASubmissions
 @using System.Text.Json
@@ -47,6 +48,17 @@
                         <i class="bi bi-lock-fill"></i> وضع العرض فقط
                     </h5>
                     <p class="mb-0">تم إرسال هذا التقييم ولا يمكن تعديله. يمكنك فقط عرض البيانات.</p>
+                </div>
+            </div>
+        }
+        @if (!string.IsNullOrEmpty(ReturnMessage))
+        {
+            <div class="w-75 mb-4">
+                <div class="alert alert-info shadow-sm" role="alert">
+                    <h5 class="alert-heading">
+                        <i class="bi bi-lock-fill"></i> تم الارجاع من رئيس القسم
+                    </h5>
+                    <p>@ReturnMessage</p>
                 </div>
             </div>
         }
@@ -174,12 +186,13 @@
     private UserDataDto userData = new UserDataDto();
     private bool isLoading = true;
     private int evaluationId;
+    private int evaluationPeriodId;
     private int? submissionId;
     private bool isExistingSubmission = false;
     private string? errorMessage;
     private string? successMessage;
     private bool viewonly = false;
-
+    private string ReturnMessage = "";
     private List<ResearchPaperDto> researchPapers = new List<ResearchPaperDto>();
     private OtherActivitiesDto otherActivities = new OtherActivitiesDto();
     private AdminstrativeActivityDto administrativeData = new AdminstrativeActivityDto();
@@ -188,9 +201,28 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await GetEvaluationPeriod();
         await LoadUserData();
     }
 
+    private async Task GetEvaluationPeriod()
+    {
+        try
+        {
+            var response = await http.GetAsync($"api/EvaluationPeriod/GetActiveEvaluationPeriod");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<GetEvaluationPeriodDto>();
+                evaluationPeriodId = result.PeriodId;
+                Console.WriteLine($"✅ evaluationPeriod retrieved{evaluationPeriodId}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"No Active EvaluationPeriod  {ex.Message}");
+        }
+    }
     private void HandleEducationalData(EducationalActivityDto data)
     {
         educationalData = data;
@@ -230,9 +262,9 @@
         {
             userData = new Shared.Dtos.UserDataDto
             {
-                Id = 1044,
+                Id = 777,
                 Name = "علياء احمد",
-                EmployeeNumber = 12323,
+                EmployeeNumber = 777,
                 Qualification = "ماجستير في علوم الحاسب",
                 Department = "قسم علوم الحاسب",
                 College = "AASTMT"
@@ -258,7 +290,7 @@
     {
         try
         {
-            var response = await http.PostAsync($"/api/Evaluation/getorcreate?taEmployeeId={userData.Id}&periodId=1", null);
+            var response = await http.PostAsync($"/api/Evaluation/getorcreate?taEmployeeId={userData.Id}&periodId={evaluationPeriodId}", null);
 
             if (response.IsSuccessStatusCode)
             {
@@ -278,10 +310,15 @@
                     Console.WriteLine("ℹ️ No existing submission found - new evaluation");
                 }
 
-                if (result.StatusId >= 2)
+                if (result.StatusId == 3)
+                {
+                    ReturnMessage = result.HodRetrunMessage;
+                    viewonly = false;
+                }
+                else if (result.StatusId >= 2)
                 {
                     viewonly = true;
-                    Console.WriteLine($"🔒 View-only mode enabled (StatusId: {result.StatusId})");
+                    Console.WriteLine($"View-only mode enabled (StatusId: {result.StatusId})");
                 }
 
                 StateHasChanged();

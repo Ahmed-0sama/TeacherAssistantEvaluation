@@ -3,13 +3,14 @@
 @inject HttpClient Http
 @inject IJSRuntime JS
 
+<div class="modal-container modal-container-xl">
 <div class="modal-overlay" @onclick="HandleClose">
     <div class="modal-container modal-container-xl" @onclick:stopPropagation="true">
         <div class="modal-header" dir="rtl">
             <h5 class="modal-title">تفاصيل مساعد التدريس</h5>
             <button type="button" class="btn-close btn-close-white ms-0 me-auto" @onclick="HandleClose"></button>
         </div>
-        <div class="modal-body">
+        <div class="modal-body" id="pdfArea">
             @if (isLoadingModal)
             {
                 <div class="text-center p-5">
@@ -22,6 +23,7 @@
             else
             {
                 <div class="border rounded p-3 bg-light mb-3">
+
                     <h5 class="mb-3 text-primary">البيانات الأساسية</h5>
 
                     <div class="row">
@@ -54,7 +56,20 @@
                         </div>
                     </div>
                 </div>
-
+                    @if (statusid == 7)
+                    {
+                        <div class="alert alert-danger" role="alert">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">
+                                    <i class="bi bi-exclamation-triangle-fill me-2"></i>سبب رفض الاعتماد
+                                </label>
+                                <div class="form-control bg-light" readonly style="min-height: 60px;">
+                                    @DeanComments
+                                </div>
+                                <input type="hidden" value="@(DeanComments)" />
+                            </div>
+                        </div>
+                    }
                 <!-- Professor Evaluations -->
                 <div class="border rounded p-3 bg-light mb-3">
                     <h5 class="mb-3 text-primary">تقييم النشاط العلمي</h5>
@@ -184,7 +199,7 @@
                             <div class="card bg-primary bg-opacity-10 shadow-sm mx-auto mt-4" style="max-width: 600px; border-radius: 12px;">
                                 <div class="card-body text-center py-4">
                                     <h3 class="text-primary fw-semibold mb-2" style="direction: rtl; font-size: 18px;">المجموع الكلي للعبء التدريسي</h3>
-                                    <p class="text-primary fw-bold fs-4 mb-0" style="direction: ltr;">@(teachingLoadScore) / 40</p>
+                                    <p class="text-primary fw-bold fs-4 mb-0" style="direction: ltr;">@(y) / 40</p>
                                 </div>
                             </div>
                         }
@@ -192,7 +207,7 @@
                 </div>
 
                 <!-- Child Components -->
-                <Srs.Client.Compontets.TeachingActivitiesEvaluation TeachingLoadScore="@teachingLoadScore"
+                <Srs.Client.Compontets.TeachingActivitiesEvaluation TeachingLoadScore="@y"
                                                                     OnRatingsChanged="OnTeachingActivitiesRatingsChanged"
                                                                     IsViewMode="@IsViewMode"
                                                                     ExistingRatings="@GetExistingRatings("DirectTeaching")" />
@@ -201,6 +216,7 @@
                                                                          EvaluationPeriodId="EvaluationPeriodId"
                                                                          TaEmployeeId="SelectedTA.Id"
                                                                          OnRatingsChanged="OnScientificActivityRatingsChanged"
+                                                                         OnScientificTotalChanged="OnScientificTotalReceived"
                                                                          IsViewMode="@IsViewMode"
                                                                          ExistingRatings="@GetAdministrativeRatings()" />
 
@@ -209,6 +225,59 @@
                                                        IsViewMode="@IsViewMode"
                                                        ExistingPersonalTraits="@GetExistingRatings("PersonalTraits")"
                                                        ExistingStudentActivities="@GetExistingRatings("StudentActivities")" />
+
+                <div class="card bg-success bg-opacity-10 shadow-lg mx-auto mt-4 mb-4" style="max-width: 900px;">
+                    <div class="card-body text-center py-5">
+                        <h4 class="text-success fw-bold mb-3">
+                            <i class="bi bi-check-circle-fill me-2"></i>
+                            المجموع الكلي النهائي
+                        </h4>
+                        <div class="row justify-content-center">
+                            <div class="col-auto">
+                                <div class="bg-white rounded-3 p-4 shadow-sm">
+                                    <p class="text-success fw-bold fs-1 mb-0" style="direction: ltr;">
+                                        @CalculateFinalTotal() / 100
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- تفصيل الدرجات -->
+                        <div class="mt-4">
+                            <div class="row text-center g-3">
+                                <div class="col-md-2">
+                                    <small class="text-muted d-block">العبء التدريسي</small>
+                                    <span class="badge bg-light text-dark">@(teachingLoadScore) / 50</span>
+                                    <div class="mt-1" style="font-size: 0.7rem;">
+                                        <small class="text-muted d-block">تقييم الأساتذة: @CalculateAverageScore()</small>
+                                        <small class="text-muted d-block">اكتمال النصاب: @(teachingdto.gradegiven ?? 0)</small>
+                                        <small class="text-muted d-block">الأنشطة التعليمية: @GetTeachingActivitiesTotal()</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <small class="text-muted d-block">النشاط العلمي</small>
+                                    <span class="badge bg-light text-dark">@GetScientificTotal() / 10</span>
+                                </div>
+                                <div class="col-md-2">
+                                    <small class="text-muted d-block">النشاط الإداري</small>
+                                    <span class="badge bg-light text-dark">@GetAdministrativeTotal() / 10</span>
+                                </div>
+                                <div class="col-md-2">
+                                    <small class="text-muted d-block">الأنشطة الطلابية</small>
+                                    <span class="badge bg-light text-dark">@GetStudentActivitiesTotal() / 10</span>
+                                </div>
+                                <div class="col-md-2">
+                                    <small class="text-muted d-block">استقصاء + إرشاد</small>
+                                    <span class="badge bg-light text-dark">8 / 10</span>
+                                </div>
+                                <div class="col-md-2">
+                                    <small class="text-muted d-block">السمات الشخصية</small>
+                                    <span class="badge bg-light text-dark">@GetPersonalTraitsTotal() / 10</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <!-- Comments Section -->
                 <div class="border rounded p-3 bg-light mb-3">
                     <h5 class="mb-3 text-primary">الملاحظات والتعليقات</h5>
@@ -248,12 +317,18 @@
             @if (IsViewMode)
             {
                 <button type="button" class="btn btn-secondary" @onclick="HandleClose">إغلاق</button>
+                    <button class="btn btn-primary" @onclick="DownloadPdf">
+                        Export As PDF
+                    </button>
+
+                    //here i want to add the print button 
                 <button type="button"
                         class="btn btn-outline-primary px-4"
                         @onclick="PrintModal"
                         disabled="@isLoadingModal">
                     <i class="bi bi-printer me-2"></i>طباعة التقرير الكامل
                 </button>
+
             }
             else if (!isLoadingModal)
             {
@@ -263,11 +338,136 @@
                         disabled="@isSaving">
                     @(isSaving ? "جارٍ الحفظ..." : "حفظ التقييم")
                 </button>
+                    <button type="button" class="btn btn-warning"
+                            @onclick="OpenReturnModal"
+                            disabled="@isSaving">
+                        <i class="bi bi-arrow-return-right me-2"></i>إرجاع التقييم
+                    </button>
             }
-        </div>
+          </div>
+     </div>
     </div>
 </div>
+<!-- Professor Selection Modal -->
+@if (showProfessorModal)
+{
+    <div class="modal-overlay" style="z-index: 10000;" @onclick="CloseReturnModal">
+        <div class="modal-container" style="max-width: 600px;" @onclick:stopPropagation="true">
+            <div class="modal-header" dir="rtl">
+                <h5 class="modal-title">
+                    <i class="bi bi-arrow-return-right me-2"></i>
+                    اختر جهة الإرجاع
+                </h5>
+                <button type="button" class="btn-close btn-close-white ms-0 me-auto" @onclick="CloseReturnModal"></button>
+            </div>
 
+            <div class="modal-body" dir="rtl">
+                <div class="mb-4">
+                    <label class="form-label fw-bold">سبب الإرجاع</label>
+                    <textarea class="form-control"
+                              rows="3"
+                              @bind="HodReturnComment"
+                              placeholder="اذكر سبب إرجاع التقييم..."></textarea>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <!-- Return to TA Button -->
+                    <button type="button"
+                            class="btn btn-outline-primary btn-lg text-start"
+                            style="text-align: right !important;"
+                            @onclick="() => ConfirmReturnToTA()"
+                            disabled="@(string.IsNullOrWhiteSpace(HodReturnComment) || isSaving)">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="bi bi-person me-2"></i>
+                                <span>إرجاع إلى مساعد التدريس</span>
+                                <div class="small text-muted">@SelectedTA?.Name</div>
+                            </div>
+                        </div>
+                    </button>
+
+                    <!-- Divider -->
+                    <div class="text-center my-2">
+                        <span class="text-muted">أو</span>
+                    </div>
+
+                    <!-- Return to Professor Section -->
+                    <div class="border rounded p-3 bg-light">
+                        <h6 class="fw-bold mb-3">
+                            <i class="bi bi-mortarboard me-2"></i>
+                            إرجاع إلى أستاذ المقرر
+                        </h6>
+
+                        @if (profdto == null || !profdto.Any())
+                        {
+                            <div class="alert alert-warning mb-0">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                لا توجد تقييمات من أساتذة المقررات
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="list-group">
+                                @foreach (var prof in profdto)
+                                {
+                                    <button type="button"
+                                            class="list-group-item list-group-item-action @(selectedProfessorId == prof.ProfessorEmployeeId ? "active" : "")"
+                                            style="text-align: right;"
+                                            @onclick="() => SelectProfessor(prof.ProfessorEmployeeId)"
+                                            disabled="@isSaving">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div style="text-align: right; flex: 1;">
+                                                <div class="fw-bold">@prof.ProfessorName</div>
+                                                <small>@prof.CourseName (@prof.CourseCode)</small>
+                                            </div>
+                                            <div>
+                                                @if (prof.IsReturned)
+                                                {
+                                                    <span class="badge bg-warning text-dark">
+                                                        <i class="bi bi-arrow-return-right me-1"></i>
+                                                        تم الإرجاع مسبقاً
+                                                    </span>
+                                                }
+                                                else if (selectedProfessorId == prof.ProfessorEmployeeId)
+                                                {
+                                                    <i class="bi bi-check-circle-fill text-white"></i>
+                                                }
+                                            </div>
+                                        </div>
+                                    </button>
+                                }
+                            </div>
+
+                            @if (selectedProfessorId > 0)
+                            {
+                                <button type="button"
+                                        class="btn btn-primary w-100 mt-3"
+                                        @onclick="ConfirmReturnToProfessor"
+                                        disabled="@(string.IsNullOrWhiteSpace(HodReturnComment) || isSaving)">
+                                    @if (isSaving)
+                                    {
+                                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                    }
+                                    <i class="bi bi-send me-2"></i>
+                                    @(isSaving ? "جارٍ الإرجاع..." : "تأكيد الإرجاع إلى الأستاذ المحدد")
+                                </button>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button"
+                        class="btn btn-secondary"
+                        @onclick="CloseReturnModal"
+                        disabled="@isSaving">
+                    إلغاء
+                </button>
+            </div>
+        </div>
+    </div>
+}
 @code {
     // Parameters passed from parent component
     [Parameter] public UserDataDto? SelectedTA { get; set; }
@@ -275,26 +475,34 @@
     [Parameter] public bool IsViewMode { get; set; } = false;
     [Parameter] public EventCallback OnClose { get; set; }
     [Parameter] public EventCallback OnSaveSuccess { get; set; }
-
+    private decimal scientificTotal = 0;
+    private int statusid = 0;
     // Internal state
     private bool isLoadingModal = true;
+    private bool isGeneratingPdf = false;
+    private string HodReturnComment = "";
     private bool isSaving = false;
     private TeachingDataDto teachingdto = new TeachingDataDto();
     private List<ProfessorEvaluationResponseDto> profdto = new List<ProfessorEvaluationResponseDto>();
     private HodEvaluationResponseDto? hodEvaluationData;
-
+    double y => (CalculateAverageScore()) + (teachingdto.gradegiven ?? 0);
     // Ratings dictionaries
     private Dictionary<int, int> teachingActivitiesRatings = new();
     private Dictionary<int, int> scientificActivityRatings = new();
     private Dictionary<int, int> personalTraitsRatings = new();
     private Dictionary<int, int> studentActivitiesRatings = new();
 
+    private bool modal = false;
+    private bool showProfessorModal = false;
+    private int selectedProfessorId = 0;
     // Comments
     private string hodStrengths = string.Empty;
     private string hodWeaknesses = string.Empty;
+    private string DeanComments = string.Empty;
+    private IJSObjectReference? pdfModule;
 
-    // Computed properties
-    double teachingLoadScore => (CalculateAverageScore()) + (teachingdto.gradegiven ?? 0);
+    // Computed properties - العبء التدريسي = Professor evaluations (30) + Teaching load completion (10) + Teaching Activities (10)
+    decimal teachingLoadScore => (CalculateAverageScore()) + (teachingdto.gradegiven ?? 0) + GetTeachingActivitiesTotal();
 
     protected override async Task OnParametersSetAsync()
     {
@@ -339,7 +547,6 @@
             // Load teaching data
             if (SelectedTA.EvaluationId != 0)
             {
-                // TODO: Replace with actual API call
                 teachingdto = new TeachingDataDto
                 {
                     ActualTeachingLoad = 12,
@@ -362,6 +569,35 @@
                     {
                         hodStrengths = hodEvaluationData.HodStrengths ?? string.Empty;
                         hodWeaknesses = hodEvaluationData.HodWeaknesses ?? string.Empty;
+                        DeanComments = hodEvaluationData.DeanReturnComments ?? string.Empty;
+                        statusid = hodEvaluationData.StatusId;
+
+                        // ✅ FIX: Populate ALL rating dictionaries with existing data
+                        foreach (var eval in hodEvaluationData.Evaluations)
+                        {
+                            if (eval.CriterionType == "DirectTeaching")
+                            {
+                                teachingActivitiesRatings[eval.CriterionId] = eval.RatingId;
+                            }
+                            else if (eval.CriterionType == "Scientific")
+                            {
+                                scientificActivityRatings[eval.CriterionId] = eval.RatingId;
+                            }
+                            else if (eval.CriterionType == "Administrative" || eval.CriterionType == "AdministrativeTotal")
+                            {
+                                scientificActivityRatings[eval.CriterionId] = eval.RatingId;
+                            }
+                            else if (eval.CriterionType == "StudentActivities")
+                            {
+                                studentActivitiesRatings[eval.CriterionId] = eval.RatingId;
+                            }
+                            else if (eval.CriterionType == "PersonalTraits")
+                            {
+                                personalTraitsRatings[eval.CriterionId] = eval.RatingId;
+                            }
+                        }
+
+                        Console.WriteLine($"✅ Loaded ratings - Teaching: {teachingActivitiesRatings.Count}, Scientific: {scientificActivityRatings.Count}, Student: {studentActivitiesRatings.Count}, Personal: {personalTraitsRatings.Count}");
                     }
                 }
             }
@@ -390,24 +626,44 @@
             .Where(e => e.CriterionType == "Administrative" || e.CriterionType == "AdministrativeTotal")
             .ToDictionary(e => e.CriterionId, e => e.RatingId);
     }
-    private void OnTeachingActivitiesRatingsChanged(Dictionary<int, int> ratings)
+    private void OnTeachingActivitiesRatingsChanged((Dictionary<int, int> Ratings, decimal Total) data)
     {
-        teachingActivitiesRatings = ratings;
+        // Merge new ratings with existing ones
+        foreach (var rating in data.Ratings)
+        {
+            teachingActivitiesRatings[rating.Key] = rating.Value;
+        }
+        StateHasChanged();
     }
 
     private void OnScientificActivityRatingsChanged(Dictionary<int, int> ratings)
     {
-        scientificActivityRatings = ratings;
+        // Merge new ratings with existing ones
+        foreach (var rating in ratings)
+        {
+            scientificActivityRatings[rating.Key] = rating.Value;
+        }
+        StateHasChanged();
     }
 
     private void OnPersonalTraitsRatingsChanged(Dictionary<int, int> ratings)
     {
-        personalTraitsRatings = ratings;
+        // Merge new ratings with existing ones
+        foreach (var rating in ratings)
+        {
+            personalTraitsRatings[rating.Key] = rating.Value;
+        }
+        StateHasChanged();
     }
 
     private void OnStudentActivitiesRatingsChanged(Dictionary<int, int> ratings)
     {
-        studentActivitiesRatings = ratings;
+        // Merge new ratings with existing ones
+        foreach (var rating in ratings)
+        {
+            studentActivitiesRatings[rating.Key] = rating.Value;
+        }
+        StateHasChanged();
     }
 
     private Dictionary<int, int> GetExistingRatings(string criterionType)
@@ -433,7 +689,133 @@
     {
         await OnClose.InvokeAsync();
     }
+    private void OpenReturnModal()
+    {
+        showProfessorModal = true;
+        HodReturnComment = string.Empty;
+        selectedProfessorId = 0;
+    }
 
+    private void CloseReturnModal()
+    {
+        showProfessorModal = false;
+        HodReturnComment = string.Empty;
+        selectedProfessorId = 0;
+    }
+
+    private void SelectProfessor(int professorId)
+    {
+        selectedProfessorId = professorId;
+    }
+
+    private async Task ConfirmReturnToTA()
+    {
+        if (string.IsNullOrWhiteSpace(HodReturnComment))
+        {
+            await JS.InvokeVoidAsync("alert", "الرجاء إدخال سبب الإرجاع");
+            return;
+        }
+
+        await RejectToTA();
+        CloseReturnModal();
+    }
+    private async Task RejectToTA()
+    {
+        if (SelectedTA == null) return;
+        isSaving = true;
+        try
+        {
+            ReturnEvaluationHODDto returnDto = new ReturnEvaluationHODDto
+            {
+                EvaluationId = SelectedTA.EvaluationId,
+                Comments = HodReturnComment
+            };
+            var response = await Http.PostAsJsonAsync(
+                "/api/HodEvaluation/ReturnToTA",
+                returnDto);
+            if (response.IsSuccessStatusCode)
+            {
+                await JS.InvokeVoidAsync("alert", "تم إرجاع التقييم إلى مساعد التدريس بنجاح");
+                await LoadData(); // ✅ Reload data after save
+                await OnSaveSuccess.InvokeAsync();
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"❌ Reject failed: {error}");
+                await JS.InvokeVoidAsync("alert", $"فشل إرجاع التقييم: {error}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error rejecting evaluation: {ex}");
+            await JS.InvokeVoidAsync("alert", $"حدث خطأ أثناء الإرجاع: {ex.Message}");
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+    private async Task RejectToProfessor()
+    {
+        if (SelectedTA == null) return;
+
+        isSaving = true;
+        try
+        {
+            ReturnToProfessor returnprof = new ReturnToProfessor
+            {
+                evaluationId=SelectedTA.EvaluationId,
+                EvaluationPeriodId = EvaluationPeriodId,
+                ProfessorId = selectedProfessorId, // ✅ Use the selected professor
+                TAId = SelectedTA.Id,
+                HodComments = HodReturnComment // ✅ Add this property to your DTO if not exists
+            };
+
+            var response = await Http.PostAsJsonAsync(
+                "api/HodEvaluation/ReturnToProfessor",
+                returnprof);
+
+            if (response.IsSuccessStatusCode)
+            {
+                await JS.InvokeVoidAsync("alert", "تم إرجاع التقييم إلى أستاذ المقرر بنجاح");
+                await LoadData();
+                await OnSaveSuccess.InvokeAsync();
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"❌ Reject failed: {error}");
+                await JS.InvokeVoidAsync("alert", $"فشل إرجاع التقييم: {error}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error rejecting evaluation: {ex}");
+            await JS.InvokeVoidAsync("alert", $"حدث خطأ أثناء الإرجاع: {ex.Message}");
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+    private async Task ConfirmReturnToProfessor()
+    {
+        if (selectedProfessorId == 0)
+        {
+            await JS.InvokeVoidAsync("alert", "الرجاء اختيار أستاذ المقرر");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(HodReturnComment))
+        {
+            await JS.InvokeVoidAsync("alert", "الرجاء إدخال سبب الإرجاع");
+            return;
+        }
+
+        await RejectToProfessor();
+        CloseReturnModal();
+    }
     private async Task HandleSave()
     {
         if (SelectedTA == null) return;
@@ -469,15 +851,23 @@
                 RatingId = kvp.Value
             }).ToList();
 
-            if (IsViewMode && hodEvaluationData != null)
+            // ✅ FIXED: Check if evaluation exists by checking hodEvaluationData.HodEvaluationId
+            // An evaluation truly exists if it has an ID in the database
+            bool evaluationExists = hodEvaluationData?.EvaluationId > 0;
+
+            Console.WriteLine($"🔍 Evaluation exists: {evaluationExists}, HodEvaluationId: {hodEvaluationData?.EvaluationId}, StatusId: {statusid}");
+
+            if (evaluationExists)
             {
-                // Update existing evaluation
+                // ✅ Update existing evaluation
                 var updateDto = new UpdateHodEvaluationDto
                 {
                     CriterionRatings = criterionRatings,
                     HodStrengths = hodStrengths,
                     HodWeaknesses = hodWeaknesses
                 };
+
+                Console.WriteLine($"📤 Updating evaluation {SelectedTA.EvaluationId} with {criterionRatings.Count} ratings");
 
                 var response = await Http.PutAsJsonAsync(
                     $"api/HodEvaluation/UpdateHodEvaluation/{SelectedTA.EvaluationId}",
@@ -486,17 +876,19 @@
                 if (response.IsSuccessStatusCode)
                 {
                     await JS.InvokeVoidAsync("alert", "تم تحديث التقييم بنجاح");
+                    await LoadData(); // ✅ Reload data after save
                     await OnSaveSuccess.InvokeAsync();
                 }
                 else
                 {
                     var error = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"❌ Update failed: {error}");
                     await JS.InvokeVoidAsync("alert", $"فشل تحديث التقييم: {error}");
                 }
             }
             else
             {
-                // Create new evaluation
+                // ✅ Create new evaluation
                 var createDto = new CreateHodEvaluationDto
                 {
                     EvaluationId = SelectedTA.EvaluationId,
@@ -505,34 +897,153 @@
                     HodWeaknesses = hodWeaknesses
                 };
 
+                Console.WriteLine($"📤 Creating new evaluation for {SelectedTA.EvaluationId} with {criterionRatings.Count} ratings");
+
                 var response = await Http.PostAsJsonAsync("api/HodEvaluation/create", createDto);
 
                 if (response.IsSuccessStatusCode)
                 {
                     await JS.InvokeVoidAsync("alert", "تم حفظ التقييم بنجاح");
+                    await LoadData(); // ✅ Reload data after save
                     await OnSaveSuccess.InvokeAsync();
                 }
                 else
                 {
                     var error = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"❌ Create failed: {error}");
                     await JS.InvokeVoidAsync("alert", $"فشل حفظ التقييم: {error}");
                 }
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error saving evaluation: {ex}");
+            Console.WriteLine($"❌ Error saving evaluation: {ex}");
             await JS.InvokeVoidAsync("alert", $"حدث خطأ أثناء الحفظ: {ex.Message}");
         }
         finally
         {
             isSaving = false;
         }
-
     }
     private async Task PrintModal()
     {
         Console.WriteLine("🔵 Printing entire modal");
         await JS.InvokeVoidAsync("window.print");
+    }
+    private decimal CalculateFinalTotal()
+    {
+        // Total = 50 (teaching load) + 10 (scientific) + 10 (administrative) + 10 (student activities) + 10 (survey+guidance) + 10 (personal traits) = 100
+        return teachingLoadScore +  // 50 points
+               GetScientificTotal() +                // 10 points
+               GetAdministrativeTotal() +            // 10 points
+               GetStudentActivitiesTotal() +         // 10 points
+               4 +                                   // استقصاء الطلاب (4/5)
+               4 +                                   // الإرشاد الأكاديمي (4/5)
+               GetPersonalTraitsTotal();             // 10 points
+    }
+    private void OnScientificTotalReceived(decimal total)
+    {
+        scientificTotal = total;
+        StateHasChanged();
+    }
+
+    private decimal GetScientificTotal()
+    {
+        return scientificTotal;
+    }
+
+    private int GetAdministrativeTotal()
+    {
+        // النشاط الإداري = المشاركة في اللجان (criterion 20)
+        if (scientificActivityRatings.ContainsKey(20))
+        {
+        int ratingId = scientificActivityRatings[20];
+            // Convert RatingId (16-26) to score (0-10)
+   return ratingId >= 16 && ratingId <= 26 ? ratingId - 16 : 0;
+    }
+        return 0;
+    }
+
+    private decimal GetStudentActivitiesTotal()
+    {
+        // الأنشطة الطلابية = sum of criteria 12, 13, 14
+        // RatingId 6-10 maps to points: 0, 1, 2, 3, 3.33
+        decimal total = 0;
+    foreach (var kvp in studentActivitiesRatings)
+        {
+            int ratingId = kvp.Value;
+      // Convert RatingId (6-10) to ScoreValue (0-4)
+            int scoreValue = ratingId >= 6 && ratingId <= 10 ? ratingId - 6 : 0;
+            
+     // Map ScoreValue to points
+            total += scoreValue switch
+            {
+                  0 => 0m,
+            1 => 1m,
+             2 => 2m,
+               3 => 3m,
+            4 => 3.33m,
+             _ => 0m
+           };
+        }
+        return total;
+    }
+
+    private decimal GetPersonalTraitsTotal()
+    {
+        // السمات الشخصية = sum of criteria 15, 16, 17, 18, 19
+        // RatingId 11-15 maps to points: 0, 0.5, 1, 1.5, 2
+      decimal total = 0;
+        foreach (var kvp in personalTraitsRatings)
+        {
+            int ratingId = kvp.Value;
+          // Convert RatingId (11-15) to ScoreValue (0-4)
+         int scoreValue = ratingId >= 11 && ratingId <= 15 ? ratingId - 11 : 0;
+            
+        // Map ScoreValue to points (each is worth 0.5)
+    total += scoreValue * 0.5m;
+      }
+  return total;
+    }
+
+private decimal GetTeachingActivitiesTotal()
+    {
+   // الأنشطة التعليمية = sum of criteria 1-5
+      // RatingId 1-5 maps to points: 0, 0.5, 1, 1.5, 2
+        decimal total = 0;
+        foreach (var kvp in teachingActivitiesRatings)
+        {
+            int ratingId = kvp.Value;
+     // Convert RatingId (1-5) to ScoreValue (0-4)
+ int scoreValue = ratingId >= 1 && ratingId <= 5 ? ratingId - 1 : 0;
+            
+            // Map ScoreValue to points (each is worth 0.5)
+      total += scoreValue * 0.5m;
+     }
+        return total;
+  }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            pdfModule = await JS.InvokeAsync<IJSObjectReference>("import", "/JavaScript.js");
+        }
+    }
+
+    private async Task DownloadPdf()
+    {
+        try
+        {
+            isGeneratingPdf = true;
+            StateHasChanged();
+
+            // Now generate PDF
+            await pdfModule.InvokeVoidAsync("saveElementAsPdf", "pdfArea", "evaluation-report.pdf");
+        }
+        finally
+        {
+            isGeneratingPdf = false;
+            StateHasChanged();
+        }
     }
 }

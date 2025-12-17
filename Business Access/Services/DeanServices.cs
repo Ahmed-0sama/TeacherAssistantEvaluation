@@ -14,14 +14,13 @@ namespace Business_Access.Services
 {
     public class DeanServices : IDean
     {
-        private const int STATUS_APPROVED_BY_DEAN = 5;
-        private const int STATUS_RETURNED_BY_DEAN = 6;
 
         private readonly SrsDbContext _db;
         public DeanServices(SrsDbContext db)
         {
             _db = db;
         }
+
 
         public async Task<DeanEvaluationDetailDto?> GetEvaluationDetailAsync(int evaluationId)
         {
@@ -30,190 +29,182 @@ namespace Business_Access.Services
 
             var evaluation = await _db.Evaluations
                 .Include(e => e.Status)
-                .Include(e => e.Period)
-                .Include(e => e.Hodevaluations)
-                    .ThenInclude(h => h.Rating)
                 .Include(e => e.Hodevaluations)
                     .ThenInclude(h => h.Criterion)
+                .Include(e => e.Hodevaluations)
+                    .ThenInclude(h => h.Rating)
                 .Include(e => e.Tasubmission)
-                    .ThenInclude(t => t.ResearchActivities)
-                        .ThenInclude(r => r.Status)
-                .Include(e => e.EvaluationNavigation) // VpgsEvaluation for scientific score
+                .Include(e => e.Period)
                 .FirstOrDefaultAsync(e => e.EvaluationId == evaluationId);
 
             if (evaluation == null)
                 return null;
 
+            // HOD Data (only needed to calculate totals)
             var hodEvaluations = evaluation.Hodevaluations?.ToList() ?? new List<Hodevaluation>();
-            var hodEval = hodEvaluations.FirstOrDefault();
 
-            // ⭐ ONLY show the HOD's evaluated scores - display them exactly as HOD rated them
-            // Get all HOD evaluation scores by category (don't recalculate)
-            var directTeachingScores = hodEvaluations
-                .Where(h => h.CriterionId >= 1 && h.CriterionId <= 5)
-                .Select(h => h.Rating?.ScoreValue ?? 0)
-                .ToList();
-            var directTeachingScore = directTeachingScores.Any()
-                ? directTeachingScores.Average()
-                : 0;
+            // Aggregate Section Totals - ensure decimal type
+            var teachingActivities = (decimal)hodEvaluations
+                .Where(x => x.Criterion?.CriterionType == "DirectTeaching")
+                .Sum(x => x.Rating != null
+                       ? MapScoreToPoints(x.Rating.ScoreValue, "DirectTeaching")
+                       : 0);
 
-            var administrativeScores = hodEvaluations
-                .Where(h => h.CriterionId >= 6 && h.CriterionId <= 11)
-                .Select(h => h.Rating?.ScoreValue ?? 0)
-                .ToList();
-            var administrativeScore = administrativeScores.Any()
-                ? administrativeScores.Average()
-                : 0;
+            var studentActivities = (decimal)hodEvaluations
+                .Where(x => x.Criterion?.CriterionType == "StudentActivities")
+                .Sum(x => x.Rating != null
+                       ? MapScoreToPoints(x.Rating.ScoreValue, "StudentActivities")
+                       : 0);
 
-            var studentActivitiesScores = hodEvaluations
-                .Where(h => h.CriterionId >= 12 && h.CriterionId <= 14)
-                .Select(h => h.Rating?.ScoreValue ?? 0)
-                .ToList();
-            var studentActivitiesScore = studentActivitiesScores.Any()
-                ? studentActivitiesScores.Average()
-                : 0;
+            var personalTraits = (decimal)hodEvaluations
+                .Where(x => x.Criterion?.CriterionType == "PersonalTraits")
+                .Sum(x => x.Rating != null
+                       ? MapScoreToPoints(x.Rating.ScoreValue, "PersonalTraits")
+                       : 0);
 
-            var personalTraitsScores = hodEvaluations
-                .Where(h => h.CriterionId >= 15 && h.CriterionId <= 19)
-                .Select(h => h.Rating?.ScoreValue ?? 0)
-                .ToList();
-            var personalTraitsScore = personalTraitsScores.Any()
-                ? personalTraitsScores.Average()
-                : 0;
+            var administrative = (decimal)hodEvaluations
+                .Where(x => x.Criterion?.CriterionType == "Administrative" ||
+                            x.Criterion?.CriterionType == "AdministrativeTotal")
+                .Sum(x => x.Rating != null
+                       ? MapScoreToPoints(x.Rating.ScoreValue, "Administrative")
+                       : 0);
 
-            // ⭐ Get other scores from submission data
-            var studentSurveyScore = evaluation.StudentSurveyScore ?? 0;
+            // Professor Course Evaluations - Query through EvaluationPeriod
+            var professorEvaluations = await _db.ProfessorCourseEvaluations
+                .Where(p => p.TaEmployeeId == evaluation.TaEmployeeId &&
+                            p.EvaluationPeriodId == evaluation.PeriodId)
+                .ToListAsync();
 
-            var advisedStudentCount = evaluation.Tasubmission?.AdvisedStudentCount ?? 0;
-            var academicAdvisingScore = Math.Min(advisedStudentCount, 10);
+            var professorAverageScore = professorEvaluations.Any(p => p.TotalScore.HasValue)
+                ? (decimal)professorEvaluations
+                    .Where(p => p.TotalScore.HasValue)
+                    .Average(p => p.TotalScore!.Value)
+                : 0m;
 
-            // Get Scientific Activity Score from VpgsEvaluation
-            decimal scientificScore = 0;
-            if (evaluation.EvaluationNavigation?.ScientificScore > 0)
+            // Scientific Score - Sum of VPGS and GS Dean scores
+            var vpgsScore = await _db.VpgsEvaluations
+                .Where(v => v.EvaluationId == evaluationId)
+                .Select(v => v.ScientificScore)
+                .FirstOrDefaultAsync();
+
+            var gsDeanScore = await _db.GsdeanEvaluations
+                .Where(g => g.TaEmployeeId == evaluation.TaEmployeeId &&
+                            g.EvaluationPeriodId == evaluation.PeriodId)
+                .Select(g => g.ProgressScore ?? 0)
+                .FirstOrDefaultAsync();
+
+            var scientificScore = vpgsScore + gsDeanScore;
+
+            // Student Survey
+            var studentSurvey = (decimal)(evaluation.StudentSurveyScore ?? 0);
+
+            // Academic Advising
+            var academicAdvisingCount = evaluation.Tasubmission?.AdvisedStudentCount ?? 0;
+            var academicAdvising = (decimal)Math.Min(academicAdvisingCount, 5);
+
+            // Calculate total
+            var totalScore =
+                teachingActivities +
+                studentActivities +
+                personalTraits +
+                administrative +
+                scientificScore +
+                studentSurvey +
+                professorAverageScore +
+                academicAdvising;
+
+            // Grade simple mapping
+            var finalGrade = totalScore switch
             {
-                scientificScore = evaluation.EvaluationNavigation.ScientificScore;
-            }
-            else
-            {
-                var researchActivityCount = evaluation.Tasubmission?.ResearchActivities?.Count ?? 0;
-                scientificScore = Math.Min(researchActivityCount * 2, 10);
-            }
-
-            // ⭐ Calculate weighted total using HOD's scores
-            const decimal directTeachingWeight = 0.50m;
-            const decimal administrativeWeight = 0.10m;
-            const decimal studentActivitiesWeight = 0.10m;
-            const decimal personalTraitsWeight = 0.10m;
-            const decimal studentSurveyWeight = 0.05m;
-            const decimal academicAdvisingWeight = 0.05m;
-            const decimal scientificActivityWeight = 0.10m;
-
-            var weightedTotal =
-                (decimal)directTeachingScore * directTeachingWeight +
-                (decimal)administrativeScore * administrativeWeight +
-                (decimal)studentActivitiesScore * studentActivitiesWeight +
-                (decimal)personalTraitsScore * personalTraitsWeight +
-                (decimal)studentSurveyScore * studentSurveyWeight +
-                (decimal)academicAdvisingScore * academicAdvisingWeight +
-                (decimal)scientificScore * scientificActivityWeight;
-
-            var totalScore = Math.Round(weightedTotal, 2);
+                >= 90 => "ممتاز",
+                >= 80 => "جيد جداً",
+                >= 70 => "جيد",
+                >= 60 => "مقبول",
+                _ => "ضعيف"
+            };
 
             return new DeanEvaluationDetailDto
             {
                 EvaluationId = evaluation.EvaluationId,
-
-                // TA info
                 TaEmployeeId = evaluation.TaEmployeeId,
-                TaName = "غير محدد",
-                TaEmail = "",
-
-                // Period
-                PeriodName = evaluation.Period?.PeriodName ?? "",
-                PeriodStartDate = evaluation.Period?.StartDate ?? default,
-                PeriodEndDate = evaluation.Period?.EndDate ?? default,
-
-                // Status
-                StatusName = evaluation.StatusId,
+                TaName = $"TA #{evaluation.TaEmployeeId}",
+                TaEmail = evaluation.Status?.StatusName ?? "Unknown", // TODO: Get actual department/email
+                PeriodName = evaluation.Period?.PeriodName,
+                StatusName = evaluation.Status?.StatusName ?? "Unknown",
                 StatusId = evaluation.StatusId,
 
-                // HOD Review
+                // Section totals
+                TeachingActivitiesTotal = teachingActivities,
+                StudentActivitiesTotal = studentActivities,
+                PersonalTraitsTotal = personalTraits,
+                AdministrativeTotal = administrative,
+                ScientificActivityScore = scientificScore,
+                StudentSurveyScore = studentSurvey,
+                AcademicAdvisingScore = academicAdvising,
+                ProfessorAverageCourseScore = Math.Round(professorAverageScore, 2),
+
+                // Final total
+                TotalScore = (int)Math.Round(totalScore),
+                FinalGrade = finalGrade,
+
+                // HOD Comments
                 HodStrengths = evaluation.HodStrengths,
                 HodWeaknesses = evaluation.HodWeaknesses,
                 HodReturnComment = evaluation.HodReturnComment,
-
-                DeanReturnComment = evaluation.DeanReturnComment,
-                FinalGrade = evaluation.FinalGrade,
-                StudentSurveyScore = evaluation.StudentSurveyScore,
-                DateSubmitted = evaluation.DateSubmitted,
-                DateApproved = evaluation.DateApproved,
-
-                // ⭐ Component Scores - DIRECTLY FROM HOD EVALUATION
-                EducationalActivityScore = Math.Round((decimal)directTeachingScore, 2),
-                AdministrativeActivityScore = Math.Round((decimal)administrativeScore, 2),
-                StudentActivitiesScore = Math.Round((decimal)studentActivitiesScore, 2),
-                PersonalTraitsScore = Math.Round((decimal)personalTraitsScore, 2),
-                ScientificActivityScore = Math.Round((decimal)scientificScore, 2),
-                AcademicAdvisingScore = Math.Round((decimal)academicAdvisingScore, 2),
-
-                // ⭐ Total Score (0-10 scale)
-                TotalScore = totalScore,
-
-                // ⭐ Detailed HOD Evaluations - Show ALL individual HOD ratings
-                HodEvaluations = hodEvaluations.Any()
-                    ? new HodEvaluationDto
-                    {
-                        HodevalId = hodEval?.HodevalId ?? 0,
-                        EvaluationId = hodEval?.EvaluationId ?? 0,
-                        CriterionId = hodEval?.CriterionId ?? 0,
-                        CriterionName = hodEval?.Criterion?.CriterionName ?? "",
-                        CriterionType = hodEval?.Criterion?.CriterionType ?? "",
-                        RatingId = hodEval?.RatingId ?? 0,
-                        RatingName = hodEval?.Rating?.RatingName ?? "",
-                        ScoreValue = hodEval?.Rating?.ScoreValue ?? 0,
-                    }
-                    : new HodEvaluationDto(),
-                // TA Submission
-                TaSubmission = evaluation.Tasubmission != null
-                    ? new TASubmissionResponseDto
-                    {
-                        SubmissionId = evaluation.Tasubmission.SubmissionId,
-                        EvaluationId = evaluation.Tasubmission.EvaluationId,
-
-                        ActualTeachingLoad = evaluation.Tasubmission.ActualTeachingLoad,
-                        ExpectedTeachingLoad = evaluation.Tasubmission.ExpectedTeachingLoad,
-
-                        HasTechnicalReports = evaluation.Tasubmission.HasTechnicalReports,
-                        HasSeminarLectures = evaluation.Tasubmission.HasSeminarLectures,
-                        HasAttendingSeminars = evaluation.Tasubmission.HasAttendingSeminars,
-
-                        IsInAcademicAdvisingCommittee = evaluation.Tasubmission.IsInAcademicAdvisingCommittee,
-                        IsInSchedulingCommittee = evaluation.Tasubmission.IsInSchedulingCommittee,
-                        IsInQualityAssuranceCommittee = evaluation.Tasubmission.IsInQualityAssuranceCommittee,
-                        IsInLabEquipmentCommittee = evaluation.Tasubmission.IsInLabEquipmentCommittee,
-                        IsInExamOrganizationCommittee = evaluation.Tasubmission.IsInExamOrganizationCommittee,
-                        IsInSocialOrSportsCommittee = evaluation.Tasubmission.IsInSocialOrSportsCommittee,
-
-                        ParticipatedInSports = evaluation.Tasubmission.ParticipatedInSports,
-                        ParticipatedInSocial = evaluation.Tasubmission.ParticipatedInSocial,
-                        ParticipatedInCultural = evaluation.Tasubmission.ParticipatedInCultural,
-
-                        AdvisedStudentCount = evaluation.Tasubmission.AdvisedStudentCount,
-
-                        ResearchActivities = evaluation.Tasubmission.ResearchActivities
-                            ?.Select(r => new ResearchActivityResponseDto
-                            {
-                                ActivityId = r.ActivityId,
-                                Title = r.Title,
-                                Journal = r.Journal,
-                                StatusId = r.StatusId,
-                                ActivityDate = r.ActivityDate
-                            }).ToList() ?? new List<ResearchActivityResponseDto>(),
-                    }
-                    : null
+                DeanReturnComment = evaluation.DeanReturnComment
             };
         }
-       
+        // ⭐ Add the MapScoreToPoints method (SAME AS HOD SERVICE)
+        private decimal MapScoreToPoints(int scoreValue, string criterionType)
+        {
+            return criterionType switch
+            {
+                "DirectTeaching" => scoreValue switch      // Criteria 1-5 (max 10 points total)
+                {
+                    0 => 0m,
+                    1 => 0.5m,
+                    2 => 1m,
+                    3 => 1.5m,
+                    4 => 2m,
+                    _ => 0m
+                },
+                "StudentActivities" => scoreValue switch   // Criteria 12-14 (max 10 points total)
+                {
+                    0 => 0m,
+                    1 => 1m,
+                    2 => 2m,
+                    3 => 3m,
+                    4 => 3.33m,
+                    _ => 0m
+                },
+                "PersonalTraits" => scoreValue switch      // Criteria 15-19 (max 10 points total)
+                {
+                    0 => 0m,
+                    1 => 0.5m,
+                    2 => 1m,
+                    3 => 1.5m,
+                    4 => 2m,
+                    _ => 0m
+                },
+                "Administrative" or "AdministrativeTotal" => scoreValue switch  // Criteria 6-11 + 20 (max 10 points)
+                {
+                    0 => 0m,
+                    1 => 1m,
+                    2 => 2m,
+                    3 => 3m,
+                    4 => 4m,
+                    5 => 5m,
+                    6 => 6m,
+                    7 => 7m,
+                    8 => 8m,
+                    9 => 9m,
+                    10 => 10m,
+                    _ => 0m
+                },
+                _ => 0m
+            };
+        }
+
         public async Task<DeanActionResponseDto> AcceptEvaluationAsync(AcceptEvaluationDto dto)
         {
             using (var transaction = await _db.Database.BeginTransactionAsync())
@@ -236,7 +227,7 @@ namespace Business_Access.Services
                     }
 
                     // Update evaluation status
-                    evaluation.StatusId = STATUS_APPROVED_BY_DEAN;
+                    evaluation.StatusId = 6;
                     evaluation.DateApproved = DateTime.UtcNow;
                     await _db.SaveChangesAsync();
 
@@ -285,7 +276,7 @@ namespace Business_Access.Services
                         };
                     }
 
-                    if (evaluation.StatusId != STATUS_APPROVED_BY_DEAN)
+                    if (evaluation.StatusId != 5)
                     {
                         await transaction.RollbackAsync();
                         return new DeanActionResponseDto
@@ -309,7 +300,7 @@ namespace Business_Access.Services
                     }
 
                     // Update evaluation status and add comment
-                    evaluation.StatusId = STATUS_RETURNED_BY_DEAN;
+                    evaluation.StatusId = 7;
                     evaluation.DeanReturnComment = dto.DeanReturnComment;
                     await _db.SaveChangesAsync();
 

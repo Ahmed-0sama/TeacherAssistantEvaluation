@@ -8,6 +8,7 @@ namespace Shared.Dtos.ProfessorEvaluationDto
 {
     public class ProfessorEvaluationResponseDto
     {
+
         public int ProfEvalId { get; set; }
         public int EvaluationPeriodId { get; set; }
         public int TaEmployeeId {  get; set; }

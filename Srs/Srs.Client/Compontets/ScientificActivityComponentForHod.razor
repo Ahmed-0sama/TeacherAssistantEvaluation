@@ -357,52 +357,20 @@
     private OtherActivitiesDto otherActivities = new OtherActivitiesDto();
     private AdminstrativeActivityDto administrativeData = new AdminstrativeActivityDto();
     private string? errorMessage;
-    private decimal vpg ;
+    private decimal vpg;
+
     [Parameter] public EventCallback<Dictionary<int, int>> OnRatingsChanged { get; set; }
     [Parameter] public bool IsViewMode { get; set; }
+    [Parameter] public EventCallback<decimal> OnScientificTotalChanged { get; set; }
     [Parameter] public Dictionary<int, int>? ExistingRatings { get; set; }
+    [Parameter] public int EvaluationId { get; set; }
+    [Parameter] public int EvaluationPeriodId { get; set; }
+    [Parameter] public int TaEmployeeId { get; set; }
+
     private int administrativeCommitteeScore = 0;
-
     private Dictionary<int, int> administrativeRatings = new();
+    private Dictionary<int, int>? previousExistingRatings = null;
 
-    // In OnParametersSet or OnInitialized, load existing ratings
-    protected override void OnParametersSet()
-    {
-        base.OnParametersSet();
-
-        if (ExistingRatings != null && ExistingRatings.Any())
-        {
-            administrativeRatings = new Dictionary<int, int>(ExistingRatings);
-        }
-    }
-
-    // If you have any input fields for administrative activities (criteria 6-11),
-    // update them to send ratings back like this:
-    private void UpdateAdministrativeRating(int criterionId, int ratingValue)
-    {
-        // Map the score (0-10) to the corresponding RatingId (6-16)
-        int ratingId = ratingValue + 6; // RatingId 6 = score 0, RatingId 16 = score 10
-
-        if (ratingValue >= 0 && ratingValue <= 10)
-        {
-            administrativeRatings[criterionId] = ratingId;
-        }
-        else
-        {
-            administrativeRatings.Remove(criterionId);
-        }
-
-        OnRatingsChanged.InvokeAsync(administrativeRatings);
-    }
-
-    [Parameter]
-    public int EvaluationId { get; set; }
-    [Parameter]
-    public int EvaluationPeriodId { get; set; }
-    [Parameter]
-    public int TaEmployeeId { get; set; }
-
-    // Modal state
     private bool showModal = false;
     private bool isEditMode = false;
     private ResearchPaperDto currentPaper = new ResearchPaperDto();
@@ -411,21 +379,88 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadActivityData();
-        if (ExistingRatings != null && ExistingRatings.ContainsKey(20))
+        await NotifyScientificTotal();
+    }
+
+    // ✅ FIXED: Track changes to ExistingRatings
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+
+        // Only reload if ExistingRatings actually changed
+        if (ExistingRatings != null && !AreRatingsDictionariesEqual(ExistingRatings, previousExistingRatings))
         {
-            int ratingId = ExistingRatings[20];
-            administrativeCommitteeScore = ratingId - 6; 
+            Console.WriteLine($"🔄 Loading {ExistingRatings.Count} existing administrative ratings");
+
+            administrativeRatings = new Dictionary<int, int>(ExistingRatings);
+
+            // Load the administrative committee score (criterion 20)
+            if (ExistingRatings.ContainsKey(20))
+            {
+                int ratingId = ExistingRatings[20];
+                // Convert RatingId (16-26) to score (0-10)
+                administrativeCommitteeScore = ratingId >= 16 && ratingId <= 26 ? ratingId - 16 : 0;
+                Console.WriteLine($"  Loaded Admin Score: {administrativeCommitteeScore} (RatingId: {ratingId})");
+            }
+
+            previousExistingRatings = new Dictionary<int, int>(ExistingRatings);
+
+            // ✅ Notify parent immediately after loading
+            OnRatingsChanged.InvokeAsync(administrativeRatings);
         }
     }
+
+    private bool AreRatingsDictionariesEqual(Dictionary<int, int>? dict1, Dictionary<int, int>? dict2)
+    {
+        if (dict1 == null && dict2 == null) return true;
+        if (dict1 == null || dict2 == null) return false;
+        if (dict1.Count != dict2.Count) return false;
+
+        foreach (var kvp in dict1)
+        {
+            if (!dict2.TryGetValue(kvp.Key, out var value) || value != kvp.Value)
+                return false;
+        }
+        return true;
+    }
+
+    private async Task NotifyScientificTotal()
+    {
+        decimal total = (scientificScore + mastersData.GradeGivenbySupervisor??0);
+        await OnScientificTotalChanged.InvokeAsync(total);
+    }
+
+    // ✅ FIXED: Update method with proper logging
+    private void UpdateAdministrativeRating(int criterionId, int scoreValue)
+    {
+        // Map the score (0-10) to the corresponding RatingId (16-26)
+        if (scoreValue >= 0 && scoreValue <= 10)
+        {
+            int ratingId = scoreValue + 16; // Convert score to RatingId
+            administrativeRatings[criterionId] = ratingId;
+            Console.WriteLine($"✏️ Updated Admin Criterion {criterionId}: Score {scoreValue} → RatingId {ratingId}");
+        }
+        else
+        {
+            administrativeRatings.Remove(criterionId);
+            Console.WriteLine($"🗑️ Removed Admin Criterion {criterionId}");
+        }
+
+        Console.WriteLine($"📤 Sending {administrativeRatings.Count} administrative ratings to parent");
+        OnRatingsChanged.InvokeAsync(administrativeRatings);
+    }
+
     private int GetAdministrativeScoreValue()
     {
         if (ExistingRatings != null && ExistingRatings.ContainsKey(20))
         {
             int ratingId = ExistingRatings[20];
-            return ratingId - 6;
+            // Convert RatingId (16-26) to score (0-10)
+            return ratingId >= 16 && ratingId <= 26 ? ratingId - 16 : 0;
         }
         return 0;
     }
+
     private async Task LoadActivityData()
     {
         isLoading = true;
@@ -433,7 +468,6 @@
 
         try
         {
-            // Validate EvaluationId
             if (EvaluationId <= 0)
             {
                 errorMessage = "معرف التقييم غير صالح";
@@ -448,23 +482,22 @@
 
                 if (evaluationData != null)
                 {
-                    // Map API data to mastersData
                     mastersData = new MastersDto
-                        {
-                            Major = evaluationData.ProgramName,
-                            HoursGained = evaluationData.CompletedHours,
-                            Grade = evaluationData.Gpa,
-                            EstimatedGraduationDate = evaluationData.ExpectedCompletionDate,
-                            GradeGivenbySupervisor = evaluationData.ProgressScore ?? 0,
-                            Status = evaluationData.EvaluationComments,
-                            Notes = evaluationData.EvaluationComments,
-                            ResearchPointsCompleted = evaluationData.TopicChosen,
-                            SearchInResources = evaluationData.LiteratureReview,
-                            SearchPlanning = evaluationData.ResearchPlan,
-                            CollectDataAndAnalyze = evaluationData.DataCollection,
-                            ResearchReportWriting = evaluationData.Writing,
-                            ScientificResearchReport = evaluationData.ThesisDefense
-                        };
+                    {
+                        Major = evaluationData.ProgramName,
+                        HoursGained = evaluationData.CompletedHours,
+                        Grade = evaluationData.Gpa,
+                        EstimatedGraduationDate = evaluationData.ExpectedCompletionDate,
+                        GradeGivenbySupervisor = evaluationData.ProgressScore ?? 0,
+                        Status = evaluationData.EvaluationComments,
+                        Notes = evaluationData.EvaluationComments,
+                        ResearchPointsCompleted = evaluationData.TopicChosen,
+                        SearchInResources = evaluationData.LiteratureReview,
+                        SearchPlanning = evaluationData.ResearchPlan,
+                        CollectDataAndAnalyze = evaluationData.DataCollection,
+                        ResearchReportWriting = evaluationData.Writing,
+                        ScientificResearchReport = evaluationData.ThesisDefense
+                    };
                     Console.WriteLine("✅ Data loaded successfully from API");
                 }
                 else
@@ -474,21 +507,20 @@
             }
             else if (gsdeanResponse.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
-                // No data found - initialize with empty data
                 Console.WriteLine("No evaluation data found - initializing empty form");
                 mastersData = new MastersDto
-                    {
-                        Major = "",
-                        HoursGained = 0,
-                        Grade = 0,
-                        EstimatedGraduationDate = DateOnly.FromDateTime(DateTime.Now),
-                        ResearchPointsCompleted = false,
-                        SearchInResources = false,
-                        SearchPlanning = false,
-                        CollectDataAndAnalyze = false,
-                        ResearchReportWriting = false,
-                        ScientificResearchReport = false
-                    };
+                {
+                    Major = "",
+                    HoursGained = 0,
+                    Grade = 0,
+                    EstimatedGraduationDate = DateOnly.FromDateTime(DateTime.Now),
+                    ResearchPointsCompleted = false,
+                    SearchInResources = false,
+                    SearchPlanning = false,
+                    CollectDataAndAnalyze = false,
+                    ResearchReportWriting = false,
+                    ScientificResearchReport = false
+                };
             }
             else
             {
@@ -513,17 +545,13 @@
                 {
                     scientificScore = 0;
                 }
-                else
-                {
-                    var errorContent = await vpgsResponse.Content.ReadAsStringAsync();
-                }
             }
             catch (Exception vpgsEx)
             {
                 Console.WriteLine($"⚠️ Non-critical error loading VPGS data: {vpgsEx.Message}");
-
                 scientificScore = 0;
             }
+
             try
             {
                 await LoadResearchPapers(EvaluationId);
@@ -533,7 +561,6 @@
                 Console.WriteLine($"⚠️ Error loading research papers: {ex.Message}");
             }
 
-            // Initialize research papers and activities if not loaded from parameters
             if (researchPapers == null || !researchPapers.Any())
             {
                 researchPapers = new List<ResearchPaperDto>();
@@ -560,6 +587,7 @@
             StateHasChanged();
         }
     }
+
     private async Task LoadResearchPapers(int evaluationId)
     {
         try
@@ -576,7 +604,6 @@
 
                 if (submissionData != null)
                 {
-                    // Map research papers
                     if (submissionData.ResearchActivities != null && submissionData.ResearchActivities.Any())
                     {
                         researchPapers = submissionData.ResearchActivities.Select(activity => new ResearchPaperDto
@@ -594,7 +621,6 @@
                         researchPapers = new List<ResearchPaperDto>();
                     }
 
-                    // Map other activities - ALWAYS set these values
                     otherActivities = new OtherActivitiesDto
                     {
                         HasTechnicalReportsOrArticles = submissionData.HasTechnicalReports,
@@ -602,7 +628,6 @@
                         HasAttendedScientificSeminars = submissionData.HasAttendingSeminars
                     };
 
-                    // Map administrative data - ALWAYS set these values
                     administrativeData = new AdminstrativeActivityDto
                     {
                         IsAcademicGuidanceCommittee = submissionData.IsInAcademicAdvisingCommittee,
@@ -611,7 +636,6 @@
                         IsLaboratoryEquipmentCommittee = submissionData.IsInLabEquipmentCommittee,
                         IsExaminationsOrganizingCommittee = submissionData.IsInExamOrganizationCommittee,
                         IsSocialOrSportsActivityCommittees = submissionData.IsInSocialOrSportsCommittee,
-                       // TotalAdministrativeActivityScore = submissionData
                     };
 
                     Console.WriteLine($"✅ Successfully loaded {researchPapers.Count} research papers");
@@ -636,14 +660,12 @@
         }
         finally
         {
-            // Ensure we always have initialized objects
             if (researchPapers == null)
                 researchPapers = new List<ResearchPaperDto>();
 
-            StateHasChanged(); // Force UI update
+            StateHasChanged();
         }
     }
-
 
     private void CloseModal()
     {
@@ -664,17 +686,18 @@
             _ => "bg-secondary text-white"
         };
     }
+
     private string GetStatusCode(int statusName)
     {
         return statusName switch
         {
-             1=> "published",
-              2=>"under review",
-              3=>"accepted",
-             4=>"rejected",
+            1 => "published",
+            2 => "under review",
+            3 => "accepted",
+            4 => "rejected",
+            _ => "unknown"
         };
     }
-
 
     private string GetStatusName(int status)
     {

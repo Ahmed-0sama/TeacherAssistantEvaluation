@@ -10,7 +10,7 @@
     <link href="./Custom-Rtl.css" rel="stylesheet" />
 </HeadContent>
 
-<h3 class="text-center mb-4">تققيم النشاط العلمي لمساعدي التدريس</h3>
+<h3 class="text-center mb-4">تقييم الأنشطة البحثية لمساعدي التدريس</h3>
 
 <div class="card shadow-sm" dir="rtl">
     <div class="card-body">
@@ -71,7 +71,7 @@
             <div class="modal-content" dir="rtl">
                 <div class="modal-header" dir="rtl">
                     <button type="button" class="btn-close ms-0 me-auto" @onclick="CloseModal"></button>
-                    <h5 class="modal-title">بيانات التقدم في الماجيستير</h5>
+                    <h5 class="modal-title">تقييم الأنشطة البحثية</h5>
                 </div>
                 <div class="modal-body">
                     @if (isLoadingModalData)
@@ -231,7 +231,31 @@
                                 </table>
                             </div>
                         </div>
+                        <div class="border rounded p-3 bg-light mb-3">
+                            <h5 class="mb-3 text-primary">الأنشطة الأخرى</h5>
+                            <div class="col-md-4 d-flex align-items-center mb-2">
+                                <img src="icons/@(otherActivities.HasTechnicalReportsOrArticles ? "check-circle-fill.svg" : "check-circle.svg")"
+                                     width="20" height="20" style="margin-inline-end: 12px;" />
+                                <span class="@(otherActivities.HasTechnicalReportsOrArticles ? "text-dark" : "text-muted")">
+                                    تقارير فنية او مقالات منشورة (دون مستوي البحث العلمي)
+                                </span>
+                            </div>
+                            <div class="col-md-4 d-flex align-items-center mb-2">
+                                <img src="icons/@(otherActivities.HasGivenLecturesOrSeminars ? "check-circle-fill.svg" : "check-circle.svg")"
+                                     width="20" height="20" style="margin-inline-end: 12px;" />
+                                <span class="@(otherActivities.HasGivenLecturesOrSeminars ? "text-dark" : "text-muted")">
+                                    القاء محاضرات في ندوات او لقاءات
+                                </span>
+                            </div>
+                            <div class="col-md-4 d-flex align-items-center mb-2">
+                                <img src="icons/@(otherActivities.HasAttendedScientificSeminars ? "check-circle-fill.svg" : "check-circle.svg")"
+                                     width="20" height="20" style="margin-inline-end: 12px;" />
+                                <span class="@(otherActivities.HasAttendedScientificSeminars ? "text-dark" : "text-muted")">
+                                    حضور ندوات علمية ودورات تدريبية ومحاضرات علمية
+                                </span>
 
+                            </div>
+                        </div>
                         <div class="border rounded p-3 bg-light mb-2">
                             <div class="row">
                                 <label class="form-label fw-bold mb-3">تقييم التقدم والملاحظات</label>
@@ -294,7 +318,7 @@
     private bool IsReadOnly => selectedTA?.statusid == 2;
     private bool IsViewMode => selectedTA?.HasVpgsEvaluation == true;
     private List<ResearchPaperDto> researchPapers = new();
-
+    private OtherActivitiesDto otherActivities = new OtherActivitiesDto();
     // VPGS specific fields
     private decimal scientificScore = 0;
     private int? currentVpgsEvaluationId = null;
@@ -474,6 +498,12 @@
 
                     Console.WriteLine($"✅ Successfully loaded {researchPapers.Count} research papers");
 
+                    otherActivities = new OtherActivitiesDto
+                    {
+                        HasTechnicalReportsOrArticles = submissionData.HasTechnicalReports,
+                        HasGivenLecturesOrSeminars = submissionData.HasSeminarLectures,
+                        HasAttendedScientificSeminars = submissionData.HasAttendingSeminars
+                    };
                     foreach (var paper in researchPapers)
                     {
                         Console.WriteLine($"  - Paper: {paper.Title}, Status: {paper.Status}, Date: {paper.Date}");
