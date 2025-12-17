@@ -21,20 +21,14 @@ namespace Business_Access.Services
         {
             try
             {
-                var notification = new ReminderLog
+                var notification = new Notification
                 {
-
-                    EvaluationId = dto.EvaluationId,
-
-                    SentByEmployeeId = dto.senderId,
-
-                    RecievedByEmployeeId = dto.recipientId,
-
-                    RecipientDescription = dto.message,
-
+                    EmployeeId = dto.recipientId,
+                    Message= dto.message,
                     Timestamp = DateTime.Now,
+                    IsRead = false
                 };
-                _context.ReminderLogs.Add(notification);
+                _context.Notifications.Add(notification);
                 await _context.SaveChangesAsync();
                 return true;
             }
@@ -43,21 +37,22 @@ namespace Business_Access.Services
                 return false;
             }
         }
+        //it will return the last 10 notification for employee
         public async Task<List<NotificationDto>> GetAllNotification(int employeeId)
         {
             try
             {
-                var notifications = await _context.ReminderLogs
-                    .Where(n => n.RecievedByEmployeeId == employeeId)
+                var notifications = await _context.Notifications
+                    .Where(n => n.EmployeeId == employeeId)
                     .OrderByDescending(n => n.Timestamp)
+                    .Take(10)
                     .Select(n => new NotificationDto
                     {
-                        NotificationId = n.LogId,
-                        SenderTitle =n.SenderRole,
-                        SenderId = n.SentByEmployeeId,
-                        ReceiverId = n.RecievedByEmployeeId,
-                        Message = n.RecipientDescription,
-                        CreatedAt = n.Timestamp
+                        NotificationId = n.NotificationId,
+                        ReceiverId = n.EmployeeId,
+                        Message = n.Message,
+                        CreatedAt = n.Timestamp,
+                        markedAsRead = n.IsRead
                     })
                     .ToListAsync();
 
@@ -68,6 +63,23 @@ namespace Business_Access.Services
                 throw new Exception("Failed to load notifications", ex);
             }
         }
+        public async Task<bool> MarkAsReadAsync(int notificationId)
+        {
+            try
+            {
+                var notification = await _context.Notifications.FindAsync(notificationId);
+                if (notification == null)
+                {
+                    return false;
+                }
+                notification.IsRead = true;
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
     }
-
 }

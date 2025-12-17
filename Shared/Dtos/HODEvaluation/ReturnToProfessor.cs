@@ -13,5 +13,6 @@ namespace Shared.Dtos.HODEvaluation
         public int ProfessorId { get; set; }
         public int TAId { get; set; }
         public string HodComments { get; set; }
+        public string TaName { get; set; }
     }
 }

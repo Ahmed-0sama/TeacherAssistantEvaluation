@@ -1,5 +1,6 @@
 ﻿@page "/hod"
 @using Shared.Dtos
+@using Shared.Dtos.EvaluationPeriod
 @using Shared.Dtos.HODEvaluation
 @using Shared.Dtos.ProfessorEvaluationDto
 @inject HttpClient Http
@@ -29,6 +30,11 @@
                 }
                 else
                 {
+                    
+                    @* notification component need to be fixed later 
+                        <div class="position-fixed top-0 start-0 m-3" style="z-index: 1050;">
+                        <Srs.Client.Compontets.NotificationComponent EmployeeId="@userData.Id.ToString()" />
+                    </div> *@
                     <div class="table-responsive">
                         <table class="table table-hover table-striped text-center align-middle" dir="rtl">
                             <thead class="table-secondary">
@@ -118,11 +124,31 @@
     private bool showModal = false;
     private UserDataDto? selectedTA;
     private bool isViewMode = false;
-    private const int EvaluationPeriodId = 1; // Example period ID
+    private int EvaluationPeriodId; // Example period ID
     
     protected override async Task OnInitializedAsync()
     {
+        await GetEvaluationPeriod();
         await LoadTAList();
+    }
+    private async Task GetEvaluationPeriod()
+    {
+        try
+        {
+            var response = await Http.GetAsync($"api/EvaluationPeriod/GetActiveEvaluationPeriod");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<GetEvaluationPeriodDto>();
+                EvaluationPeriodId = result.PeriodId;
+                Console.WriteLine($"✅ evaluationPeriod retrieved{EvaluationPeriodId}");
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"لا توجد فترة تقييم حاليا {ex.Message}";
+            Console.WriteLine($"No Active EvaluationPeriod  {ex.Message}");
+        }
     }
 
     private async Task LoadTAList()
@@ -133,7 +159,7 @@
         {
             // Load ONLY the HOD evaluations (your DTO contains everything needed)
             var hodEvaluations = await Http.GetFromJsonAsync<List<HodEvaluationResponseDto>>(
-                "/api/HodEvaluation/GetHodEvaluationByPeriod/1"
+                $"/api/HodEvaluation/GetHodEvaluationByPeriod/{EvaluationPeriodId}"
             ) ?? new List<HodEvaluationResponseDto>();
 
 

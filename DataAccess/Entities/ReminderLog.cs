@@ -11,7 +11,7 @@ public partial class ReminderLog
 
     public int SentByEmployeeId { get; set; }
 
-    public string SenderRole { get; set; }
+    //public string SenderRole { get; set; }
 
     public int RecievedByEmployeeId { get; set; }
 

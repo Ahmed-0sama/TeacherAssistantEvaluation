@@ -3,6 +3,7 @@ using DataAccess.Entities;
 using Microsoft.EntityFrameworkCore;
 using Shared.Dtos.DeanDto;
 using Shared.Dtos.HODEvaluation;
+using Shared.Dtos.Notifications;
 using Shared.Dtos.TASubmissions;
 using System;
 using System.Collections.Generic;
@@ -16,9 +17,11 @@ namespace Business_Access.Services
     {
 
         private readonly SrsDbContext _db;
-        public DeanServices(SrsDbContext db)
+        private readonly INotification _notificationService;
+        public DeanServices(SrsDbContext db, INotification notificationService)
         {
             _db = db;
+            _notificationService = notificationService;
         }
 
 
@@ -230,7 +233,12 @@ namespace Business_Access.Services
                     evaluation.StatusId = 6;
                     evaluation.DateApproved = DateTime.UtcNow;
                     await _db.SaveChangesAsync();
-
+                    SendNotificationDto notificationdto = new SendNotificationDto
+                    {
+                        recipientId = evaluation.TaEmployeeId,
+                        message = "Your evaluation has been Accepted by Dean."
+                    };
+                    await _notificationService.SendNotificationAsync(notificationdto);
                     await transaction.CommitAsync();
 
                     return new DeanActionResponseDto
@@ -303,7 +311,6 @@ namespace Business_Access.Services
                     evaluation.StatusId = 7;
                     evaluation.DeanReturnComment = dto.DeanReturnComment;
                     await _db.SaveChangesAsync();
-
                     await transaction.CommitAsync();
 
                     return new DeanActionResponseDto

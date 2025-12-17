@@ -299,18 +299,7 @@
                                   disabled="@IsViewMode"
                                   placeholder="اذكر نقاط الضعف ومجالات التحسين..."></textarea>
                     </div>
-                </div>
-
-                <!-- Score Summary -->
-                @if (IsViewMode && hodEvaluationData != null)
-                {
-                    <div class="alert alert-info">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span class="fs-5 fw-bold">المجموع الكلي:</span>
-                            <span class="fs-3 fw-bold text-primary">@hodEvaluationData.TotalScore / @hodEvaluationData.MaxScore</span>
-                        </div>
-                    </div>
-                }
+                </div> 
             }
         </div>
         <div class="modal-footer">
@@ -769,7 +758,8 @@
                 EvaluationPeriodId = EvaluationPeriodId,
                 ProfessorId = selectedProfessorId, // ✅ Use the selected professor
                 TAId = SelectedTA.Id,
-                HodComments = HodReturnComment // ✅ Add this property to your DTO if not exists
+                HodComments = HodReturnComment ,// ✅ Add this property to your DTO if not exists
+                TaName = SelectedTA.Name
             };
 
             var response = await Http.PostAsJsonAsync(

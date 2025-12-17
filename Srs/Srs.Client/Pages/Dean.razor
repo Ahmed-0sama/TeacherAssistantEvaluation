@@ -1,4 +1,5 @@
 ﻿@page "/dean"
+@using Shared.Dtos.EvaluationPeriod
 @using Shared.Dtos.ProfessorEvaluationDto
 @using Shared.Dtos.TASubmissions
 @using Shared.Dtos.DeanDto
@@ -407,7 +408,7 @@
     private DeanPermissions Permissions { get; set; } = new();
     private CancellationTokenSource? _toastCancellationTokenSource;
     private UserDataDto userData = new UserDataDto();
-    private int EvaluationPeriodId = 1;
+    private int EvaluationPeriodId ;
     private bool isViewMode = true;
 
     private IEnumerable<EvaluationApiResponseDto> FilteredEvaluations =>
@@ -420,10 +421,29 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await GetEvaluationPeriod();
         Console.WriteLine("?? Dean page initializing...");
         await FetchEvaluationsAsync();
     }
+    private async Task GetEvaluationPeriod()
+    {
+        try
+        {
+            var response = await Http.GetAsync($"api/EvaluationPeriod/GetActiveEvaluationPeriod");
 
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<GetEvaluationPeriodDto>();
+                EvaluationPeriodId = result.PeriodId;
+                Console.WriteLine($"✅ evaluationPeriod retrieved{EvaluationPeriodId}");
+            }
+        }
+        catch (Exception ex)
+        {
+            ToastMessage = $"لا توجد فترة تقييم حاليا {ex.Message}";
+            Console.WriteLine($"No Active EvaluationPeriod  {ex.Message}");
+        }
+    }
     private async Task FetchEvaluationsAsync()
     {
         Console.WriteLine("?? Starting FetchEvaluationsAsync...");

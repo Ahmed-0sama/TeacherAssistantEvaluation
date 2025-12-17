@@ -1,8 +1,10 @@
 ﻿@page "/vpgs"
 @using Shared.Dtos
+@using Shared.Dtos.EvaluationPeriod
 @using Shared.Dtos.GSDean
 @using Shared.Dtos.TASubmissions
 @using Shared.Dtos.VPGSEvaluation
+@using static System.Net.WebRequestMethods
 @inject HttpClient Http
 @inject IJSRuntime JS
 @rendermode InteractiveWebAssembly
@@ -311,7 +313,7 @@
     private List<UserDataDto> taList = new();
     private bool ModalVisable = false;
     private UserDataDto? selectedTA;
-    private int evaluationperiodid = 1;// Hardcoded for now
+    private int evaluationperiodid;// Hardcoded for now
     private MastersDto mastersDto = new();
     private bool isLoadingModalData = false;
     private bool isSaving = false;
@@ -331,9 +333,10 @@
     protected override async Task OnInitializedAsync()
     {
         isLoading = true;
+        await GetEvaluationPeriod();
         try
         {
-            var evaluations = await Http.GetFromJsonAsync<List<GetEvaluationDto>>("/api/evaluation/period/1");
+            var evaluations = await Http.GetFromJsonAsync<List<GetEvaluationDto>>($"/api/evaluation/period/{evaluationperiodid}");
 
             // Get VPGS existence map for the period
             var vpgsExistenceMap = await Http.GetFromJsonAsync<Dictionary<int, bool>>("/api/Vpgs/period/1/existenceMap")
@@ -362,7 +365,25 @@
             isLoading = false;
         }
     }
+    private async Task GetEvaluationPeriod()
+    {
+        try
+        {
+            var response = await Http.GetAsync($"api/EvaluationPeriod/GetActiveEvaluationPeriod");
 
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<GetEvaluationPeriodDto>();
+                evaluationperiodid = result.PeriodId;
+                Console.WriteLine($"✅ evaluationPeriod retrieved{evaluationperiodid}");
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"لا توجد فترة تقييم حاليا {ex.Message}";
+            Console.WriteLine($"No Active EvaluationPeriod  {ex.Message}");
+        }
+    }
     private async Task OpenModal(UserDataDto ta)
     {
         selectedTA = ta;
