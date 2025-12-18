@@ -339,7 +339,7 @@
             var evaluations = await Http.GetFromJsonAsync<List<GetEvaluationDto>>($"/api/evaluation/period/{evaluationperiodid}");
 
             // Get VPGS existence map for the period
-            var vpgsExistenceMap = await Http.GetFromJsonAsync<Dictionary<int, bool>>("/api/Vpgs/period/1/existenceMap")
+            var vpgsExistenceMap = await Http.GetFromJsonAsync<Dictionary<int, bool>>($"/api/Vpgs/period/{evaluationperiodid}/existenceMap")
                 ?? new Dictionary<int, bool>();
 
             if (evaluations != null)
