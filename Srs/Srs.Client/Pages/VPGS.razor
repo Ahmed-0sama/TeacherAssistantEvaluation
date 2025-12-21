@@ -206,6 +206,7 @@
                                             <th>عدد الصفحات</th>
                                             <th>التاريخ</th>
                                             <th>الحالة</th>
+                                            <th>الرابط</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -220,6 +221,21 @@
                                                     <td>@paper.PageCount</td>
                                                     <td>@paper.Date.ToString("yyyy/MM/dd")</td>
                                                     <td>@GetStatusName(paper.Status)</td>
+                                                    <td class="py-3" style="max-width: 250px;">
+                                                        @if (!string.IsNullOrEmpty(paper.Url))
+                                                        {
+                                                            <a href="@paper.Url" target="_blank" class="text-primary text-decoration-none d-flex align-items-center" title="@paper.Url">
+                                                                <i class="bi bi-link-45deg me-1 flex-shrink-0"></i>
+                                                                <span class="text-truncate" style="max-width: 200px;">
+                                                                    @paper.Url
+                                                                </span>
+                                                            </a>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="text-muted">لا يوجد رابط</span>
+                                                        }
+                                                    </td>
                                                 </tr>
                                             }
                                         }
@@ -514,7 +530,8 @@
                         Location = activity.Location,
                         PageCount = activity.PageCount,
                         Date = activity.ActivityDate,
-                        Status = activity.StatusId  // Fixed: Changed from StatusName to StatusId
+                        Status = activity.StatusId,
+                        Url = activity.Url
                     }).ToList();
 
                     Console.WriteLine($"✅ Successfully loaded {researchPapers.Count} research papers");

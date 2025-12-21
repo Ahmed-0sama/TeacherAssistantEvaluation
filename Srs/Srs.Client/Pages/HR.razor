@@ -5,6 +5,9 @@
 @using Shared.Dtos.Hr
 @inject HttpClient Http
 @rendermode InteractiveWebAssembly
+<HeadContent>
+    <link href="./Custom-Rtl.css" rel="stylesheet" />
+</HeadContent>
 <div class="container-fluid">
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-center py-3 border-bottom">
@@ -67,12 +70,17 @@
             </div>
         </div>
 
-        <!-- Action Buttons -->
-        <div class="d-flex gap-2 mb-3">
+        <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
             <button class="btn btn-primary">
                 <i class="bi bi-printer"></i> طباعة التقرير
             </button>
-            <button class="btn btn-dark">بحث بالاسم أو الرقم الوظيفي</button>
+
+            <input type="text"
+                   class="form-control w-50"
+                   placeholder="بحث بالاسم أو الرقم الوظيفي أو الحالة..."
+                   @bind="SearchTerm"
+                   @bind:event="oninput" />
+
         </div>
 
         <!-- Table -->
@@ -91,7 +99,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var evaluation in taList)
+                            @foreach (var evaluation in FilteredTAList)
                             {
                                 <tr>
                                     <td>@evaluation.Name</td>
@@ -104,11 +112,13 @@
                                     </td>
                                     <td>@GetStatusText(evaluation.statusid)</td>
                                     <td>
-                                        @if (evaluation.statusid == 6 || evaluation.statusid == 7)
+                                        @if (evaluation.statusid == 6 || evaluation.statusid == 5)
                                         {
-                                            <button class="btn btn-sm btn-primary me-1">عرض التقرير</button>
+                                            <button class="btn btn-sm btn-primary ms-2 " @onclick="() => OpenModal(evaluation)">عرض التقرير</button>
                                         }
+                                       @if(evaluation.statusid!=6){
                                         <button class="btn btn-sm btn-warning text-white">إرسال تذكير</button>
+                                       }
                                     </td>
                                 </tr>
                             }
@@ -119,19 +129,65 @@
         </div>
     </div>
 </div>
-
+@if (showHodModal && selectedTA != null)
+{
+    <Srs.Client.Compontets.HODComponent SelectedTA="@selectedTA"
+                                        EvaluationPeriodId="@EvaluationPeriodId"
+                                        IsViewMode="true"
+                                        OnClose="@CloseModal"/>
+}
 @code {
     private int EvaluationPeriodId;
     private string errorMessage = string.Empty;
     private List<UserDataDto> taList = new();
-    private EvaluationStatisticsDto evstat=new();
+    private UserDataDto? selectedTA;
+    private bool showHodModal = false;
+    private EvaluationStatisticsDto evstat = new();
     private bool isLoading = false;
+    private string SearchTerm { get; set; } = string.Empty;
+
+    private List<UserDataDto> FilteredTAList
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(SearchTerm))
+            {
+                return taList;
+            }
+
+            var searchLower = SearchTerm.ToLower().Trim();
+
+            return taList.Where(ta =>
+                (ta.Name?.ToLower().Contains(searchLower) ?? false) ||
+                (ta.EmployeeNumber.ToString().Contains(searchLower)) ||
+                (ta.Department?.ToLower().Contains(searchLower) ?? false) ||
+                (GetStatusText(ta.statusid).ToLower().Contains(searchLower))
+            ).ToList();
+        }
+    }
+
     protected override async Task OnInitializedAsync()
     {
         await GetEvaluationPeriod();
         await GetEvaluationStatistics();
         await LoadTAList();
     }
+
+    private void OpenModal(UserDataDto ta)
+    {
+        Console.WriteLine($"Opening modal for: {ta.Name}, EvaluationId: {ta.EvaluationId}");
+        selectedTA = ta;
+        showHodModal = true;
+        StateHasChanged();
+    }
+
+    private void CloseModal()
+    {
+        showHodModal = false;
+        selectedTA = null;
+        StateHasChanged();
+    }
+
     private async Task GetEvaluationPeriod()
     {
         try
@@ -142,15 +198,16 @@
             {
                 var result = await response.Content.ReadFromJsonAsync<GetEvaluationPeriodDto>();
                 EvaluationPeriodId = result.PeriodId;
-                Console.WriteLine($"✅ evaluationPeriod retrieved{EvaluationPeriodId}");
+                Console.WriteLine($"✅ evaluationPeriod retrieved {EvaluationPeriodId}");
             }
         }
         catch (Exception ex)
         {
             errorMessage = $"لا توجد فترة تقييم حاليا {ex.Message}";
-            Console.WriteLine($"No Active EvaluationPeriod  {ex.Message}");
+            Console.WriteLine($"No Active EvaluationPeriod {ex.Message}");
         }
     }
+
     private async Task GetEvaluationStatistics()
     {
         try
@@ -172,6 +229,7 @@
             Console.WriteLine($"Error fetching evaluation statistics: {ex.Message}");
         }
     }
+
     private async Task LoadTAList()
     {
         isLoading = true;
@@ -182,8 +240,6 @@
                 $"/api/HodEvaluation/GetHodEvaluationByPeriod/{EvaluationPeriodId}"
             ) ?? new List<HodEvaluationResponseDto>();
 
-
-            // Now build the TA list from the HOD data
             taList = hodEvaluations.Select(h => new UserDataDto
             {
                 Name = h.TaName ?? $"TA #{h.TaEmployeeId}",
@@ -192,11 +248,7 @@
                 EvaluationId = h.EvaluationId,
                 Id = h.TaEmployeeId,
                 statusid = h.StatusId,
-
-                // There IS a HOD evaluation because this DTO exists
                 HasHodEvaluation = true,
-
-                // Full HOD evaluation object if needed later
                 HodEvaluationData = h
             })
             .ToList();
@@ -219,11 +271,13 @@
         return evaluationstatus switch
         {
             6 => "bg-success",
-            2 => "bg-warning text-dark",
+            5 => "bg-primary",
+            2 or 4 or 7 => "bg-warning text-dark",
             1 => "bg-secondary",
             _ => "bg-secondary"
         };
     }
+
     private string GetStatusText(int evaluationstatus)
     {
         return evaluationstatus switch
@@ -235,5 +289,4 @@
             _ => "غير معروف"
         };
     }
-
 }
