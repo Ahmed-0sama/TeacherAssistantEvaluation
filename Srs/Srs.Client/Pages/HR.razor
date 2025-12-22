@@ -4,6 +4,7 @@
 @using Shared.Dtos.HODEvaluation
 @using Shared.Dtos.Hr
 @inject HttpClient Http
+@inject IJSRuntime JS
 @rendermode InteractiveWebAssembly
 <HeadContent>
     <link href="./Custom-Rtl.css" rel="stylesheet" />
@@ -71,12 +72,12 @@
         </div>
 
         <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
-            <button class="btn btn-primary">
+            <button class="btn btn-primary" @onclick="PrintReport">
                 <i class="bi bi-printer"></i> طباعة التقرير
             </button>
 
             <input type="text"
-                   class="form-control w-50"
+                   class="form-control w-50 no-print"
                    placeholder="بحث بالاسم أو الرقم الوظيفي أو الحالة..."
                    @bind="SearchTerm"
                    @bind:event="oninput" />
@@ -95,7 +96,7 @@
                                 <th>فترة التقييم</th>
                                 <th>التقدير العام</th>
                                 <th>الحالة</th>
-                                <th>إجراء</th>
+                                <th class="no-print">إجراء</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -288,5 +289,9 @@
             1 => "بانتظار المدخلات",
             _ => "غير معروف"
         };
+    }
+    private async Task PrintReport()
+    {
+        await JS.InvokeVoidAsync("window.print");
     }
 }

@@ -190,7 +190,7 @@
                                         <div class="p-2 bg-white rounded border">
                                             <i class="bi bi-star-fill fs-4 d-block text-warning"></i>
                                             <span class="fw-bold">التقييم</span>
-                                            <div>@(teachingdto.gradegiven)/10</div>
+                                                <div>@teachingLoadGrade(teachingdto.ActualTeachingLoad, teachingdto.ExpectedTeachingLoad)/10</div>
                                         </div>
                                     </div>
                                 </div>
@@ -199,7 +199,7 @@
                             <div class="card bg-primary bg-opacity-10 shadow-sm mx-auto mt-4" style="max-width: 600px; border-radius: 12px;">
                                 <div class="card-body text-center py-4">
                                     <h3 class="text-primary fw-semibold mb-2" style="direction: rtl; font-size: 18px;">المجموع الكلي للعبء التدريسي</h3>
-                                    <p class="text-primary fw-bold fs-4 mb-0" style="direction: ltr;">@(y) / 40</p>
+                                        <p class="text-primary fw-bold fs-4 mb-0" style="direction: ltr;">@(TotalTeachingLoad) / 40</p>
                                 </div>
                             </div>
                         }
@@ -207,7 +207,7 @@
                 </div>
 
                 <!-- Child Components -->
-                <Srs.Client.Compontets.TeachingActivitiesEvaluation TeachingLoadScore="@y"
+                    <Srs.Client.Compontets.TeachingActivitiesEvaluation TeachingLoadScore="@TotalTeachingLoad"
                                                                     OnRatingsChanged="OnTeachingActivitiesRatingsChanged"
                                                                     IsViewMode="@IsViewMode"
                                                                     ExistingRatings="@GetExistingRatings("DirectTeaching")" />
@@ -250,7 +250,7 @@
                                     <span class="badge bg-light text-dark">@(teachingLoadScore) / 50</span>
                                     <div class="mt-1" style="font-size: 0.7rem;">
                                         <small class="text-muted d-block">تقييم الأساتذة: @CalculateAverageScore()</small>
-                                        <small class="text-muted d-block">اكتمال النصاب: @(teachingdto.gradegiven ?? 0)</small>
+                                            <small class="text-muted d-block">اكتمال النصاب: @teachingLoadGrade(teachingdto.ActualTeachingLoad,teachingdto.ExpectedTeachingLoad)</small>
                                         <small class="text-muted d-block">الأنشطة التعليمية: @GetTeachingActivitiesTotal()</small>
                                     </div>
                                 </div>
@@ -474,7 +474,7 @@
     private TeachingDataDto teachingdto = new TeachingDataDto();
     private List<ProfessorEvaluationResponseDto> profdto = new List<ProfessorEvaluationResponseDto>();
     private HodEvaluationResponseDto? hodEvaluationData;
-    double y => (CalculateAverageScore()) + (teachingdto.gradegiven ?? 0);
+    double TotalTeachingLoad => (CalculateAverageScore()) + (teachingLoadGrade(teachingdto.ActualTeachingLoad,teachingdto.ExpectedTeachingLoad));
     // Ratings dictionaries
     private Dictionary<int, int> teachingActivitiesRatings = new();
     private Dictionary<int, int> scientificActivityRatings = new();
@@ -491,7 +491,7 @@
     private IJSObjectReference? pdfModule;
 
     // Computed properties - العبء التدريسي = Professor evaluations (30) + Teaching load completion (10) + Teaching Activities (10)
-    decimal teachingLoadScore => (CalculateAverageScore()) + (teachingdto.gradegiven ?? 0) + GetTeachingActivitiesTotal();
+    decimal teachingLoadScore => (CalculateAverageScore()) + teachingLoadGrade(teachingdto.ActualTeachingLoad,teachingdto.ExpectedTeachingLoad) + GetTeachingActivitiesTotal();
 
     protected override async Task OnParametersSetAsync()
     {
@@ -572,8 +572,7 @@
                 {
                     ActualTeachingLoad = 12,
                     ExpectedTeachingLoad = 10,
-                    ClassCount = 3,
-                    gradegiven = 8
+                    ClassCount = 3
                 };
                 Console.WriteLine("✅ Teaching data initialized");
             }
@@ -593,7 +592,7 @@
                     if (hodEvaluationData != null)
                     {
                         Console.WriteLine($"✅ HOD evaluation loaded - StatusId: {hodEvaluationData.StatusId}, Evaluations count: {hodEvaluationData.Evaluations?.Count ?? 0}");
-                        
+
                         if (hodEvaluationData.Evaluations?.Any() == true)
                         {
                             hodStrengths = hodEvaluationData.HodStrengths ?? string.Empty;
@@ -973,6 +972,17 @@
         finally
         {
             isSaving = false;
+        }
+    }
+    private int teachingLoadGrade(int actualteaching,int expectedteaching)
+    {
+        if(actualteaching>=expectedteaching)
+        {
+            return 10;
+        }
+        else
+        {
+            return 0;
         }
     }
     private async Task PrintModal()
