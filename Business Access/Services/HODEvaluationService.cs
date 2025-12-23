@@ -2,6 +2,7 @@
 using DataAccess.Entities;
 using Microsoft.EntityFrameworkCore;
 using Shared.Dtos.HODEvaluation;
+using Shared.Dtos.Notifications;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,9 +14,11 @@ namespace Business_Access.Services
     public class HODEvaluationService : IHODEvaluation
     {
         private readonly SrsDbContext _db;
-        public HODEvaluationService(SrsDbContext db)
+        private readonly INotification _notificationService;
+        public HODEvaluationService(SrsDbContext db, INotification notificationService)
         {
             _db = db;
+            _notificationService = notificationService;
         }
         public async Task<int> CreateHodEvaluationAsync(CreateHodEvaluationDto dto)
         {
@@ -57,7 +60,12 @@ namespace Business_Access.Services
                 evaluation.StatusId = 5; // Completed HOD evaluation
                 evaluation.HodStrengths = dto.HodStrengths;
                 evaluation.HodWeaknesses = dto.HodWeaknesses;
-
+                SendNotificationDto notificationdto = new SendNotificationDto
+                {
+                    recipientId = evaluation.TaEmployeeId,
+                    message = "Your evaluation has been Accepted by HOD."
+                };
+                await _notificationService.SendNotificationAsync(notificationdto);
                 await _db.SaveChangesAsync();
                 await transaction.CommitAsync();
 
@@ -274,6 +282,7 @@ namespace Business_Access.Services
                 //2 maybe returned from ta
                 if (evaluation.StatusId == 7 || evaluation.StatusId == 5||evaluation.StatusId==2)
                 {
+
                     evaluation.StatusId = 5; // Completed HOD evaluation
                 }
 
@@ -282,6 +291,12 @@ namespace Business_Access.Services
                 {
                     evaluation.DeanReturnComment = null;
                 }
+                SendNotificationDto notificationdto = new SendNotificationDto
+                {
+                    recipientId = evaluation.TaEmployeeId,
+                    message = "Your evaluation has been Approved by HOD."
+                };
+                await _notificationService.SendNotificationAsync(notificationdto);
 
                 // ✅ 7. Save all changes
                 await _db.SaveChangesAsync();
@@ -309,6 +324,12 @@ namespace Business_Access.Services
                 // Update evaluation status and comments
                 evaluation.StatusId = 3; // Returned by HOD
                 evaluation.HodReturnComment = dto.Comments;
+                SendNotificationDto notificationdto= new SendNotificationDto
+                {
+                    recipientId = evaluation.TaEmployeeId,
+                    message = "Your evaluation has been returned by HOD. Please review the comments and make necessary adjustments."
+                };
+                await _notificationService.SendNotificationAsync(notificationdto);
                 await _db.SaveChangesAsync();
                 await transaction.CommitAsync();
                 return true;
@@ -333,9 +354,16 @@ namespace Business_Access.Services
                 {
                     evaluation.StatusId = 4;
                 }
+
                 ProfessorEvaluation.HodReturnComment = dto.HodComments;
                 ProfessorEvaluation.IsReturned = true;
                 ProfessorEvaluation.StatusId = 4; // Returned by HOD
+                SendNotificationDto notificationdto = new SendNotificationDto
+                {
+                    recipientId = ProfessorEvaluation.ProfessorEmployeeId,
+                    message = $"Your evaluation for {dto.TaName} returned by HOD. Please review the comments and make necessary adjustments."
+                };
+                await _notificationService.SendNotificationAsync(notificationdto);
                 await _db.SaveChangesAsync();
                 await transaction.CommitAsync();
                 return true;

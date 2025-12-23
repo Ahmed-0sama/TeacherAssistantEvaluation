@@ -268,55 +268,56 @@ hr {
     display: inline-block;
 }
 @media print {
-    /* Remove ALL default page margins */
-    @page {
-        margin: 0;
-        size: auto;
-    }
-
-    /* Hide everything except the modal */
-    body * {
-        visibility: hidden !important;
-    }
-
-    html, body {
-      margin: 0 !important;
+    /* Only apply modal print styles when modal IS present */
+    body:has(.modal-overlay) {
+        margin: 0 !important;
         padding: 0 !important;
         height: auto !important;
         width: 100% !important;
     }
 
-    /* Show modal content */
-    .modal-overlay,
-    .modal-overlay *,
-    .modal,
-    .modal * {
-        visibility: visible !important;
-    }
+        /* Remove ALL default page margins for modals */
+        body:has(.modal-overlay) @page {
+            margin: 0;
+            size: auto;
+        }
 
-    .modal-overlay,
-    .modal {
-      visibility: visible !important;
-        position: absolute !important;
- top: 0 !important;
-        left: 0 !important;
-        background: white !important;
-        display: block !important;
-   margin: 0 !important;
-        padding: 0 !important;
-        height: auto !important;
-        width: 100% !important;
-    }
+        /* Hide everything except the modal ONLY when modal is present */
+        body:has(.modal-overlay) * {
+            visibility: hidden !important;
+        }
+
+        /* Show modal content */
+        body:has(.modal-overlay) .modal-overlay,
+        body:has(.modal-overlay) .modal-overlay *,
+        body:has(.modal-overlay) .modal,
+        body:has(.modal-overlay) .modal * {
+            visibility: visible !important;
+        }
+
+        body:has(.modal-overlay) .modal-overlay,
+        body:has(.modal-overlay) .modal {
+            visibility: visible !important;
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            background: white !important;
+            display: block !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            height: auto !important;
+            width: 100% !important;
+        }
 
     .modal-container,
     .modal-dialog,
     .modal-content {
         position: absolute !important;
-left: 0 !important;
-    top: 0 !important;
+        left: 0 !important;
+        top: 0 !important;
         width: 100% !important;
         max-width: 100% !important;
-      max-height: none !important;
+        max-height: none !important;
         margin: 0 !important;
         padding: 0 !important;
         background: white !important;
@@ -324,15 +325,15 @@ left: 0 !important;
         height: auto !important;
         box-shadow: none !important;
         border-radius: 0 !important;
-    display: block !important;
+        display: block !important;
         transform: none !important;
         border: none !important;
     }
 
     .modal-header {
         background-color: #0d6efd !important;
-     color: white !important;
-  -webkit-print-color-adjust: exact !important;
+        color: white !important;
+        -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
         color-adjust: exact !important;
         page-break-after: avoid !important;
@@ -342,16 +343,16 @@ left: 0 !important;
 
     .modal-body {
         overflow: visible !important;
-    max-height: none !important;
+        max-height: none !important;
         height: auto !important;
-     padding: 1rem !important;
-     margin: 0 !important;
+        padding: 1rem !important;
+        margin: 0 !important;
     }
 
     /* Hide buttons, close button, and footer when printing */
     .modal-footer,
     .btn-close,
-  button {
+    button {
         display: none !important;
     }
 
@@ -365,12 +366,12 @@ left: 0 !important;
     /* Info section with background color */
     .info-section,
     .bg-light {
-    background-color: #f8f9fa !important;
+        background-color: #f8f9fa !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
         color-adjust: exact !important;
-   padding: 1rem !important;
-      border-radius: 6px !important;
+        padding: 1rem !important;
+        border-radius: 6px !important;
         margin-bottom: 1rem !important;
     }
 
@@ -382,88 +383,88 @@ left: 0 !important;
         color-adjust: exact !important;
     }
 
-    .badge.bg-success {
-  background-color: #198754 !important;
-        color: white !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        color-adjust: exact !important;
-    }
+        .badge.bg-success {
+            background-color: #198754 !important;
+            color: white !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
+        }
 
-    .badge.bg-warning {
-        background-color: #ffc107 !important;
-        color: #000 !important;
- -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        color-adjust: exact !important;
-    }
+        .badge.bg-warning {
+            background-color: #ffc107 !important;
+            color: #000 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
+        }
 
-    .badge.bg-primary {
-  background-color: #0d6efd !important;
-        color: white !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        color-adjust: exact !important;
-    }
+        .badge.bg-primary {
+            background-color: #0d6efd !important;
+            color: white !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
+        }
 
-    .badge.bg-info {
-    background-color: #0dcaf0 !important;
-        color: #000 !important;
-        -webkit-print-color-adjust: exact !important;
-      print-color-adjust: exact !important;
-        color-adjust: exact !important;
-    }
+        .badge.bg-info {
+            background-color: #0dcaf0 !important;
+            color: #000 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
+        }
 
-    .badge.bg-secondary {
-        background-color: #6c757d !important;
-  color: white !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        color-adjust: exact !important;
-    }
+        .badge.bg-secondary {
+            background-color: #6c757d !important;
+            color: white !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
+        }
 
     /* Card styling for print */
     .card {
         border: 1px solid #dee2e6 !important;
-   margin-bottom: 0.5rem !important;
+        margin-bottom: 0.5rem !important;
         background-color: white !important;
-     -webkit-print-color-adjust: exact !important;
+        -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
         color-adjust: exact !important;
- }
+    }
 
     .card-body {
         padding: 0.75rem !important;
-  }
+    }
 
     .card.border-primary,
     .bg-primary {
-   border-color: #0d6efd !important;
- background-color: #e7f3ff !important;
+        border-color: #0d6efd !important;
+        background-color: #e7f3ff !important;
         -webkit-print-color-adjust: exact !important;
-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
         color-adjust: exact !important;
     }
 
-    .bg-primary.bg-opacity-10 {
-        background-color: #e7f3ff !important;
-    -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
- color-adjust: exact !important;
-    }
+        .bg-primary.bg-opacity-10 {
+            background-color: #e7f3ff !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
+        }
 
     .card.border-success {
         border-color: #198754 !important;
         border-width: 2px !important;
         -webkit-print-color-adjust: exact !important;
- print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
         color-adjust: exact !important;
     }
 
     .card.bg-light {
-  background-color: #f8f9fa !important;
-    -webkit-print-color-adjust: exact !important;
-  print-color-adjust: exact !important;
+        background-color: #f8f9fa !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
         color-adjust: exact !important;
     }
 
@@ -483,16 +484,16 @@ print-color-adjust: exact !important;
     }
 
     .text-warning {
-    color: #ffc107 !important;
--webkit-print-color-adjust: exact !important;
+        color: #ffc107 !important;
+        -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
-    color-adjust: exact !important;
+        color-adjust: exact !important;
     }
 
     .text-muted {
         color: #6c757d !important;
         -webkit-print-color-adjust: exact !important;
-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
         color-adjust: exact !important;
     }
 
@@ -507,31 +508,31 @@ print-color-adjust: exact !important;
     .alert {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
-  color-adjust: exact !important;
+        color-adjust: exact !important;
         padding: 0.75rem 1rem !important;
         margin-bottom: 1rem !important;
         border-radius: 6px !important;
     }
 
     .alert-info {
-   background-color: #cfe2ff !important;
-     border-color: #b6d4fe !important;
+        background-color: #cfe2ff !important;
+        border-color: #b6d4fe !important;
         color: #084298 !important;
         -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-    color-adjust: exact !important;
-}
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
 
     .alert-secondary {
-     background-color: #e2e3e5 !important;
-    border-color: #d3d6d8 !important;
+        background-color: #e2e3e5 !important;
+        border-color: #d3d6d8 !important;
         color: #41464b !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
-   color-adjust: exact !important;
+        color-adjust: exact !important;
     }
 
-.alert-warning {
+    .alert-warning {
         background-color: #fff3cd !important;
         border-color: #ffecb5 !important;
         color: #856404 !important;
@@ -545,31 +546,31 @@ print-color-adjust: exact !important;
         border-collapse: collapse !important;
     }
 
-    .table th,
-    .table td {
-        border: 1px solid #dee2e6 !important;
-    }
+        .table th,
+        .table td {
+            border: 1px solid #dee2e6 !important;
+        }
 
-    .table-secondary,
-    .table thead.table-secondary {
-        background-color: #e2e3e5 !important;
-        -webkit-print-color-adjust: exact !important;
-   print-color-adjust: exact !important;
-        color-adjust: exact !important;
-    }
+        .table-secondary,
+        .table thead.table-secondary {
+            background-color: #e2e3e5 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
+        }
 
-  .table-light,
-    .table tfoot.table-light {
-        background-color: #f8f9fa !important;
-    -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        color-adjust: exact !important;
-    }
+        .table-light,
+        .table tfoot.table-light {
+            background-color: #f8f9fa !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
+        }
 
     /* Prevent page breaks inside important sections */
     h5, h6 {
         page-break-after: avoid !important;
-  color: #333 !important;
+        color: #333 !important;
         font-weight: 600 !important;
     }
 
@@ -577,7 +578,7 @@ print-color-adjust: exact !important;
     hr {
         border-top: 1px solid #dee2e6 !important;
         page-break-after: avoid !important;
-     margin: 1rem 0 !important;
+        margin: 1rem 0 !important;
     }
 
     /* Border colors */
@@ -605,5 +606,179 @@ print-color-adjust: exact !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
         color-adjust: exact !important;
+    }
+}
+
+/* ==================== HR PAGE PRINT STYLES ==================== */
+
+@media print {
+    /* Only apply when NO modal is open */
+    body:not(:has(.modal-overlay)) @page {
+        margin: 1cm;
+        size: A4 portrait;
+    }
+
+    /* Hide search bar and print button */
+    body:not(:has(.modal-overlay)) .no-print {
+        display: none !important;
+    }
+
+    /* Full width container */
+    body:not(:has(.modal-overlay)) .container-fluid {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 0.5cm !important;
+        margin: 0 !important;
+    }
+
+    /* Statistics cards - keep them together */
+    body:not(:has(.modal-overlay)) .row.g-3 {
+        page-break-inside: avoid !important;
+        margin-bottom: 1rem !important;
+    }
+
+    /* Remove box shadows for print */
+    body:not(:has(.modal-overlay)) .card {
+        box-shadow: none !important;
+        page-break-inside: avoid !important;
+    }
+
+    /* Table styles - THIS IS KEY FOR LONG TABLES */
+    body:not(:has(.modal-overlay)) .table-responsive {
+        overflow: visible !important;
+        box-shadow: none !important;
+        height: auto !important;
+        max-height: none !important;
+    }
+
+    body:not(:has(.modal-overlay)) .table {
+        page-break-inside: auto !important;
+        border-collapse: collapse !important;
+        width: 100% !important;
+    }
+
+        /* Repeat table header on each page */
+        body:not(:has(.modal-overlay)) .table thead {
+            display: table-header-group !important;
+        }
+
+            body:not(:has(.modal-overlay)) .table thead th {
+                background-color: #f8f9fa !important;
+                border: 1px solid #dee2e6 !important;
+                padding: 0.5rem !important;
+                font-weight: 600 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+        /* Keep rows together, but allow page breaks between rows */
+        body:not(:has(.modal-overlay)) .table tr {
+            page-break-inside: avoid !important;
+            page-break-after: auto !important;
+        }
+
+        body:not(:has(.modal-overlay)) .table td,
+        body:not(:has(.modal-overlay)) .table th {
+            border: 1px solid #dee2e6 !important;
+            padding: 0.4rem !important;
+            font-size: 10pt !important;
+        }
+
+    /* Preserve badge colors */
+    body:not(:has(.modal-overlay)) .badge {
+        border: 1px solid currentColor !important;
+        padding: 0.25rem 0.5rem !important;
+        font-size: 9pt !important;
+    }
+
+        body:not(:has(.modal-overlay)) .badge.bg-success {
+            background-color: #198754 !important;
+            color: white !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        body:not(:has(.modal-overlay)) .badge.bg-primary {
+            background-color: #0d6efd !important;
+            color: white !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        body:not(:has(.modal-overlay)) .badge.bg-warning {
+            background-color: #ffc107 !important;
+            color: #000 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        body:not(:has(.modal-overlay)) .badge.bg-secondary {
+            background-color: #6c757d !important;
+            color: white !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+    /* Preserve card border colors */
+    body:not(:has(.modal-overlay)) .border-success {
+        border-color: #198754 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    body:not(:has(.modal-overlay)) .border-warning {
+        border-color: #ffc107 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    body:not(:has(.modal-overlay)) .border-info {
+        border-color: #0dcaf0 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    body:not(:has(.modal-overlay)) .border-primary {
+        border-color: #0d6efd !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    /* Text colors */
+    body:not(:has(.modal-overlay)) .text-primary {
+        color: #0d6efd !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    body:not(:has(.modal-overlay)) .text-muted {
+        color: #6c757d !important;
+    }
+
+    /* Page headers */
+    body:not(:has(.modal-overlay)) h2,
+    body:not(:has(.modal-overlay)) h3 {
+        page-break-after: avoid !important;
+    }
+
+    body:not(:has(.modal-overlay)) h2 {
+        font-size: 16pt !important;
+    }
+
+    body:not(:has(.modal-overlay)) h3 {
+        font-size: 14pt !important;
+    }
+
+    body:not(:has(.modal-overlay)) h6 {
+        font-size: 9pt !important;
+    }
+
+    /* Remove scrollbars */
+    body:not(:has(.modal-overlay)) ::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    body:not(:has(.modal-overlay)) * {
+        overflow: visible !important;
     }
 }

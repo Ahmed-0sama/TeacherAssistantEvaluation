@@ -30,5 +30,15 @@ namespace Srs.Controllers
             var notifications = await _notificationService.GetAllNotification(employeeId);
             return Ok(notifications);
         }
+        [HttpPut("MarkRead/{notificationId}")]
+        public async Task<IActionResult> MarkAsRead(int notificationId)
+        {
+            var result = await _notificationService.MarkAsReadAsync(notificationId);
+            if (result)
+            {
+                return Ok(new { message = "Notification marked as read." });
+            }
+            return StatusCode(500, new { message = "Failed to mark notification as read." });
+        }
     }
 }

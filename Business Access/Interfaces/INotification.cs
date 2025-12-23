@@ -11,5 +11,6 @@ namespace Business_Access.Interfaces
     {
         Task<bool> SendNotificationAsync(SendNotificationDto dto);
         Task<List<NotificationDto>> GetAllNotification(int EmployeeId);
+        Task<bool> MarkAsReadAsync(int notificationId);
     }
 }

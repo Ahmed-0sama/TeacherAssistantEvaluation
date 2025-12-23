@@ -2,6 +2,7 @@
 @rendermode InteractiveWebAssembly
 @using Shared.Dtos
 @using Shared.Dtos.EvaluationPeriod
+@using Shared.Dtos.HODEvaluation
 @using Shared.Dtos.ProfessorEvaluationDto
 @using Shared.Dtos.TASubmissions
 @using System.Text.Json
@@ -16,7 +17,6 @@
 
     @if (isLoading)
     {
-        @* --- GLOBAL LOADING STATE --- *@
         <div class="text-center py-5 w-100">
             <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
                 <span class="visually-hidden">جاري التحميل...</span>
@@ -26,7 +26,6 @@
     }
     else if (errorMessage != null)
     {
-        @* --- ERROR STATE --- *@
         <div class="w-75 mb-4">
             <div class="alert alert-danger shadow-sm" role="alert">
                 <h4 class="alert-heading">حدث خطأ</h4>
@@ -38,8 +37,6 @@
     }
     else
     {
-
-        @* View-Only Notice *@
         @if (viewonly)
         {
             <div class="w-75 mb-4">
@@ -62,8 +59,10 @@
                 </div>
             </div>
         }
-
-        @* 1. Personal Data Card *@
+        <div class="position-fixed top-0 start-0 m-3" style="z-index: 1050;">
+         <Srs.Client.Compontets.NotificationComponent EmployeeId="@userData.Id.ToString()" />
+        </div>
+        @*  Personal Data Card *@
         <div class="w-75 mb-4 shadow-sm">
             <div class="card shadow-sm" style="width: 100%;" dir="rtl">
                 <div class="card-body">
@@ -113,7 +112,7 @@
                                                                  />
         </div>
 
-        @* FIXED: Pass evaluationId and IsReadOnly to the component *@
+        @* Pass evaluationId and IsReadOnly to the component *@
         <div class="w-75 mb-4 shadow-sm">
             <Srs.Client.Compontets.SentificِActivityComponent EvaluationId="@evaluationId"
                                                               InitialResearchPapers="@researchPapers"
@@ -155,12 +154,34 @@
             <div class="w-75 mb-4">
                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
                     <strong>خطأ!</strong> @errorMessage
-                    <button type="button" class="btn-close" @onclick="@(() => errorMessage = null)"></button>
+                    <button type="button" class="btn btn-close" @onclick="@(() => errorMessage = null)"></button>
+                </div>
+            </div>
+        }
+        @if (StatusId == 6 && viewonly && !isLoading && userData != null && evaluationPeriodId > 0)
+        {
+            <div class="w-75 mb-4">
+                <div class="alert alert-success shadow-sm text-center" role="alert">
+                    <h5 class="alert-heading">
+                        <i class="bi bi-check-circle-fill"></i>تم قبول تقييمك
+                    </h5>
+                    <p class="mb-3">يمكنك الآن عرض تقييم النهائي</p>
+                    <button class="btn btn-primary" @onclick="OpenHodModal">
+                        <i class="bi bi-eye"></i> عرض تقييم
+                    </button>
                 </div>
             </div>
         }
 
-        @* Only show buttons if NOT in view-only mode *@
+        @*button is clicked *@
+        @if (ShowHodModal && userData != null && evaluationPeriodId > 0)
+        {
+            <Srs.Client.Compontets.HODComponent SelectedTA="@userData"
+                                                EvaluationPeriodId="@evaluationPeriodId"
+                                                IsViewMode="true"
+                                                OnClose="@CloseModal" />
+        }
+        @* show buttons if NOT in view mode*@
         @if (!viewonly)
         {
             <div class="w-75 mb-4 d-flex gap-3">
@@ -190,7 +211,9 @@
     private int? submissionId;
     private bool isExistingSubmission = false;
     private string? errorMessage;
+    private int StatusId;
     private string? successMessage;
+    private bool ShowHodModal = false;
     private bool viewonly = false;
     private string ReturnMessage = "";
     private List<ResearchPaperDto> researchPapers = new List<ResearchPaperDto>();
@@ -198,13 +221,18 @@
     private AdminstrativeActivityDto administrativeData = new AdminstrativeActivityDto();
     private StudentActivityDto studentActivityData = new StudentActivityDto();
     private EducationalActivityDto? educationalData;
+    private HodEvaluationResponseDto? hodEvaluationData;
 
     protected override async Task OnInitializedAsync()
     {
         await GetEvaluationPeriod();
         await LoadUserData();
     }
-
+    private void CloseModal()
+    {
+        ShowHodModal = false;
+        StateHasChanged();
+    }
     private async Task GetEvaluationPeriod()
     {
         try
@@ -220,6 +248,7 @@
         }
         catch (Exception ex)
         {
+            errorMessage = $"لا توجد فترة تقييم حاليا {ex.Message}";
             Console.WriteLine($"No Active EvaluationPeriod  {ex.Message}");
         }
     }
@@ -262,9 +291,9 @@
         {
             userData = new Shared.Dtos.UserDataDto
             {
-                Id = 777,
+                Id = 110,
                 Name = "علياء احمد",
-                EmployeeNumber = 777,
+                EmployeeNumber = 1100,
                 Qualification = "ماجستير في علوم الحاسب",
                 Department = "قسم علوم الحاسب",
                 College = "AASTMT"
@@ -309,7 +338,10 @@
                 {
                     Console.WriteLine("ℹ️ No existing submission found - new evaluation");
                 }
-
+                if (result.StatusId == 6)
+                {
+                    StatusId = result.StatusId;
+                }
                 if (result.StatusId == 3)
                 {
                     ReturnMessage = result.HodRetrunMessage;
@@ -542,7 +574,7 @@
             HasTechnicalReports = otherActivities.HasTechnicalReportsOrArticles,
             HasSeminarLectures = otherActivities.HasGivenLecturesOrSeminars,
             HasAttendingSeminars = otherActivities.HasAttendedScientificSeminars,
-            AdvisedStudentCount = 2,
+            AdvisedStudentCount = 2,//should be bring from lms system
             ResearchActivities = researchActivities,
             IsInAcademicAdvisingCommittee = administrativeData.IsAcademicGuidanceCommittee,
             IsInSchedulingCommittee = administrativeData.ISchedulingCommittee,
@@ -634,7 +666,36 @@
             StateHasChanged();
         }
     }
+    private async Task OpenHodModal()
+    {
+        Console.WriteLine($"Opening HOD Modal - userData: {userData?.Name}, evaluationPeriodId: {evaluationPeriodId}");
 
+        if (userData == null || userData.Id == 0)
+        {
+            errorMessage = "بيانات المستخدم غير متوفرة";
+            StateHasChanged();
+            return;
+        }
+
+        if (evaluationPeriodId == 0)
+        {
+            errorMessage = "معرف فترة التقييم غير متوفر";
+            StateHasChanged();
+            return;
+        }
+
+        // Ensure EvaluationId is set in userData
+        if (userData.EvaluationId == 0)
+        {
+            userData.EvaluationId = evaluationId;
+        }
+
+        Console.WriteLine($"✅ Opening HOD modal with EvaluationId: {userData.EvaluationId}");
+
+        ShowHodModal = true;
+        StateHasChanged();
+    }
+    
     private async Task UpdateSubmission(UpdateTASubmissionsDto data)
     {
         try

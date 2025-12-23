@@ -38,6 +38,10 @@
         }
         else
         {
+
+            <div class="position-fixed top-0 start-0 m-3" style="z-index: 1050;">
+                <Srs.Client.Compontets.NotificationComponent EmployeeId="@currentProfessorId.ToString()" />
+            </div>
             <div class="table-responsive">
                 <table class="table table-hover table-striped" dir="rtl">
                     <thead class="table-primary">
@@ -299,8 +303,7 @@
     // TODO: Replace with actual logged-in professor ID from authentication
     private int currentProfessorId = 123;
 
-    // ✅ FIXED: Using actual period ID
-    private int currentEvaluationPeriodId = 1;
+    private int evaluationperiodid;
 
     private int Total => currentProfEval.OfficeHoursScore +
                          currentProfEval.AttendanceScore +
@@ -310,10 +313,28 @@
     {
         Console.WriteLine("=== OnInitializedAsync called ===");
         Console.WriteLine($"HttpClient BaseAddress: {Http.BaseAddress}");
-
+        await GetEvaluationPeriod();
         await LoadData();
     }
+    private async Task GetEvaluationPeriod()
+    {
+        try
+        {
+            var response = await Http.GetAsync($"api/EvaluationPeriod/GetActiveEvaluationPeriod");
 
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<GetEvaluationPeriodDto>();
+                evaluationperiodid = result.PeriodId;
+                Console.WriteLine($"✅ evaluationPeriod retrieved{evaluationperiodid}");
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"لا توجد فترة تقييم حاليا {ex.Message}";
+            Console.WriteLine($"No Active EvaluationPeriod  {ex.Message}");
+        }
+    }
     private async Task LoadData()
     {
         isLoading = true;
@@ -344,10 +365,10 @@
         try
         {
             // ✅ OPTION 1: Load using Period-based approach (RECOMMENDED)
-            Console.WriteLine($"Loading evaluations for period {currentEvaluationPeriodId}...");
+            Console.WriteLine($"Loading evaluations for period {evaluationperiodid}...");
 
             // Step 1: Get all evaluations for this period
-            var evaluationsResponse = await Http.GetAsync($"api/evaluation/period/{currentEvaluationPeriodId}");
+            var evaluationsResponse = await Http.GetAsync($"api/evaluation/period/{evaluationperiodid}");
 
             if (!evaluationsResponse.IsSuccessStatusCode)
             {
@@ -379,7 +400,7 @@
 
                 // Group by TA employee ID for easier lookup
                 existingProfEvaluations = profEvals
-                    .Where(pe => pe.EvaluationPeriodId == currentEvaluationPeriodId)
+                    .Where(pe => pe.EvaluationPeriodId == evaluationperiodid)
                     .GroupBy(pe => pe.TaEmployeeId)
                     .ToDictionary(g => g.Key, g => g.ToList());
             }
@@ -403,9 +424,9 @@
                         {
                             EvaluationId=evaluation.evaluationId,
                             ProfEvalId = profEval.ProfEvalId,
-                            EvaluationPeriodId = currentEvaluationPeriodId,
+                            EvaluationPeriodId = evaluationperiodid,
                             TAEmployeeId = taEmployeeId,
-                            PeriodId = currentEvaluationPeriodId,
+                            PeriodId = evaluationperiodid,
                             PeriodName = evaluation.periodName ?? "فترة غير معروفة",
 
                             StatusId = profEval.StatusId,
@@ -431,9 +452,9 @@
                     var viewModel = new TAEvaluationViewModelDto
                     {
                         ProfEvalId = null,
-                        EvaluationPeriodId = currentEvaluationPeriodId,
+                        EvaluationPeriodId = evaluationperiodid,
                         TAEmployeeId = taEmployeeId,
-                        PeriodId = currentEvaluationPeriodId,
+                        PeriodId = evaluationperiodid,
                         PeriodName = evaluation.periodName ?? "فترة غير معروفة",
 
                         StatusId = 0,

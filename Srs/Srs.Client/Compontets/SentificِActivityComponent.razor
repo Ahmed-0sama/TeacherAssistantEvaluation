@@ -128,7 +128,9 @@
                                         <th class="py-3 fw-semibold text-center">عدد الصفحات</th>
                                         <th class="py-3 fw-semibold text-center">التاريخ</th>
                                         <th class="py-3 fw-semibold text-center">الحالة</th>
-                                    @if (!IsReadOnly){
+                                    <th class="py-3 fw-semibold text-center">الرابط</th>
+                                    @if (!IsReadOnly)
+                                    {
                                         <th class="py-3 fw-semibold text-center">إجراء</th>
                                     }
                                     </tr>
@@ -161,6 +163,21 @@
                                                     @GetStatusName(paper.Status)
                                                 </span>
                                             </td>
+                                        <td class="py-3" style="max-width: 250px;">
+                                            @if (!string.IsNullOrEmpty(paper.Url))
+                                            {
+                                                <a href="@paper.Url" target="_blank" class="text-primary text-decoration-none d-flex align-items-center" title="@paper.Url">
+                                                    <i class="bi bi-link-45deg me-1 flex-shrink-0"></i>
+                                                    <span class="text-truncate" style="max-width: 200px;">
+                                                        @paper.Url
+                                                    </span>
+                                                </a>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">لا يوجد رابط</span>
+                                            }
+                                        </td>
                                         @if (!IsReadOnly)
                                         {
                                             <td class="py-3 text-center">
@@ -302,6 +319,11 @@
                                 </InputSelect>
                                 <ValidationMessage For="@(() => currentPaper.Status)" class="text-danger" />
 
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Url <span class="text-danger">*</span></label>
+                            <InputText class="form-control" @bind-Value="currentPaper.Url"/>
+                            <ValidationMessage For="@(() => currentPaper.Url)" class="text-danger" />
                         </div>
                     </div>
                 </div>
@@ -508,7 +530,8 @@
                 Location = paper.Location,
                 PageCount = paper.PageCount,
                 Date = paper.Date,
-                Status = paper.Status
+                Status = paper.Status,
+                Url = paper.Url
             };
             showModal = true;
             StateHasChanged();
@@ -563,6 +586,7 @@
                 existingPaper.PageCount = currentPaper.PageCount;
                 existingPaper.Date = currentPaper.Date;
                 existingPaper.Status = currentPaper.Status;
+                existingPaper.Url = currentPaper.Url;
             }
         }
         else

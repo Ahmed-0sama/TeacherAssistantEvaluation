@@ -1,4 +1,5 @@
 ﻿@page "/dean"
+@using Shared.Dtos.EvaluationPeriod
 @using Shared.Dtos.ProfessorEvaluationDto
 @using Shared.Dtos.TASubmissions
 @using Shared.Dtos.DeanDto
@@ -39,21 +40,20 @@
                        @bind:event="oninput" />
             </div>
             <div class="col-md-3">
-                <select class="form-select">
-                    <option selected>فلترة حسب القسم</option>
-                    <option>قسم علوم الحاسب</option>
-                    <option>قسم نظم المعلومات</option>
+                <select class="form-select" @bind="SelectedDepartment">
+                    <option value="">فلترة حسب القسم</option>
+                    <option value="قسم علوم الحاسب">قسم علوم الحاسب</option>
+                    <option value="قسم نظم المعلومات">قسم نظم المعلومات</option>
                 </select>
             </div>
             <div class="col-md-3">
-                <select class="form-select">
-                    <option selected>فلترة حسب الفترة الزمنية</option>
-                    <option>الفصل الدراسي الأول 2024</option>
-                    <option>الفصل الدراسي الثاني 2024</option>
+                <select class="form-select" @bind="SelectedPeriod">
+                    <option value="">فلترة حسب الفترة الزمنية</option>
+                    <option value="الفصل الدراسي الأول 2024">الفصل الدراسي الأول 2024</option>
+                    <option value="الفصل الدراسي الثاني 2024">الفصل الدراسي الثاني 2024</option>
                 </select>
             </div>
         </div>
-
         @if (IsLoading)
         {
             <div class="text-center py-5">
@@ -407,23 +407,66 @@
     private DeanPermissions Permissions { get; set; } = new();
     private CancellationTokenSource? _toastCancellationTokenSource;
     private UserDataDto userData = new UserDataDto();
-    private int EvaluationPeriodId = 1;
+    private int EvaluationPeriodId ;
     private bool isViewMode = true;
+    private string SelectedDepartment { get; set; } = string.Empty;
+    private string SelectedPeriod { get; set; } = string.Empty;
+    private IEnumerable<EvaluationApiResponseDto> FilteredEvaluations
+    {
+        get
+        {
+            var filtered = Evaluations.AsEnumerable();
 
-    private IEnumerable<EvaluationApiResponseDto> FilteredEvaluations =>
-        string.IsNullOrWhiteSpace(SearchTerm)
-   ? Evaluations
-            : Evaluations.Where(e =>
- e.taEmployeeId.ToString().Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)
-      || (e.statusName?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false)
-             || (e.periodName?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false));
+            // Apply search filter
+            if (!string.IsNullOrWhiteSpace(SearchTerm))
+            {
+                filtered = filtered.Where(e =>
+                    e.taEmployeeId.ToString().Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
+                    (e.statusName?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                    (e.periodName?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false));
+            }
+
+            // Apply department filter
+            if (!string.IsNullOrWhiteSpace(SelectedDepartment))
+            {
+                filtered = filtered.Where(e => e.statusName == SelectedDepartment);
+            }
+
+            // Apply period filter
+            if (!string.IsNullOrWhiteSpace(SelectedPeriod))
+            {
+                filtered = filtered.Where(e => e.periodName == SelectedPeriod);
+            }
+
+            return filtered;
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
+        await GetEvaluationPeriod();
         Console.WriteLine("?? Dean page initializing...");
         await FetchEvaluationsAsync();
     }
+    private async Task GetEvaluationPeriod()
+    {
+        try
+        {
+            var response = await Http.GetAsync($"api/EvaluationPeriod/GetActiveEvaluationPeriod");
 
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<GetEvaluationPeriodDto>();
+                EvaluationPeriodId = result.PeriodId;
+                Console.WriteLine($"✅ evaluationPeriod retrieved{EvaluationPeriodId}");
+            }
+        }
+        catch (Exception ex)
+        {
+            ToastMessage = $"لا توجد فترة تقييم حاليا {ex.Message}";
+            Console.WriteLine($"No Active EvaluationPeriod  {ex.Message}");
+        }
+    }
     private async Task FetchEvaluationsAsync()
     {
         Console.WriteLine("?? Starting FetchEvaluationsAsync...");

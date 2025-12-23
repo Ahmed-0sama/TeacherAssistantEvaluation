@@ -1,0 +1,297 @@
+﻿@page "/hr"
+@using Microsoft.AspNetCore.Components
+@using Shared.Dtos.EvaluationPeriod
+@using Shared.Dtos.HODEvaluation
+@using Shared.Dtos.Hr
+@inject HttpClient Http
+@inject IJSRuntime JS
+@rendermode InteractiveWebAssembly
+<HeadContent>
+    <link href="./Custom-Rtl.css" rel="stylesheet" />
+</HeadContent>
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center py-3 border-bottom">
+        <div class="d-flex align-items-center">
+            <button class="btn btn-link text-decoration-none">
+                <i class="bi bi-list"></i>
+            </button>
+        </div>
+        <h2 class="text-primary fw-bold m-0">نظام تقييم مساعدي التدريس</h2>
+    </div>
+
+    <!-- Main Content -->
+    <div class="py-4">
+        <h3 class="text-center mb-3">لوحة تحكم الموارد البشرية</h3>
+        <p class="text-center text-muted mb-4">
+            عرض وإدارة التقييمات الوظائفية. يمكن من هنا مراقبة حالة التقييمات، تصفيرها، طباعة تقارير، وإدراج أي تقييم للمراجعة في حال وجود خطأ.
+        </p>
+
+        <!-- Statistics Cards -->
+        <div class="row g-3 mb-4">
+            <div class="col">
+                <div class="card border-success border-2 border-end-0 border-top-0 border-bottom-0 h-100">
+                    <div class="card-body text-center">
+                        <h6 class="text-muted">معتمد</h6>
+                        <h2 class="fw-bold">@evstat.accepted</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card border-warning border-2 border-end-0 border-top-0 border-bottom-0 h-100">
+                    <div class="card-body text-center">
+                        <h6 class="text-muted">بانتظار العميد</h6>
+                        <h2 class="fw-bold">@evstat.DeanPending</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card border-warning border-2 border-end-0 border-top-0 border-bottom-0 h-100">
+                    <div class="card-body text-center">
+                        <h6 class="text-muted">بانتظار رئيس القسم</h6>
+                        <h2 class="fw-bold">@evstat.HodPending</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card border-info border-2 border-end-0 border-top-0 border-bottom-0 h-100">
+                    <div class="card-body text-center">
+                        <h6 class="text-muted">بانتظار المحدثات</h6>
+                        <h2 class="fw-bold">@evstat.TAPending</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card border-primary border-2 border-end-0 border-top-0 border-bottom-0 h-100">
+                    <div class="card-body text-center">
+                        <h6 class="text-muted">إجمالي التقييمات</h6>
+                        <h2 class="fw-bold text-primary">@evstat.TotalEvaluations</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+            <button class="btn btn-primary" @onclick="PrintReport">
+                <i class="bi bi-printer"></i> طباعة التقرير
+            </button>
+
+            <input type="text"
+                   class="form-control w-50 no-print"
+                   placeholder="بحث بالاسم أو الرقم الوظيفي أو الحالة..."
+                   @bind="SearchTerm"
+                   @bind:event="oninput" />
+
+        </div>
+
+        <!-- Table -->
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive" dir="rtl">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>اسم مساعد التدريس</th>
+                                <th>القسم</th>
+                                <th>فترة التقييم</th>
+                                <th>التقدير العام</th>
+                                <th>الحالة</th>
+                                <th class="no-print">إجراء</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var evaluation in FilteredTAList)
+                            {
+                                <tr>
+                                    <td>@evaluation.Name</td>
+                                    <td>@evaluation.Department</td>
+                                    <td>@evaluation.Department</td>
+                                    <td>
+                                        <span class="badge @GetStatusBadgeClass(evaluation.statusid)">
+                                            @evaluation.statusid
+                                        </span>
+                                    </td>
+                                    <td>@GetStatusText(evaluation.statusid)</td>
+                                    <td>
+                                        @if (evaluation.statusid == 6 || evaluation.statusid == 5)
+                                        {
+                                            <button class="btn btn-sm btn-primary ms-2 " @onclick="() => OpenModal(evaluation)">عرض التقرير</button>
+                                        }
+                                       @if(evaluation.statusid!=6){
+                                        <button class="btn btn-sm btn-warning text-white">إرسال تذكير</button>
+                                       }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@if (showHodModal && selectedTA != null)
+{
+    <Srs.Client.Compontets.HODComponent SelectedTA="@selectedTA"
+                                        EvaluationPeriodId="@EvaluationPeriodId"
+                                        IsViewMode="true"
+                                        OnClose="@CloseModal"/>
+}
+@code {
+    private int EvaluationPeriodId;
+    private string errorMessage = string.Empty;
+    private List<UserDataDto> taList = new();
+    private UserDataDto? selectedTA;
+    private bool showHodModal = false;
+    private EvaluationStatisticsDto evstat = new();
+    private bool isLoading = false;
+    private string SearchTerm { get; set; } = string.Empty;
+
+    private List<UserDataDto> FilteredTAList
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(SearchTerm))
+            {
+                return taList;
+            }
+
+            var searchLower = SearchTerm.ToLower().Trim();
+
+            return taList.Where(ta =>
+                (ta.Name?.ToLower().Contains(searchLower) ?? false) ||
+                (ta.EmployeeNumber.ToString().Contains(searchLower)) ||
+                (ta.Department?.ToLower().Contains(searchLower) ?? false) ||
+                (GetStatusText(ta.statusid).ToLower().Contains(searchLower))
+            ).ToList();
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetEvaluationPeriod();
+        await GetEvaluationStatistics();
+        await LoadTAList();
+    }
+
+    private void OpenModal(UserDataDto ta)
+    {
+        Console.WriteLine($"Opening modal for: {ta.Name}, EvaluationId: {ta.EvaluationId}");
+        selectedTA = ta;
+        showHodModal = true;
+        StateHasChanged();
+    }
+
+    private void CloseModal()
+    {
+        showHodModal = false;
+        selectedTA = null;
+        StateHasChanged();
+    }
+
+    private async Task GetEvaluationPeriod()
+    {
+        try
+        {
+            var response = await Http.GetAsync($"api/EvaluationPeriod/GetActiveEvaluationPeriod");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<GetEvaluationPeriodDto>();
+                EvaluationPeriodId = result.PeriodId;
+                Console.WriteLine($"✅ evaluationPeriod retrieved {EvaluationPeriodId}");
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"لا توجد فترة تقييم حاليا {ex.Message}";
+            Console.WriteLine($"No Active EvaluationPeriod {ex.Message}");
+        }
+    }
+
+    private async Task GetEvaluationStatistics()
+    {
+        try
+        {
+            var response = await Http.GetAsync($"/api/Statistics/EvaluationStatistics/{EvaluationPeriodId}");
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<EvaluationStatisticsDto>();
+                if (result != null)
+                {
+                    evstat = result;
+                    Console.WriteLine($"✅ Evaluation statistics retrieved successfully.");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"حدث خطأ أثناء جلب إحصائيات التقييم: {ex.Message}";
+            Console.WriteLine($"Error fetching evaluation statistics: {ex.Message}");
+        }
+    }
+
+    private async Task LoadTAList()
+    {
+        isLoading = true;
+
+        try
+        {
+            var hodEvaluations = await Http.GetFromJsonAsync<List<HodEvaluationResponseDto>>(
+                $"/api/HodEvaluation/GetHodEvaluationByPeriod/{EvaluationPeriodId}"
+            ) ?? new List<HodEvaluationResponseDto>();
+
+            taList = hodEvaluations.Select(h => new UserDataDto
+            {
+                Name = h.TaName ?? $"TA #{h.TaEmployeeId}",
+                Department = h.TaName,
+                EmployeeNumber = h.TaEmployeeId,
+                EvaluationId = h.EvaluationId,
+                Id = h.TaEmployeeId,
+                statusid = h.StatusId,
+                HasHodEvaluation = true,
+                HodEvaluationData = h
+            })
+            .ToList();
+
+            Console.WriteLine($"Loaded {taList.Count} TAs from HOD evaluations only.");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"حدث خطأ أثناء تحميل البيانات: {ex.Message}";
+            Console.WriteLine($"Error: {ex}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private string GetStatusBadgeClass(int evaluationstatus)
+    {
+        return evaluationstatus switch
+        {
+            6 => "bg-success",
+            5 => "bg-primary",
+            2 or 4 or 7 => "bg-warning text-dark",
+            1 => "bg-secondary",
+            _ => "bg-secondary"
+        };
+    }
+
+    private string GetStatusText(int evaluationstatus)
+    {
+        return evaluationstatus switch
+        {
+            6 => "معتمد",
+            5 => "بانتظار العميد",
+            2 or 4 or 7 => "بانتظار رئيس القسم",
+            1 => "بانتظار المدخلات",
+            _ => "غير معروف"
+        };
+    }
+    private async Task PrintReport()
+    {
+        await JS.InvokeVoidAsync("window.print");
+    }
+}

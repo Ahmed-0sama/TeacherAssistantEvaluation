@@ -159,7 +159,8 @@
                                     <th class="py-3 fw-semibold text-center">عدد الصفحات</th>
                                     <th class="py-3 fw-semibold text-center">التاريخ</th>
                                     <th class="py-3 fw-semibold text-center">الحالة</th>
-
+                                    <th class="py-3 fw-semibold text-center">الرابط</th>
+                                    
                                 </tr>
                             </thead>
                             <tbody class="table-group-divider">
@@ -190,6 +191,21 @@
                                                 @GetStatusName(paper.Status)
                                             </span>
                                         </td>
+                                            <td class="py-3" style="max-width: 250px;">
+                                                @if (!string.IsNullOrEmpty(paper.Url))
+                                                {
+                                                    <a href="@paper.Url" target="_blank" class="text-primary text-decoration-none d-flex align-items-center" title="@paper.Url">
+                                                        <i class="bi bi-link-45deg me-1 flex-shrink-0"></i>
+                                                        <span class="text-truncate" style="max-width: 200px;">
+                                                            @paper.Url
+                                                        </span>
+                                                    </a>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">لا يوجد رابط</span>
+                                                }
+                                            </td>
                                     </tr>
                                 }
                             </tbody>
@@ -613,7 +629,8 @@
                             Location = activity.Location,
                             PageCount = activity.PageCount,
                             Date = activity.ActivityDate,
-                            Status = activity.StatusId
+                            Status = activity.StatusId,
+                            Url = activity.Url
                         }).ToList();
                     }
                     else

@@ -1,0 +1,232 @@
+﻿@* Components/NotificationDropdown.razor *@
+@inject HttpClient http
+@using Shared.Dtos.Notifications
+
+<div class="position-relative" dir="rtl">
+    <button class="btn btn-link position-relative p-2" type="button" @onclick="ToggleDropdown">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-dark">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+        </svg>
+        @if (UnreadCount > 0)
+        {
+            <span class="position-absolute top-0 start-0 translate-middle badge rounded-pill bg-danger">
+                @UnreadCount
+                <span class="visually-hidden">إشعارات غير مقروءة</span>
+            </span>
+        }
+    </button>
+
+    @if (isOpen)
+    {
+        <div class="dropdown-menu dropdown-menu-start show position-absolute shadow-lg"
+             style="width: 380px; max-height: 500px; overflow-y: auto; left: 0; top: 100%; z-index: 1050;">
+
+            <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-light">
+                <h6 class="mb-0 fw-bold">الإشعارات</h6>
+            </div>
+
+            <div class="notification-list">
+                @if (isLoading)
+                {
+                    <div class="text-center py-5">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status">
+                            <span class="visually-hidden">جاري التحميل...</span>
+                        </div>
+                    </div>
+                }
+                else if (notifications.Count == 0)
+                {
+                    <div class="text-center py-5">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24"
+                             fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                             stroke-linejoin="round" class="text-muted mb-3">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                        </svg>
+                        <p class="text-muted mb-0">لا توجد إشعارات جديدة</p>
+                    </div>
+                }
+                else
+                {
+                    @foreach (var notification in notifications)
+                    {
+                        <div class="@GetNotificationItemClass(notification.markedAsRead)"
+                             @onclick="() => MarkAsRead(notification.NotificationId)"
+                             style="cursor: pointer;">
+                            <div class="d-flex align-items-start p-3 border-bottom">
+                                <div class="@GetNotificationIconClass(notification.Message) rounded-circle p-2 me-3"
+                                     style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                    @((MarkupString)GetNotificationIcon(notification.Message))
+                                </div>
+                                <div class="flex-grow-1">
+                                    <p class="mb-1 text-muted small @(!notification.markedAsRead ? "fw-bold" : "")">
+                                        @notification.Message
+                                    </p>
+                                    <small class="text-muted">@GetRelativeTime(notification.CreatedAt)</small>
+                                </div>
+                                @if (!notification.markedAsRead)
+                                {
+                                    <span class="badge bg-primary rounded-circle" style="width: 8px; height: 8px; padding: 0;"></span>
+                                }
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+
+        @* Backdrop to close dropdown when clicking outside *@
+        <div class="position-fixed top-0 start-0 w-100 h-100"
+             style="z-index: 1040;"
+             @onclick="CloseDropdown"></div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public string EmployeeId { get; set; } = string.Empty;
+
+    [Parameter]
+    public EventCallback<int> OnNotificationClicked { get; set; }
+
+    private bool isOpen = false;
+    private List<NotificationDto> notifications = new();
+    private bool isLoading = false;
+
+    private int UnreadCount => notifications.Count(n => !n.markedAsRead);
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadNotifications();
+    }
+
+    private async Task LoadNotifications()
+    {
+        if (string.IsNullOrEmpty(EmployeeId))
+        {
+            Console.WriteLine("EmployeeId is not provided");
+            return;
+        }
+
+        isLoading = true;
+        try
+        {
+            var response = await http.GetFromJsonAsync<List<NotificationDto>>($"/api/Notification/employee/{EmployeeId}");
+
+            if (response != null)
+            {
+                notifications = response;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading notifications: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task ToggleDropdown()
+    {
+        isOpen = !isOpen;
+        if (isOpen)
+        {
+            await LoadNotifications();
+        }
+    }
+
+    private void CloseDropdown()
+    {
+        isOpen = false;
+    }
+
+    private async Task MarkAsRead(int notificationId)
+    {
+        var notification = notifications.FirstOrDefault(n => n.NotificationId == notificationId);
+        if (notification != null && !notification.markedAsRead)
+        {
+            try
+            {
+                var response = await http.PutAsync($"/api/Notification/MarkRead/{notificationId}", null);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    notification.markedAsRead = true;
+
+                    if (OnNotificationClicked.HasDelegate)
+                    {
+                        await OnNotificationClicked.InvokeAsync(notificationId);
+                    }
+
+                    StateHasChanged();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error marking notification as read: {ex.Message}");
+            }
+        }
+    }
+
+    public async Task RefreshNotifications()
+    {
+        await LoadNotifications();
+    }
+
+    private string GetNotificationItemClass(bool isRead)
+    {
+        return isRead ? "notification-item-read" : "notification-item-unread bg-light";
+    }
+
+    private string GetNotificationIconClass(string message)
+    {
+        var lowerMessage = message.ToLower();
+
+        if (lowerMessage.Contains("return") || lowerMessage.Contains("إرجاع"))
+            return "bg-warning bg-opacity-10";
+        if (lowerMessage.Contains("approved") || lowerMessage.Contains("موافق"))
+            return "bg-success bg-opacity-10";
+        if (lowerMessage.Contains("accepted") || lowerMessage.Contains("قبول"))
+            return "bg-success bg-opacity-10";
+
+        return "bg-primary bg-opacity-10";
+    }
+
+    private string GetNotificationIcon(string message)
+    {
+        var lowerMessage = message.ToLower();
+
+        // Returned - Warning icon
+        if (lowerMessage.Contains("return") || lowerMessage.Contains("إرجاع"))
+            return @"<svg xmlns=""http://www.w3.org/2000/svg"" width=""20"" height=""20"" viewBox=""0 0 24 24"" fill=""none"" stroke=""#ffc107"" stroke-width=""2"" stroke-linecap=""round"" stroke-linejoin=""round""><circle cx=""12"" cy=""12"" r=""10""></circle><line x1=""12"" y1=""8"" x2=""12"" y2=""12""></line><line x1=""12"" y1=""16"" x2=""12.01"" y2=""16""></line></svg>";
+
+        // Approved/Accepted - Check icon
+        if (lowerMessage.Contains("approved") || lowerMessage.Contains("accepted") || lowerMessage.Contains("موافق") || lowerMessage.Contains("قبول"))
+            return @"<svg xmlns=""http://www.w3.org/2000/svg"" width=""20"" height=""20"" viewBox=""0 0 24 24"" fill=""none"" stroke=""#198754"" stroke-width=""2"" stroke-linecap=""round"" stroke-linejoin=""round""><path d=""M22 11.08V12a10 10 0 1 1-5.93-9.14""></path><polyline points=""22 4 12 14.01 9 11.01""></polyline></svg>";
+
+        // Default - Document icon
+        return @"<svg xmlns=""http://www.w3.org/2000/svg"" width=""20"" height=""20"" viewBox=""0 0 24 24"" fill=""none"" stroke=""#0d6efd"" stroke-width=""2"" stroke-linecap=""round"" stroke-linejoin=""round""><path d=""M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z""></path><polyline points=""14 2 14 8 20 8""></polyline><line x1=""16"" y1=""13"" x2=""8"" y2=""13""></line><line x1=""16"" y1=""17"" x2=""8"" y2=""17""></line></svg>";
+    }
+
+    private string GetRelativeTime(DateTime timestamp)
+    {
+        var timeSpan = DateTime.Now - timestamp;
+
+        if (timeSpan.TotalMinutes < 1)
+            return "الآن";
+        if (timeSpan.TotalMinutes < 60)
+            return $"منذ {(int)timeSpan.TotalMinutes} دقيقة";
+        if (timeSpan.TotalHours < 24)
+            return $"منذ {(int)timeSpan.TotalHours} ساعة";
+        if (timeSpan.TotalDays < 7)
+            return $"منذ {(int)timeSpan.TotalDays} يوم";
+        if (timeSpan.TotalDays < 30)
+            return $"منذ {(int)(timeSpan.TotalDays / 7)} أسبوع";
+
+        return timestamp.ToString("dd/MM/yyyy");
+    }
+}

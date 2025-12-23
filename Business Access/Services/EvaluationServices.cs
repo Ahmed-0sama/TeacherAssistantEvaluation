@@ -354,7 +354,7 @@ namespace Business_Access.Services
                         Location = ra.Location,
                         PageCount = ra.PageCount,
                         ActivityDate = ra.ActivityDate,
-                        StatusId = ra.StatusId,  // Fixed: Now using StatusId
+                        StatusId = ra.StatusId,  
                         Url = ra.Url
                     }).ToList(),
                     SubmittedDate = submission.Evaluation.DateSubmitted ?? DateTime.MinValue
@@ -472,7 +472,7 @@ namespace Business_Access.Services
                 throw new Exception($"Error getting evaluations for period {periodId}", ex);
             }
         }
-        //i will use the getor create instead of this method
+        //i will use the getOrCreate instead of this method
         //public async Task<int?> CanTAEditEvaluationAsync(int taEmployeeId)
         //{
         //    try
