@@ -1,0 +1,48 @@
+﻿@using Shared.Dtos.Reminder
+@inject HttpClient Http
+@inject IJSRuntime JS
+<div class="d-flex justify-content-between align-items-center border rounded p-2 bg-white mb-3">
+    <div class="fw-bold text-primary">
+        @Name
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-warning text-dark fw-semibold">
+            قيد الانتظار
+        </span>
+
+        <button class="btn btn-sm btn-warning text-white fw-semibold" @onclick="SendReminder">
+            إرسال تذكير
+        </button>
+    </div>
+</div>
+@code{
+    [Parameter]
+    public string Name { get; set; }
+    [Parameter]
+    public int EvaluationId { get; set; }
+    [Parameter]
+    public int EmployeeId { get; set; }
+    [Parameter]
+    public int RecieverId { get; set; }
+
+    private async Task SendReminder()
+    {
+        var reminder = new SendReminderDto
+        {
+            EvaluationId = EvaluationId,
+            SenderEmployeeId = EmployeeId,
+            ReciverEmployeeId = RecieverId,
+            Message = "تذكير بضرورة إكمال تقييم مساعدي التدريس."
+        };
+        var response = await Http.PostAsJsonAsync("api/reminder/sendreminder", reminder);
+        if (response.IsSuccessStatusCode)
+        {
+            await JS.InvokeVoidAsync("alert", "تم إرسال التذكير بنجاح.");
+        }
+        else
+        {
+            await JS.InvokeVoidAsync("alert", "فشل في إرسال التذكير. حاول مرة أخرى.");
+        }
+        
+    }
+}

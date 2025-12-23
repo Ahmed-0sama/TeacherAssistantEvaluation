@@ -3,10 +3,12 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+
 namespace DataAccess.Migrations
 {
     /// <inheritdoc />
-    public partial class editthenavigation : Migration
+    public partial class inial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -176,7 +178,7 @@ namespace DataAccess.Migrations
                     CompletedHours = table.Column<int>(type: "int", nullable: false),
                     Gpa = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     ExpectedCompletionDate = table.Column<DateOnly>(type: "date", nullable: false),
-                    ProgressScore = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    ProgressScore = table.Column<int>(type: "int", nullable: true),
                     EvaluationComments = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     TopicChosen = table.Column<bool>(type: "bit", nullable: false),
                     LiteratureReview = table.Column<bool>(type: "bit", nullable: false),
@@ -215,6 +217,7 @@ namespace DataAccess.Migrations
                     Professor_EmployeeID = table.Column<int>(type: "int", nullable: false),
                     CourseCode = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     CourseName = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
+                    SemesterName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     OfficeHoursScore = table.Column<int>(type: "int", nullable: false),
                     AttendanceScore = table.Column<int>(type: "int", nullable: false),
                     PerformanceScore = table.Column<int>(type: "int", nullable: false),
@@ -416,6 +419,94 @@ namespace DataAccess.Migrations
                         principalSchema: "taEvaluation",
                         principalTable: "TASubmissions",
                         principalColumn: "SubmissionID");
+                });
+
+            migrationBuilder.InsertData(
+                schema: "taEvaluation",
+                table: "EvaluationStatuses",
+                columns: new[] { "StatusID", "StatusDescription", "StatusName" },
+                values: new object[,]
+                {
+                    { 1, "NUTA has not submitted their evaluation yet", "Draft" },
+                    { 2, "Evaluation submitted by TA and awaiting HOD review", "Submitted" },
+                    { 3, "HOD has Returned and provided comments", "ReturnedByHOD_ToTA" },
+                    { 4, "HOD returned the evaluation to the Professor for corrections", "ReturnedByHOD_ToProfessor" },
+                    { 5, "HOD has reviewed the evaluation And Accept it", "AcceptedByHOD" },
+                    { 6, "Evaluation fully approved and completed", "Approved" },
+                    { 7, "Dean returned the evaluation for corrections", "ReturnedByDean" }
+                });
+
+            migrationBuilder.InsertData(
+                schema: "taEvaluation",
+                table: "HODEvaluation_Criteria",
+                columns: new[] { "CriterionID", "CriterionName", "CriterionType" },
+                values: new object[,]
+                {
+                    { 1, "إعداد مذكرات للجزء العملي/تدريبات", "DirectTeaching" },
+                    { 2, "إعداد مساعدات تعليمية وتدريسية جديدة", "DirectTeaching" },
+                    { 3, "المساعدة في إعداد التجارب العملية/التمارين", "DirectTeaching" },
+                    { 4, "المشاركة في تنظيم وإدارة دورات تدريسية/مؤتمرات", "DirectTeaching" },
+                    { 5, "أي نشاط تعليمي آخر مكلف به", "DirectTeaching" },
+                    { 6, "لجنة الإرشاد الأكاديمي", "Administrative" },
+                    { 7, "لجنة الجدولة", "Administrative" },
+                    { 8, "لجنة أعمال الجودة", "Administrative" },
+                    { 9, "لجنة التجهيزات المعملية", "Administrative" },
+                    { 10, "لجنة تنظيم امتحانات", "Administrative" },
+                    { 11, "لجان النشاط الاجتماعي أو الرياضي", "Administrative" },
+                    { 12, "نشاط رياضي", "StudentActivities" },
+                    { 13, "نشاط اجتماعي", "StudentActivities" },
+                    { 14, "نشاط ثقافي", "StudentActivities" },
+                    { 15, "التعاون والعمل الجماعي", "PersonalTraits" },
+                    { 16, "الالتزام بالمواعيد", "PersonalTraits" },
+                    { 17, "المظهر العام", "PersonalTraits" },
+                    { 18, "المبادرة وتحمل المسؤولية", "PersonalTraits" },
+                    { 19, "إدارة الوقت", "PersonalTraits" },
+                    { 20, "تقييم المشاركة في اللجان", "AdministrativeTotal" }
+                });
+
+            migrationBuilder.InsertData(
+                schema: "taEvaluation",
+                table: "Ratings",
+                columns: new[] { "RatingID", "RatingName", "ScoreValue" },
+                values: new object[,]
+                {
+                    { 1, "TA_ضعيف", 0 },
+                    { 2, "TA_مقبول", 1 },
+                    { 3, "TA_جيد", 2 },
+                    { 4, "TA_جيد جداً", 3 },
+                    { 5, "TA_ممتاز", 4 },
+                    { 6, "SA_ضعيف", 0 },
+                    { 7, "SA_مقبول", 1 },
+                    { 8, "SA_جيد", 2 },
+                    { 9, "SA_جيد جداً", 3 },
+                    { 10, "SA_ممتاز", 4 },
+                    { 11, "PT_ضعيف", 0 },
+                    { 12, "PT_مقبول", 1 },
+                    { 13, "PT_جيد", 2 },
+                    { 14, "PT_جيد جداً", 3 },
+                    { 15, "PT_ممتاز", 4 },
+                    { 16, "Admin_0", 0 },
+                    { 17, "Admin_1", 1 },
+                    { 18, "Admin_2", 2 },
+                    { 19, "Admin_3", 3 },
+                    { 20, "Admin_4", 4 },
+                    { 21, "Admin_5", 5 },
+                    { 22, "Admin_6", 6 },
+                    { 23, "Admin_7", 7 },
+                    { 24, "Admin_8", 8 },
+                    { 25, "Admin_9", 9 },
+                    { 26, "Admin_10", 10 }
+                });
+
+            migrationBuilder.InsertData(
+                schema: "taEvaluation",
+                table: "ResearchStatuses",
+                columns: new[] { "StatusID", "StatusKey", "StatusName" },
+                values: new object[,]
+                {
+                    { 1, "P", "Published" },
+                    { 2, "S", "Submitted" },
+                    { 3, "R", "Rejected" }
                 });
 
             migrationBuilder.CreateIndex(

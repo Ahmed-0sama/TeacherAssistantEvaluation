@@ -1,6 +1,7 @@
 ﻿@* Components/NotificationDropdown.razor *@
 @inject HttpClient http
 @using Shared.Dtos.Notifications
+@using Shared.Dtos.Reminder
 
 <div class="position-relative" dir="rtl">
     <button class="btn btn-link position-relative p-2" type="button" @onclick="ToggleDropdown">
@@ -36,7 +37,7 @@
                         </div>
                     </div>
                 }
-                else if (notifications.Count == 0)
+                else if (unifiedNotifications.Count == 0)
                 {
                     <div class="text-center py-5">
                         <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24"
@@ -50,30 +51,31 @@
                 }
                 else
                 {
-                    @foreach (var notification in notifications)
-                    {
-                        <div class="@GetNotificationItemClass(notification.markedAsRead)"
-                             @onclick="() => MarkAsRead(notification.NotificationId)"
-                             style="cursor: pointer;">
-                            <div class="d-flex align-items-start p-3 border-bottom">
-                                <div class="@GetNotificationIconClass(notification.Message) rounded-circle p-2 me-3"
-                                     style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
-                                    @((MarkupString)GetNotificationIcon(notification.Message))
+                    @foreach (var notification in unifiedNotifications)
+                        {
+                            <div class="@GetNotificationItemClass(notification.IsRead)"
+                                 @onclick="() => MarkAsRead(notification)"
+                                 style="cursor: pointer;">
+                                <div class="d-flex align-items-start p-3 border-bottom">
+                                    <div class="@GetNotificationIconClass(notification.Message) rounded-circle p-2 me-3"
+                                         style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                        @((MarkupString)GetNotificationIcon(notification.Message))
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p class="mb-1 text-muted small @(!notification.IsRead ? "fw-bold" : "")">
+                                            @notification.Message
+                                        </p>
+                                        <small class="text-muted">@GetRelativeTime(notification.CreatedAt)</small>
+                                    </div>
+                                    @if (!notification.IsRead)
+                                    {
+                                        <span class="badge bg-primary rounded-circle" style="width: 8px; height: 8px; padding: 0;"></span>
+                                    }
                                 </div>
-                                <div class="flex-grow-1">
-                                    <p class="mb-1 text-muted small @(!notification.markedAsRead ? "fw-bold" : "")">
-                                        @notification.Message
-                                    </p>
-                                    <small class="text-muted">@GetRelativeTime(notification.CreatedAt)</small>
-                                </div>
-                                @if (!notification.markedAsRead)
-                                {
-                                    <span class="badge bg-primary rounded-circle" style="width: 8px; height: 8px; padding: 0;"></span>
-                                }
                             </div>
-                        </div>
+                        }
                     }
-                }
+                
             </div>
         </div>
 
@@ -92,17 +94,17 @@
     public EventCallback<int> OnNotificationClicked { get; set; }
 
     private bool isOpen = false;
-    private List<NotificationDto> notifications = new();
+    private List<UnifiedNotification> unifiedNotifications = new();
     private bool isLoading = false;
 
-    private int UnreadCount => notifications.Count(n => !n.markedAsRead);
+    private int UnreadCount => unifiedNotifications.Count(n => !n.IsRead);
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadNotifications();
+        await LoadAllNotifications();
     }
 
-    private async Task LoadNotifications()
+    private async Task LoadAllNotifications()
     {
         if (string.IsNullOrEmpty(EmployeeId))
         {
@@ -111,22 +113,83 @@
         }
 
         isLoading = true;
+        unifiedNotifications.Clear();
+
+        try
+        {
+            // Load regular notifications
+            var notificationsTask = LoadNotifications();
+
+            // Load reminders
+            var remindersTask = LoadReminders();
+
+            // Wait for both to complete
+            await Task.WhenAll(notificationsTask, remindersTask);
+
+            // Sort by timestamp descending (newest first)
+            unifiedNotifications = unifiedNotifications
+                .OrderByDescending(n => n.CreatedAt)
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading notifications and reminders: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task LoadNotifications()
+    {
         try
         {
             var response = await http.GetFromJsonAsync<List<NotificationDto>>($"/api/Notification/employee/{EmployeeId}");
 
             if (response != null)
             {
-                notifications = response;
+                var notifications = response.Select(n => new UnifiedNotification
+                {
+                    Id = n.NotificationId,
+                    Message = n.Message,
+                    CreatedAt = n.CreatedAt,
+                    IsRead = n.markedAsRead,
+                    Type = NotificationType.Notification
+                }).ToList();
+
+                unifiedNotifications.AddRange(notifications);
             }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error loading notifications: {ex.Message}");
         }
-        finally
+    }
+
+    private async Task LoadReminders()
+    {
+        try
         {
-            isLoading = false;
+            var response = await http.GetFromJsonAsync<List<ReminderDto>>($"/api/reminder/GetAllReminders/{EmployeeId}");
+
+            if (response != null)
+            {
+                var reminders = response.Select(r => new UnifiedNotification
+                {
+                    Id = r.reminder,
+                    Message = r.Message,
+                    CreatedAt = r.TimeStamp,
+                    IsRead = r.IsRead, // Reminders are always unread initially
+                    Type = NotificationType.Reminder
+                }).ToList();
+
+                unifiedNotifications.AddRange(reminders);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading reminders: {ex.Message}");
         }
     }
 
@@ -135,7 +198,7 @@
         isOpen = !isOpen;
         if (isOpen)
         {
-            await LoadNotifications();
+            await LoadAllNotifications();
         }
     }
 
@@ -144,37 +207,57 @@
         isOpen = false;
     }
 
-    private async Task MarkAsRead(int notificationId)
+    private async Task MarkAsRead(UnifiedNotification notification)
     {
-        var notification = notifications.FirstOrDefault(n => n.NotificationId == notificationId);
-        if (notification != null && !notification.markedAsRead)
+        if (notification.IsRead)
+            return;
+
+        try
         {
-            try
+            if (notification.Type == NotificationType.Notification)
             {
-                var response = await http.PutAsync($"/api/Notification/MarkRead/{notificationId}", null);
+                var response = await http.PutAsync($"/api/Notification/MarkRead/{notification.Id}", null);
 
                 if (response.IsSuccessStatusCode)
                 {
-                    notification.markedAsRead = true;
+                    notification.IsRead = true;
 
                     if (OnNotificationClicked.HasDelegate)
                     {
-                        await OnNotificationClicked.InvokeAsync(notificationId);
+                        await OnNotificationClicked.InvokeAsync(notification.Id);
                     }
 
                     StateHasChanged();
                 }
             }
-            catch (Exception ex)
+            else if (notification.Type == NotificationType.Reminder)
             {
-                Console.WriteLine($"Error marking notification as read: {ex.Message}");
+                // Call the reminder API endpoint to mark as read
+                var response = await http.PutAsync($"/api/reminder/MarkReminderRead/{notification.Id}", null);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    notification.IsRead = true;
+
+                    if (OnNotificationClicked.HasDelegate)
+                    {
+                        await OnNotificationClicked.InvokeAsync(notification.Id);
+                    }
+
+                    StateHasChanged();
+                }
             }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error marking as read: {ex.Message}");
         }
     }
 
+
     public async Task RefreshNotifications()
     {
-        await LoadNotifications();
+        await LoadAllNotifications();
     }
 
     private string GetNotificationItemClass(bool isRead)
@@ -192,6 +275,8 @@
             return "bg-success bg-opacity-10";
         if (lowerMessage.Contains("accepted") || lowerMessage.Contains("قبول"))
             return "bg-success bg-opacity-10";
+        if (lowerMessage.Contains("reminder") || lowerMessage.Contains("تذكير"))
+            return "bg-info bg-opacity-10";
 
         return "bg-primary bg-opacity-10";
     }
@@ -199,6 +284,10 @@
     private string GetNotificationIcon(string message)
     {
         var lowerMessage = message.ToLower();
+
+        // Reminder icon
+        if (lowerMessage.Contains("reminder") || lowerMessage.Contains("تذكير"))
+            return @"<svg xmlns=""http://www.w3.org/2000/svg"" width=""20"" height=""20"" viewBox=""0 0 24 24"" fill=""none"" stroke=""#0dcaf0"" stroke-width=""2"" stroke-linecap=""round"" stroke-linejoin=""round""><circle cx=""12"" cy=""12"" r=""10""></circle><polyline points=""12 6 12 12 16 14""></polyline></svg>";
 
         // Returned - Warning icon
         if (lowerMessage.Contains("return") || lowerMessage.Contains("إرجاع"))

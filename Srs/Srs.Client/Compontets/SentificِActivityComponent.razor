@@ -304,8 +304,9 @@
 
                         <div class="col-md-4">
                             <label class="form-label fw-bold">التاريخ <span class="text-danger">*</span></label>
-                            <InputDate class="form-control" @bind-Value="currentPaper.Date" />
-                            <ValidationMessage For="@(() => currentPaper.Date)" class="text-danger" />
+                            <InputDate class="form-control"
+                                       @bind-Value="currentPaper.Date"
+                                       max="@DateOnly.FromDateTime(DateTime.Today).ToString("yyyy-MM-dd")" />
                         </div>
 
                         <div class="col-md-4">

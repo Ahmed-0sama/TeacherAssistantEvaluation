@@ -217,32 +217,32 @@ namespace DataAccess.Migrations
                         new
                         {
                             StatusId = 3,
-                            StatusDescription = "HOD has reviewed and provided comments",
-                            StatusName = "ReviewedByHOD"
+                            StatusDescription = "HOD has Returned and provided comments",
+                            StatusName = "ReturnedByHOD_ToTA"
                         },
                         new
                         {
                             StatusId = 4,
-                            StatusDescription = "HOD returned the evaluation to the TA for corrections",
-                            StatusName = "ReturnedByHOD"
+                            StatusDescription = "HOD returned the evaluation to the Professor for corrections",
+                            StatusName = "ReturnedByHOD_ToProfessor"
                         },
                         new
                         {
                             StatusId = 5,
-                            StatusDescription = "Dean has reviewed the evaluation",
-                            StatusName = "ReviewedByDean"
+                            StatusDescription = "HOD has reviewed the evaluation And Accept it",
+                            StatusName = "AcceptedByHOD"
                         },
                         new
                         {
                             StatusId = 6,
-                            StatusDescription = "Dean returned the evaluation for corrections",
-                            StatusName = "ReturnedByDean"
+                            StatusDescription = "Evaluation fully approved and completed",
+                            StatusName = "Approved"
                         },
                         new
                         {
                             StatusId = 7,
-                            StatusDescription = "Evaluation fully approved and completed",
-                            StatusName = "Approved"
+                            StatusDescription = "Dean returned the evaluation for corrections",
+                            StatusName = "ReturnedByDean"
                         });
                 });
 
@@ -284,8 +284,8 @@ namespace DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<decimal?>("ProgressScore")
-                        .HasColumnType("decimal(18,2)");
+                    b.Property<int?>("ProgressScore")
+                        .HasColumnType("int");
 
                     b.Property<bool>("ResearchPlan")
                         .HasColumnType("bit");
@@ -803,6 +803,9 @@ namespace DataAccess.Migrations
                     b.Property<int>("EvaluationId")
                         .HasColumnType("int")
                         .HasColumnName("EvaluationID");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("bit");
 
                     b.Property<int>("RecievedByEmployeeId")
                         .HasColumnType("int")

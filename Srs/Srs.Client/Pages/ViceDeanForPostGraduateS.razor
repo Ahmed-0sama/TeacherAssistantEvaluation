@@ -200,10 +200,14 @@
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label fw-bold">درجة تقييم التقدم (من 5)</label>
                                     <input type="number"
-                                           class="form-control"
                                            @bind="mastersDto.GradeGivenbySupervisor"
-                                           readonly="@IsReadOnly"
-                                           min="0" max="5" step="0.1" />
+                                           class="form-control text-center fs-2 fw-bold"
+                                           style="max-width: 100px;"
+                                           min="0"
+                                           max="5"
+                                           step="1"
+                                           onkeypress="return (event.charCode >= 48 && event.charCode <= 53) || event.charCode === 8"
+                                           oninput="this.value = Math.floor(Math.abs(this.value)); if(this.value > 5) this.value = 5;" />
                                 </div>
 
                                 @if (IsReadOnly && mastersDto.GradeGivenbySupervisor.HasValue)
@@ -409,6 +413,14 @@
                 Name = "TA #1100",
                 Department = "Spring 2025",
                 EmployeeNumber = 1100,
+                statusid = 1,
+                EvaluationId = 5
+            },
+            new UserDataDto
+            {
+                Name = "TA #22",
+                Department = "Spring 2025",
+                EmployeeNumber = 22,
                 statusid = 1,
                 EvaluationId = 5
             }

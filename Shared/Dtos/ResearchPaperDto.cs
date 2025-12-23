@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Shared.Validation;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,6 +14,7 @@ namespace Shared.Dtos
         public string ConferenceOrJournal { get; set; } = string.Empty;
         public string Location { get; set; } = string.Empty;
         public int PageCount { get; set; }
+        [PastDateOnly]
         public DateOnly Date { get; set; }
         public int Status { get; set; }
         public string Url { get; set; } = string.Empty;

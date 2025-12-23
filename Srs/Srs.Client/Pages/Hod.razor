@@ -70,6 +70,10 @@
                                             {
                                                 <span class="badge bg-danger">تم الارجاع</span>
                                             }
+                                            else if (ta.statusid == 1)
+                                            {
+                                                <span class="badge bg-secondary">انتظار المدخلات</span>
+                                            }
                                             else 
                                             {
                                                 <span class="badge bg-warning text-dark">بانتظار التقييم</span>
@@ -116,7 +120,6 @@
         OnClose="@CloseModal"
         OnSaveSuccess="@HandleSaveSuccess" />
 }
-
 @code {
     private List<UserDataDto> taList = new();
     private bool isLoading = true;
@@ -196,7 +199,7 @@
     private void OpenModal(UserDataDto ta)
     {
         selectedTA = ta;
-        isViewMode = ta.statusid==5||ta.statusid==6||ta.statusid==3||ta.statusid==4;
+        isViewMode = ta.statusid==5||ta.statusid==6||ta.statusid==3||ta.statusid==4||ta.statusid==1;
         showModal = true;
     }
 

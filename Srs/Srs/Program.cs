@@ -24,6 +24,7 @@ builder.Services.AddScoped<IHODEvaluation, HODEvaluationService>();
 builder.Services.AddScoped<IDean, DeanServices>();
 builder.Services.AddScoped<INotification, NotificationService>();
 builder.Services.AddScoped<IHRService, HRService>();
+builder.Services.AddScoped<IReminderService, ReminderService>();
 builder.Services.AddHttpClient();
 
 //allow  cors policy 

@@ -15,7 +15,7 @@ namespace Shared.Dtos.GSDean
         public int CompletedHours { get; set; }
         public decimal Gpa { get; set; }
         public DateOnly ExpectedCompletionDate { get; set; }
-        public decimal? ProgressScore { get; set; }
+        public int? ProgressScore { get; set; }
         public string? EvaluationComments { get; set; }
         public bool TopicChosen { get; set; }
         public bool LiteratureReview { get; set; }

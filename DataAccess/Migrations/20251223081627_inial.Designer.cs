@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccess.Migrations
 {
     [DbContext(typeof(SrsDbContext))]
-    [Migration("20251204112007_seeddata")]
-    partial class seeddata
+    [Migration("20251223081627_inial")]
+    partial class inial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -203,6 +203,50 @@ namespace DataAccess.Migrations
                         .IsUnique();
 
                     b.ToTable("EvaluationStatuses", "taEvaluation");
+
+                    b.HasData(
+                        new
+                        {
+                            StatusId = 1,
+                            StatusDescription = "NUTA has not submitted their evaluation yet",
+                            StatusName = "Draft"
+                        },
+                        new
+                        {
+                            StatusId = 2,
+                            StatusDescription = "Evaluation submitted by TA and awaiting HOD review",
+                            StatusName = "Submitted"
+                        },
+                        new
+                        {
+                            StatusId = 3,
+                            StatusDescription = "HOD has Returned and provided comments",
+                            StatusName = "ReturnedByHOD_ToTA"
+                        },
+                        new
+                        {
+                            StatusId = 4,
+                            StatusDescription = "HOD returned the evaluation to the Professor for corrections",
+                            StatusName = "ReturnedByHOD_ToProfessor"
+                        },
+                        new
+                        {
+                            StatusId = 5,
+                            StatusDescription = "HOD has reviewed the evaluation And Accept it",
+                            StatusName = "AcceptedByHOD"
+                        },
+                        new
+                        {
+                            StatusId = 6,
+                            StatusDescription = "Evaluation fully approved and completed",
+                            StatusName = "Approved"
+                        },
+                        new
+                        {
+                            StatusId = 7,
+                            StatusDescription = "Dean returned the evaluation for corrections",
+                            StatusName = "ReturnedByDean"
+                        });
                 });
 
             modelBuilder.Entity("DataAccess.Entities.GsdeanEvaluation", b =>
@@ -243,8 +287,8 @@ namespace DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<decimal?>("ProgressScore")
-                        .HasColumnType("decimal(18,2)");
+                    b.Property<int?>("ProgressScore")
+                        .HasColumnType("int");
 
                     b.Property<bool>("ResearchPlan")
                         .HasColumnType("bit");
@@ -450,6 +494,12 @@ namespace DataAccess.Migrations
                             CriterionId = 19,
                             CriterionName = "إدارة الوقت",
                             CriterionType = "PersonalTraits"
+                        },
+                        new
+                        {
+                            CriterionId = 20,
+                            CriterionName = "تقييم المشاركة في اللجان",
+                            CriterionType = "AdministrativeTotal"
                         });
                 });
 
@@ -531,6 +581,10 @@ namespace DataAccess.Migrations
                         .HasColumnType("int")
                         .HasColumnName("Professor_EmployeeID");
 
+                    b.Property<string>("SemesterName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("StatusId")
                         .HasColumnType("int")
                         .HasColumnName("StatusID");
@@ -585,32 +639,158 @@ namespace DataAccess.Migrations
                         new
                         {
                             RatingId = 1,
-                            RatingName = "ممتاز",
-                            ScoreValue = 5
+                            RatingName = "TA_ضعيف",
+                            ScoreValue = 0
                         },
                         new
                         {
                             RatingId = 2,
-                            RatingName = "جيد جداً",
-                            ScoreValue = 4
+                            RatingName = "TA_مقبول",
+                            ScoreValue = 1
                         },
                         new
                         {
                             RatingId = 3,
-                            RatingName = "جيد",
-                            ScoreValue = 3
-                        },
-                        new
-                        {
-                            RatingId = 4,
-                            RatingName = "مقبول",
+                            RatingName = "TA_جيد",
                             ScoreValue = 2
                         },
                         new
                         {
+                            RatingId = 4,
+                            RatingName = "TA_جيد جداً",
+                            ScoreValue = 3
+                        },
+                        new
+                        {
                             RatingId = 5,
-                            RatingName = "ضعيف",
+                            RatingName = "TA_ممتاز",
+                            ScoreValue = 4
+                        },
+                        new
+                        {
+                            RatingId = 6,
+                            RatingName = "SA_ضعيف",
+                            ScoreValue = 0
+                        },
+                        new
+                        {
+                            RatingId = 7,
+                            RatingName = "SA_مقبول",
                             ScoreValue = 1
+                        },
+                        new
+                        {
+                            RatingId = 8,
+                            RatingName = "SA_جيد",
+                            ScoreValue = 2
+                        },
+                        new
+                        {
+                            RatingId = 9,
+                            RatingName = "SA_جيد جداً",
+                            ScoreValue = 3
+                        },
+                        new
+                        {
+                            RatingId = 10,
+                            RatingName = "SA_ممتاز",
+                            ScoreValue = 4
+                        },
+                        new
+                        {
+                            RatingId = 11,
+                            RatingName = "PT_ضعيف",
+                            ScoreValue = 0
+                        },
+                        new
+                        {
+                            RatingId = 12,
+                            RatingName = "PT_مقبول",
+                            ScoreValue = 1
+                        },
+                        new
+                        {
+                            RatingId = 13,
+                            RatingName = "PT_جيد",
+                            ScoreValue = 2
+                        },
+                        new
+                        {
+                            RatingId = 14,
+                            RatingName = "PT_جيد جداً",
+                            ScoreValue = 3
+                        },
+                        new
+                        {
+                            RatingId = 15,
+                            RatingName = "PT_ممتاز",
+                            ScoreValue = 4
+                        },
+                        new
+                        {
+                            RatingId = 16,
+                            RatingName = "Admin_0",
+                            ScoreValue = 0
+                        },
+                        new
+                        {
+                            RatingId = 17,
+                            RatingName = "Admin_1",
+                            ScoreValue = 1
+                        },
+                        new
+                        {
+                            RatingId = 18,
+                            RatingName = "Admin_2",
+                            ScoreValue = 2
+                        },
+                        new
+                        {
+                            RatingId = 19,
+                            RatingName = "Admin_3",
+                            ScoreValue = 3
+                        },
+                        new
+                        {
+                            RatingId = 20,
+                            RatingName = "Admin_4",
+                            ScoreValue = 4
+                        },
+                        new
+                        {
+                            RatingId = 21,
+                            RatingName = "Admin_5",
+                            ScoreValue = 5
+                        },
+                        new
+                        {
+                            RatingId = 22,
+                            RatingName = "Admin_6",
+                            ScoreValue = 6
+                        },
+                        new
+                        {
+                            RatingId = 23,
+                            RatingName = "Admin_7",
+                            ScoreValue = 7
+                        },
+                        new
+                        {
+                            RatingId = 24,
+                            RatingName = "Admin_8",
+                            ScoreValue = 8
+                        },
+                        new
+                        {
+                            RatingId = 25,
+                            RatingName = "Admin_9",
+                            ScoreValue = 9
+                        },
+                        new
+                        {
+                            RatingId = 26,
+                            RatingName = "Admin_10",
+                            ScoreValue = 10
                         });
                 });
 
@@ -734,6 +914,26 @@ namespace DataAccess.Migrations
                         .IsUnique();
 
                     b.ToTable("ResearchStatuses", "taEvaluation");
+
+                    b.HasData(
+                        new
+                        {
+                            StatusId = 1,
+                            StatusKey = "P",
+                            StatusName = "Published"
+                        },
+                        new
+                        {
+                            StatusId = 2,
+                            StatusKey = "S",
+                            StatusName = "Submitted"
+                        },
+                        new
+                        {
+                            StatusId = 3,
+                            StatusKey = "R",
+                            StatusName = "Rejected"
+                        });
                 });
 
             modelBuilder.Entity("DataAccess.Entities.Tasubmission", b =>

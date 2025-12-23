@@ -289,10 +289,15 @@
                                             }
                                             else
                                             {
-                                                <InputNumber @bind-Value="scientificScore"
-                                                             class="form-control text-center fs-2 fw-bold"
-                                                             style="max-width: 100px;"
-                                                             Min="0" Max="5" />
+                                                <input type="number"
+                                                       @bind="scientificScore"
+                                                       class="form-control text-center fs-2 fw-bold"
+                                                       style="max-width: 100px;"
+                                                       min="0"
+                                                       max="5"
+                                                       step="1"
+                                                       onkeypress="return (event.charCode >= 48 && event.charCode <= 53) || event.charCode === 8"
+                                                       oninput="this.value = Math.floor(Math.abs(this.value)); if(this.value > 5) this.value = 5;" />
                                             }
 
                                             <span class="fs-5 text-muted">/ 5</span>
@@ -338,7 +343,7 @@
     private List<ResearchPaperDto> researchPapers = new();
     private OtherActivitiesDto otherActivities = new OtherActivitiesDto();
     // VPGS specific fields
-    private decimal scientificScore = 0;
+    private int scientificScore = 0;
     private int? currentVpgsEvaluationId = null;
 
     // Paper modal properties

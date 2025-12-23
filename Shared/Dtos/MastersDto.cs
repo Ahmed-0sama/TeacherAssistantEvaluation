@@ -18,7 +18,7 @@ namespace Shared.Dtos
         public bool CollectDataAndAnalyze { get; set; }
         public bool ResearchReportWriting { get; set; }
         public bool ScientificResearchReport { get; set; }
-        public decimal? GradeGivenbySupervisor { get; set; }
+        public int? GradeGivenbySupervisor { get; set; }
         public string Status { get; set; }
         public string? Notes { get; set; }
     }

@@ -357,9 +357,8 @@
                            min="0"
                            max="10"
                            @bind="administrativeCommitteeScore"
-                           @bind:event="oninput"
-                           @onchange="() => UpdateAdministrativeRating(20, administrativeCommitteeScore)" />
-
+                           @bind:after="ValidateAndUpdateAdminScore"
+                           onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.charCode === 8" />
                     <span class="text-primary fw-bold fs-3">/ 10</span>
                 </div>
             }
@@ -397,8 +396,17 @@
         await LoadActivityData();
         await NotifyScientificTotal();
     }
+    private void ValidateAndUpdateAdminScore()
+    {
+        // Constrain the value
+        if (administrativeCommitteeScore < 0)
+            administrativeCommitteeScore = 0;
+        if (administrativeCommitteeScore > 10)
+            administrativeCommitteeScore = 10;
 
-    // ✅ FIXED: Track changes to ExistingRatings
+        UpdateAdministrativeRating(20, administrativeCommitteeScore);
+    }
+
     protected override void OnParametersSet()
     {
         base.OnParametersSet();
@@ -446,7 +454,6 @@
         await OnScientificTotalChanged.InvokeAsync(total);
     }
 
-    // ✅ FIXED: Update method with proper logging
     private void UpdateAdministrativeRating(int criterionId, int scoreValue)
     {
         // Map the score (0-10) to the corresponding RatingId (16-26)

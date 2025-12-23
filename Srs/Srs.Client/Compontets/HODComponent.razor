@@ -56,7 +56,14 @@
                         </div>
                     </div>
                 </div>
-                    @if (statusid == 7)
+                    @if (SelectedTA.statusid == 1)
+                    {
+                        <ReminderComponent Name="مساعد التدريس"
+                                           EvaluationId="SelectedTA.EvaluationId"
+                                           EmployeeId="selectedProfessorId"
+                                           RecieverId="SelectedTA.Id"                   />
+                    }
+                    @if (SelectedTA.statusid == 7)
                     {
                         <div class="alert alert-danger" role="alert">
                             <div class="mb-3">

@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Business_Access.Services
 {
-    public class ReminderService:IReminderService
+    public class ReminderService : IReminderService
     {
         private readonly SrsDbContext _context;
         public ReminderService(SrsDbContext context)
@@ -36,7 +36,8 @@ namespace Business_Access.Services
                     SentByEmployeeId = dto.SenderEmployeeId,
                     RecievedByEmployeeId = dto.ReciverEmployeeId,
                     RecipientDescription = dto.Message,
-                    Timestamp = dto.TimeStamp
+                    Timestamp = dto.TimeStamp,
+                    IsRead = false,
                 };
 
                 _context.ReminderLogs.Add(reminderLog);
@@ -66,6 +67,7 @@ namespace Business_Access.Services
                         ReceiverEmployeeId = r.RecievedByEmployeeId,
                         Message = r.RecipientDescription,
                         TimeStamp = r.Timestamp,
+                        IsRead = r.IsRead
                     })
                     .ToListAsync();
 
@@ -76,6 +78,23 @@ namespace Business_Access.Services
                 return new List<ReminderDto>();
             }
         }
-
+        public async Task<bool> MarkAsRead(int reminderId)
+        {
+            try
+            {
+                var reminder = await _context.ReminderLogs.FirstOrDefaultAsync(s => s.LogId == reminderId);
+                if (reminder == null)
+                {
+                    return false;
+                }
+                reminder.IsRead = true;
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
     }
 }

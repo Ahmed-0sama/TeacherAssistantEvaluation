@@ -12,6 +12,7 @@ namespace Shared.Dtos.Reminder
         public int SenderEmployeeId { get; set; }
         public string Message { get; set; }
         public int ReciverEmployeeId{ get; set; }
+        public bool Isread { get; set; }
         public DateTime TimeStamp { get; set; }
     }
 }
