@@ -55,7 +55,7 @@ namespace Business_Access.Services
 
                     _db.Hodevaluations.Add(hodEval);
                 }
-
+                evaluation.TotalScore = dto.FinalScore;
                 // Update evaluation status and comments
                 evaluation.StatusId = 5; // Completed HOD evaluation
                 evaluation.HodStrengths = dto.HodStrengths;
@@ -137,8 +137,7 @@ namespace Business_Access.Services
                 StudentActivitiesTotal = studentActivitiesTotal,
                 PersonalTraitsTotal = personalTraitsTotal,
                 AdministrativeTotal = administrativeTotal,
-                TotalScore = teachingActivitiesTotal + studentActivitiesTotal +
-                            personalTraitsTotal + administrativeTotal,
+                TotalScore=evaluation.TotalScore??0,
                 MaxScore = 40, // 10 + 10 + 10 + 10
                 HodStrengths = evaluation.HodStrengths,
                 HodWeaknesses = evaluation.HodWeaknesses,
@@ -192,10 +191,6 @@ namespace Business_Access.Services
                              || x.CriterionType == "AdministrativeTotal")
                     .Sum(x => x.ActualPoints);
 
-                var totalScore = teachingActivitiesTotal
-                               + studentActivitiesTotal
-                               + personalTraitsTotal
-                               + administrativeTotal;
 
                 // Full HOD part = 40 (10 + 10 + 10 + 10)
                 const decimal maxScore = 40m;
@@ -211,7 +206,7 @@ namespace Business_Access.Services
                     StudentActivitiesTotal = studentActivitiesTotal,
                     PersonalTraitsTotal = personalTraitsTotal,
                     AdministrativeTotal = administrativeTotal,
-                    TotalScore = totalScore,
+                    TotalScore = evaluation.TotalScore??0,
                     MaxScore = maxScore,
                     HodStrengths = evaluation.HodStrengths,
                     HodWeaknesses = evaluation.HodWeaknesses
@@ -271,12 +266,12 @@ namespace Business_Access.Services
 
                     _db.Hodevaluations.Add(hodEval);
                 }
+                evaluation.TotalScore = dto.FinalScore;
 
-                // ✅ 5. Update evaluation status and comments
                 evaluation.HodStrengths = dto.HodStrengths;
                 evaluation.HodWeaknesses = dto.HodWeaknesses;
 
-                // ✅ 6. Handle status logic properly
+
                 // If evaluation was returned (status 7), update it back to completed (status 5)
                 // Otherwise, keep status 5 if it was already completed
                 //2 maybe returned from ta

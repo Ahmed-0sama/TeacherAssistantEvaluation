@@ -920,7 +920,8 @@
                 {
                     CriterionRatings = criterionRatings,
                     HodStrengths = hodStrengths,
-                    HodWeaknesses = hodWeaknesses
+                    HodWeaknesses = hodWeaknesses,
+                    FinalScore = CalculateFinalTotal()
                 };
 
                 Console.WriteLine($"📤 Updating evaluation {SelectedTA.EvaluationId} with {criterionRatings.Count} ratings");
@@ -950,7 +951,8 @@
                     EvaluationId = SelectedTA.EvaluationId,
                     CriterionRatings = criterionRatings,
                     HodStrengths = hodStrengths,
-                    HodWeaknesses = hodWeaknesses
+                    HodWeaknesses = hodWeaknesses,
+                    FinalScore = CalculateFinalTotal()
                 };
 
                 Console.WriteLine($"📤 Creating new evaluation for {SelectedTA.EvaluationId} with {criterionRatings.Count} ratings");
