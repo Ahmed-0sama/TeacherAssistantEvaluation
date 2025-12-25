@@ -32,7 +32,7 @@ namespace Business_Access.Services
 
                 // Check if HOD evaluation already exists
                 var existingEval = await _db.Hodevaluations
-                    .AnyAsync(h => h.EvaluationId == dto.EvaluationId);
+                    .AnyAsync(h => h.EvaluationId == dto.EvaluationId && h.IsActive);
                 if (existingEval)
                     throw new Exception("HOD evaluation already exists for this evaluation");
 
@@ -50,7 +50,12 @@ namespace Business_Access.Services
                     {
                         EvaluationId = dto.EvaluationId,
                         CriterionId = criterionRating.CriterionId,
-                        RatingId = criterionRating.RatingId
+                        RatingId = criterionRating.RatingId,
+
+                        SourceRole = "HOD",
+                        IsActive = true,
+                        CreatedAt = DateTime.UtcNow,
+                        CreatedByUserId =dto.CreatedByUserId
                     };
 
                     _db.Hodevaluations.Add(hodEval);
@@ -81,7 +86,7 @@ namespace Business_Access.Services
         public async Task<HodEvaluationResponseDto> GetHodEvaluationAsync(int evaluationId)
         {
             var evaluations = await _db.Hodevaluations
-                .Where(h => h.EvaluationId == evaluationId)
+                .Where(h => h.EvaluationId == evaluationId && h.IsActive)
                 .Include(h => h.Criterion)
                 .Include(h => h.Rating)
                 .ToListAsync();
@@ -162,7 +167,7 @@ namespace Business_Access.Services
             var result = evaluations.Select(evaluation =>
             {
                 // Map each HOD evaluation row to the SAME DTO structure you use in GetHodEvaluationAsync
-                var hodEvaluationItems = evaluation.Hodevaluations.Select(h => new HodEvaluationItemDto
+                var hodEvaluationItems = evaluation.Hodevaluations.Where(h=>h.IsActive).Select(h => new HodEvaluationItemDto
                 {
                     CriterionId = h.CriterionId,
                     CriterionName = h.Criterion.CriterionName,
@@ -228,43 +233,29 @@ namespace Business_Access.Services
                     throw new Exception("Evaluation not found");
 
                 // ✅ 2. Validate that HOD evaluation exists (should exist for update)
-                var existingEvaluations = await _db.Hodevaluations
-                    .Where(h => h.EvaluationId == evaluationId)
-                    .ToListAsync();
-
-                if (!existingEvaluations.Any())
-                    throw new Exception("HOD evaluation not found. Cannot update non-existent evaluation.");
-
-                // ✅ 3. Remove existing evaluations
-                _db.Hodevaluations.RemoveRange(existingEvaluations);
-                await _db.SaveChangesAsync(); // Save deletion before adding new ones
-
-                // ✅ 4. Validate all criteria and ratings exist before adding
-                foreach (var criterionRating in dto.CriterionRatings)
+                var activeRows = await _db.Hodevaluations
+                 .Where(h => h.EvaluationId == evaluationId && h.IsActive)
+                 .ToListAsync();
+                if (!activeRows.Any(x => x.SourceRole == "HOD"))
                 {
-                    // Validate criterion exists
-                    var criterion = await _db.HodevaluationCriteria
-                        .FindAsync(criterionRating.CriterionId);
+                    throw new Exception("HOD cannot edit grades overridden by Dean");
+                }
+                foreach (var item in dto.CriterionRatings)
+                {
+                    var activeRow = activeRows
+                        .FirstOrDefault(x => x.CriterionId == item.CriterionId);
 
-                    if (criterion == null)
-                        throw new Exception($"Criterion {criterionRating.CriterionId} not found");
+                    if (activeRow == null)
+                        continue;
 
-                    // Validate rating exists
-                    var rating = await _db.Ratings
-                        .FindAsync(criterionRating.RatingId);
+                    // HOD can only edit his own grades
+                    if (activeRow.SourceRole != "HOD")
+                        continue;
 
-                    if (rating == null)
-                        throw new Exception($"Rating {criterionRating.RatingId} not found");
-
-                    // Add new evaluation
-                    var hodEval = new Hodevaluation
-                    {
-                        EvaluationId = evaluationId,
-                        CriterionId = criterionRating.CriterionId,
-                        RatingId = criterionRating.RatingId
-                    };
-
-                    _db.Hodevaluations.Add(hodEval);
+                    // In-place update
+                    activeRow.RatingId = item.RatingId;
+                    activeRow.CreatedAt = DateTime.UtcNow;
+                    activeRow.CreatedByUserId = dto.CreatedByUserId;
                 }
                 evaluation.TotalScore = dto.FinalScore;
 
@@ -374,7 +365,7 @@ namespace Business_Access.Services
         public async Task<bool> HasHodEvaluationAsync(int evaluationId)
         {
             return await _db.Hodevaluations
-                .AnyAsync(h => h.EvaluationId == evaluationId);
+                .AnyAsync(h => h.EvaluationId == evaluationId && h.IsActive);
         }
         private decimal MapScoreToPoints(int scoreValue, string criterionType)
         {
