@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+  <!-- Background Circle -->
+  <circle cx="24" cy="24" r="23" fill="#14275A" stroke="#E8B656" stroke-width="2"/>
+  
+  <!-- AAST Letters -->
+  <text x="24" y="30" font-family="Arial, sans-serif" font-size="20" font-weight="bold" 
+        fill="#E8B656" text-anchor="middle">AAST</text>
+  
+  <!-- Decorative Element -->
+  <path d="M 12 14 Q 24 8 36 14" stroke="#E8B656" stroke-width="2" fill="none"/>
+  <circle cx="24" cy="8" r="2" fill="#E8B656"/>
+</svg>

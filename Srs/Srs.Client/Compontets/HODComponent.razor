@@ -1,4 +1,5 @@
-﻿@using Shared.Dtos.HODEvaluation
+﻿@using Shared.Dtos.DeanDto
+@using Shared.Dtos.HODEvaluation
 @using Shared.Dtos.ProfessorEvaluationDto
 @inject HttpClient Http
 @inject IJSRuntime JS
@@ -229,6 +230,7 @@
                     <Srs.Client.Compontets.TeachingActivitiesEvaluation TeachingLoadScore="@TotalTeachingLoad"
                                                                         OnRatingsChanged="OnTeachingActivitiesRatingsChanged"
                                                                         IsViewMode="@IsViewMode"
+                                                                        IsDeanUser="@IsDeanUser"
                                                                         ExistingRatings="@GetExistingRatings("DirectTeaching")"
                                                                         CriterionSources="@GetCriterionSources("DirectTeaching")" />
 
@@ -244,6 +246,7 @@
                     <Srs.Client.Compontets.GradesComponent OnPersonalTraitsChanged="OnPersonalTraitsRatingsChanged"
                                                            OnStudentActivitiesChanged="OnStudentActivitiesRatingsChanged"
                                                            IsViewMode="@IsViewMode"
+                                                           IsDeanUser="@IsDeanUser"
                                                            ExistingPersonalTraits="@GetExistingRatings("PersonalTraits")"
                                                            ExistingStudentActivities="@GetExistingRatings("StudentActivities")"
                                                            PersonalTraitsSources="@GetCriterionSources("PersonalTraits")"
@@ -487,6 +490,8 @@
     [Parameter] public bool IsViewMode { get; set; } = false;
     [Parameter] public EventCallback OnClose { get; set; }
     [Parameter] public EventCallback OnSaveSuccess { get; set; }
+    [Parameter] public bool IsDeanUser { get; set; } = false;
+    [Parameter] public int DeanEmployeeId { get; set; } = 0;
     private decimal scientificTotal = 0;
     private int statusid = 0;
     // Internal state
@@ -932,15 +937,45 @@
                 RatingId = kvp.Value
             }).ToList();
 
-            // ✅ FIXED: Check if evaluation exists by checking hodEvaluationData.HodEvaluationId
-            // An evaluation truly exists if it has an ID in the database
             bool evaluationExists = hodEvaluationData?.EvaluationId > 0;
 
-            Console.WriteLine($"🔍 Evaluation exists: {evaluationExists}, HodEvaluationId: {hodEvaluationData?.EvaluationId}, StatusId: {statusid}");
+            Console.WriteLine($"🔍 Evaluation exists: {evaluationExists}, IsDeanUser: {IsDeanUser}");
 
-            if (evaluationExists)
+            // ✅ CHECK IF DEAN IS EDITING
+            if (IsDeanUser)
             {
-                // ✅ Update existing evaluation
+                // Dean is editing - use Dean's update endpoint
+                var updateDeanDto = new UpdateDeanEvaluationDto
+                {
+                    EvaluationId = SelectedTA.EvaluationId,
+                    CriterionRatings = criterionRatings,
+                    TotalScore = CalculateFinalTotal(),
+                    DeanComments = hodWeaknesses, // You can add a separate field for Dean comments
+                    CreatedByUserId = DeanEmployeeId // TODO: Get actual Dean user ID from authentication
+                };
+
+                Console.WriteLine($"📤 Dean updating evaluation {SelectedTA.EvaluationId} with {criterionRatings.Count} ratings");
+
+                var response = await Http.PutAsJsonAsync(
+                    "/api/Dean/updateEvaluationCriteria",
+                    updateDeanDto);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    await JS.InvokeVoidAsync("alert", "تم تحديث التقييم من قبل العميد بنجاح");
+                    await LoadData();
+                    await OnSaveSuccess.InvokeAsync();
+                }
+                else
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"❌ Dean update failed: {error}");
+                    await JS.InvokeVoidAsync("alert", $"فشل تحديث التقييم: {error}");
+                }
+            }
+            else if (evaluationExists)
+            {
+                // ✅ HOD Update existing evaluation
                 var updateDto = new UpdateHodEvaluationDto
                 {
                     CriterionRatings = criterionRatings,
@@ -949,7 +984,7 @@
                     FinalScore = CalculateFinalTotal()
                 };
 
-                Console.WriteLine($"📤 Updating evaluation {SelectedTA.EvaluationId} with {criterionRatings.Count} ratings");
+                Console.WriteLine($"📤 HOD updating evaluation {SelectedTA.EvaluationId} with {criterionRatings.Count} ratings");
 
                 var response = await Http.PutAsJsonAsync(
                     $"api/HodEvaluation/UpdateHodEvaluation/{SelectedTA.EvaluationId}",
@@ -958,7 +993,7 @@
                 if (response.IsSuccessStatusCode)
                 {
                     await JS.InvokeVoidAsync("alert", "تم تحديث التقييم بنجاح");
-                    await LoadData(); // ✅ Reload data after save
+                    await LoadData();
                     await OnSaveSuccess.InvokeAsync();
                 }
                 else
@@ -970,7 +1005,7 @@
             }
             else
             {
-                // ✅ Create new evaluation
+                // ✅ HOD Create new evaluation
                 var createDto = new CreateHodEvaluationDto
                 {
                     EvaluationId = SelectedTA.EvaluationId,
@@ -987,7 +1022,7 @@
                 if (response.IsSuccessStatusCode)
                 {
                     await JS.InvokeVoidAsync("alert", "تم حفظ التقييم بنجاح");
-                    await LoadData(); // ✅ Reload data after save
+                    await LoadData();
                     await OnSaveSuccess.InvokeAsync();
                 }
                 else

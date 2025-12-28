@@ -27,6 +27,9 @@ namespace Shared.Dtos.DeanDto
         public decimal StudentSurveyScore { get; set; }
         public decimal AcademicAdvisingScore { get; set; }
         public decimal ProfessorAverageCourseScore { get; set; }
+        
+        // Teaching load completion (0 or 10 points)
+        public decimal TeachingLoadCompletionScore { get; set; }
 
         // Aliases for frontend compatibility
         public int? EducationalActivityScore => (int)Math.Round(TeachingActivitiesTotal);
@@ -36,7 +39,7 @@ namespace Shared.Dtos.DeanDto
         public int? PersonalTraitsScore => (int)Math.Round(PersonalTraitsTotal);
 
         // Total and Grade
-        public int TotalScore { get; set; }
+        public decimal TotalScore { get; set; }
         public string FinalGrade { get; set; } = string.Empty;
 
         // HOD Comments

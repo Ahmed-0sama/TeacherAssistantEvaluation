@@ -141,6 +141,7 @@
 </style>
 
 @code {
+    [Parameter] public bool IsDeanUser { get; set; } = false;
     [Parameter] public double TeachingLoadScore { get; set; }
     [Parameter] public EventCallback<(Dictionary<int, int> Ratings, decimal Total)> OnRatingsChanged { get; set; }
     [Parameter] public bool IsViewMode { get; set; }
@@ -161,7 +162,10 @@
 
     private bool IsDeanModified(int criterionId)
     {
-        return CriterionSources?.TryGetValue(criterionId, out var source) == true && source == "Dean";
+        bool isModifiedByDean = CriterionSources?.TryGetValue(criterionId, out var source) == true && source == "Dean";
+
+        // ✅ Dean can edit their own modifications, HOD cannot
+        return isModifiedByDean && !IsDeanUser;
     }
 
     private string GetDeanModifiedClass(int criterionId)

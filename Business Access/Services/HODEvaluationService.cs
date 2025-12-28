@@ -208,7 +208,7 @@ namespace Business_Access.Services
                     TaName = $"TA #{evaluation.TaEmployeeId}",
                     TaEmployeeId = evaluation.TaEmployeeId,
                     StatusId = evaluation.StatusId,
-                    Evaluations = hodEvaluationItems,   // <-- THIS is the fix
+                    Evaluations = hodEvaluationItems,   
                     TeachingActivitiesTotal = teachingActivitiesTotal,
                     StudentActivitiesTotal = studentActivitiesTotal,
                     PersonalTraitsTotal = personalTraitsTotal,

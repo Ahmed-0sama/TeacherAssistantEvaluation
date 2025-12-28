@@ -33,9 +33,9 @@ namespace Business_Access.Services
 
             var evaluation = await _db.Evaluations
                 .Include(e => e.Status)
-                .Include(e => e.Hodevaluations)
+                .Include(e => e.Hodevaluations.Where(h => h.IsActive)) // ✅ FILTER FOR ACTIVE ONLY
                     .ThenInclude(h => h.Criterion)
-                .Include(e => e.Hodevaluations)
+                .Include(e => e.Hodevaluations.Where(h => h.IsActive)) // ✅ FILTER FOR ACTIVE ONLY
                     .ThenInclude(h => h.Rating)
                 .Include(e => e.Tasubmission)
                 .Include(e => e.Period)
@@ -44,11 +44,13 @@ namespace Business_Access.Services
             if (evaluation == null)
                 return null;
 
-            // HOD Data (only needed to calculate totals)
-            var hodEvaluations = evaluation.Hodevaluations?.ToList() ?? new List<Hodevaluation>();
+            // ✅ ONLY get ACTIVE HOD evaluations
+            var hodEvaluations = evaluation.Hodevaluations?
+                .Where(x => x.IsActive)  // ← ADD THIS FILTER
+                .ToList() ?? new List<Hodevaluation>();
 
             // Aggregate Section Totals - ensure decimal type
-            var teachingActivities = (decimal)hodEvaluations
+            var teachingActivities = hodEvaluations
                 .Where(x => x.Criterion?.CriterionType == "DirectTeaching")
                 .Sum(x => x.Rating != null
                        ? MapScoreToPoints(x.Rating.ScoreValue, "DirectTeaching")
@@ -106,19 +108,11 @@ namespace Business_Access.Services
             var academicAdvisingCount = evaluation.Tasubmission?.AdvisedStudentCount ?? 0;
             var academicAdvising = (decimal)Math.Min(academicAdvisingCount, 5);
 
-            // Calculate total
-            var totalScore =
-                teachingActivities +
-                studentActivities +
-                personalTraits +
-                administrative +
-                scientificScore +
-                studentSurvey +
-                professorAverageScore +
-                academicAdvising;
+            // ✅ Use the stored TotalScore from the Evaluation table
+            var totalscore = evaluation.TotalScore;
 
             // Grade simple mapping
-            var finalGrade = totalScore switch
+            var finalGrade = totalscore switch
             {
                 >= 90 => "ممتاز",
                 >= 80 => "جيد جداً",
@@ -132,12 +126,12 @@ namespace Business_Access.Services
                 EvaluationId = evaluation.EvaluationId,
                 TaEmployeeId = evaluation.TaEmployeeId,
                 TaName = $"TA #{evaluation.TaEmployeeId}",
-                TaEmail = evaluation.Status?.StatusName ?? "Unknown", // TODO: Get actual department/email
+                TaEmail = evaluation.Status?.StatusName ?? "Unknown",
                 PeriodName = evaluation.Period?.PeriodName,
                 StatusName = evaluation.Status?.StatusName ?? "Unknown",
                 StatusId = evaluation.StatusId,
 
-                // Section totals
+                // Section totals (from ACTIVE rows only)
                 TeachingActivitiesTotal = teachingActivities,
                 StudentActivitiesTotal = studentActivities,
                 PersonalTraitsTotal = personalTraits,
@@ -148,7 +142,7 @@ namespace Business_Access.Services
                 ProfessorAverageCourseScore = Math.Round(professorAverageScore, 2),
 
                 // Final total
-                TotalScore = (int)Math.Round(totalScore),
+                TotalScore = totalscore ?? 0,
                 FinalGrade = finalGrade,
 
                 // HOD Comments
@@ -209,7 +203,7 @@ namespace Business_Access.Services
                     foreach (var item in dto.CriterionRatings)
                     {
                         var activeRow = activeRows
-                            .FirstOrDefault(x => x.CriterionId == item.CriterionId);
+                     .FirstOrDefault(x => x.CriterionId == item.CriterionId);
 
                         if (activeRow == null)
                             continue;
@@ -218,23 +212,33 @@ namespace Business_Access.Services
                         if (activeRow.RatingId == item.RatingId)
                             continue; // No change needed
 
-                        // ✅ 6. Deactivate the old row (preserve history)
-                        activeRow.IsActive = false;
-
-                        // ✅ 7. Create a NEW row with Dean as the source
-                        var newDeanRow = new Hodevaluation
+                        // ✅ NEW: If the active row is already from Dean, UPDATE IT instead of creating new row
+                        if (activeRow.SourceRole == "Dean")
                         {
-                            EvaluationId = dto.EvaluationId,
-                            CriterionId = item.CriterionId,
-                            RatingId = item.RatingId,
-                            SourceRole = "Dean",  // ← Mark this as Dean's edit
-                            IsActive = true,
-                            CreatedAt = DateTime.UtcNow,  // ← Timestamp of Dean's edit
-                            CreatedByUserId = dto.CreatedByUserId  // Dean's user ID
-                        };
+                            activeRow.RatingId = item.RatingId;
+                            activeRow.CreatedAt = DateTime.UtcNow;
+                            activeRow.CreatedByUserId = dto.CreatedByUserId;
+                        }
+                        else
+                        {
+                            // ✅ Original logic: Deactivate HOD row and create new Dean row
+                            activeRow.IsActive = false;
 
-                        _db.Hodevaluations.Add(newDeanRow);
+                            var newDeanRow = new Hodevaluation
+                            {
+                                EvaluationId = dto.EvaluationId,
+                                CriterionId = item.CriterionId,
+                                RatingId = item.RatingId,
+                                SourceRole = "Dean",
+                                IsActive = true,
+                                CreatedAt = DateTime.UtcNow,
+                                CreatedByUserId = dto.CreatedByUserId
+                            };
+
+                            _db.Hodevaluations.Add(newDeanRow);
+                        }
                     }
+
 
                     // ✅ 8. Update evaluation totals and comments if provided
                     if (dto.TotalScore.HasValue)

@@ -13,6 +13,7 @@ builder.Services.AddDbContext<SrsDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddRazorComponents()
+    .AddInteractiveServerComponents()
     .AddInteractiveWebAssemblyComponents();
 
 builder.Services.AddScoped<IEvaluationPeriod, EvaluationPeriodService>();
@@ -58,8 +59,12 @@ app.MapControllers();
 
 app.UseAntiforgery();
 
+// Serve static files from the client wwwroot
+app.UseStaticFiles();
+
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
+    .AddInteractiveServerRenderMode()
     .AddInteractiveWebAssemblyRenderMode()
     .AddAdditionalAssemblies(typeof(Srs.Client._Imports).Assembly);
 

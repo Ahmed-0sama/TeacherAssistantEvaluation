@@ -245,6 +245,7 @@
     [Parameter] public Dictionary<int, int>? ExistingStudentActivities { get; set; }
     [Parameter] public Dictionary<int, string>? PersonalTraitsSources { get; set; }
     [Parameter] public Dictionary<int, string>? StudentActivitiesSources { get; set; }
+    [Parameter] public bool IsDeanUser { get; set; } = false;
 
     private Dictionary<int, int> personalTraitsRatings = new();
     private Dictionary<int, int> studentActivitiesRatings = new();
@@ -275,17 +276,21 @@
 
     private bool IsDeanModified(int criterionId)
     {
+        bool isModifiedByDean = false;
+
         // Check student activities (12-14)
         if (criterionId >= 12 && criterionId <= 14)
         {
-            return StudentActivitiesSources?.TryGetValue(criterionId, out var source) == true && source == "Dean";
+            isModifiedByDean = StudentActivitiesSources?.TryGetValue(criterionId, out var source) == true && source == "Dean";
         }
         // Check personal traits (15-19)
         else if (criterionId >= 15 && criterionId <= 19)
         {
-            return PersonalTraitsSources?.TryGetValue(criterionId, out var source) == true && source == "Dean";
+            isModifiedByDean = PersonalTraitsSources?.TryGetValue(criterionId, out var source) == true && source == "Dean";
         }
-        return false;
+
+        // ✅ Dean can edit their own modifications, HOD cannot
+        return isModifiedByDean && !IsDeanUser;
     }
 
     private string GetDeanModifiedClass(int criterionId)

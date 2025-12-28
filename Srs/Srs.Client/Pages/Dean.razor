@@ -198,8 +198,13 @@
                                         <div class="d-flex justify-content-between align-items-center">
                                             <span class="text-muted">الأنشطة التعليمية (العبء التدريسي)</span>
                                             <span class="fw-bold text-primary">
-                                                @(SelectedData.TeachingActivitiesTotal + SelectedData.ProfessorAverageCourseScore+8 ) / 50
+                                                @(SelectedData.ProfessorAverageCourseScore + SelectedData.TeachingLoadCompletionScore + SelectedData.TeachingActivitiesTotal) / 50
                                             </span>
+                                        </div>
+                                        <div class="mt-2" style="font-size: 0.85rem;">
+                                            <small class="text-muted d-block">• تقييم الأساتذة: @SelectedData.ProfessorAverageCourseScore / 30</small>
+                                            <small class="text-muted d-block">• اكتمال النصاب: @SelectedData.TeachingLoadCompletionScore / 10</small>
+                                            <small class="text-muted d-block">• الأنشطة التعليمية: @SelectedData.TeachingActivitiesTotal / 10</small>
                                         </div>
                                     </div>
                                 </div>
@@ -300,7 +305,7 @@
 
                                         <div class="bg-white rounded-3 p-3 shadow-sm d-inline-block">
                                             <span class="fw-bold text-success" style="font-size: 2.5rem; direction: ltr;">
-                                                @CalculateTotalScoreDetailed()/ 100
+                                                @CalculateTotalScore()/ 100
                                             </span>
                                         </div>
 
@@ -309,7 +314,7 @@
                                             <div class="mt-3">
                                                 <span class="badge @GetGradeBadgeClass(SelectedData.FinalGrade)"
                                                       style="font-size: 1.1rem; padding: 0.5rem 1rem;">
-                                                    التقدير: @CalculateTotalScoreDetailed()
+                                                    التقدير: @CalculateTotalScore()
                                                 </span>
                                             </div>
                                         }
@@ -390,10 +395,13 @@
 @if (IsHodModalVisible && SelectedData != null)
 {
     <Srs.Client.Compontets.HODComponent SelectedTA="@userData"
-                                            EvaluationPeriodId="@EvaluationPeriodId"
-                                            IsViewMode="@isViewMode"
-                                            OnClose="@HideHodModal"
-                                            OnSaveSuccess="@HandleSaveSuccess" />
+                                        EvaluationPeriodId="@EvaluationPeriodId"
+                                        IsViewMode="@isViewMode"
+                                        IsDeanUser="true"
+                                        OnClose="@HideHodModal"
+                                        OnSaveSuccess="@HandleSaveSuccess"
+                                        DeanEmployeeId="121"
+                                        />
 }
 @code {
     private List<EvaluationApiResponseDto> Evaluations { get; set; } = new();
@@ -591,7 +599,7 @@
 
     private async void OpenModal(EvaluationApiResponseDto eval)
     {
-        Console.WriteLine($"?? Opening modal for evaluation: {eval.evaluationId}");
+        Console.WriteLine($"🔵 Opening modal for evaluation: {eval.evaluationId}");
         SelectedData = null;
         DetailError = null;
         IsDetailLoading = true;
@@ -612,8 +620,10 @@
                 Console.WriteLine($"API StudentSurveyScore: {SelectedData?.StudentSurveyScore}");
                 Console.WriteLine($"API AcademicAdvisingScore: {SelectedData?.AcademicAdvisingScore}");
 
-                SelectedData.StudentSurveyScore = 4;
-                SelectedData.AcademicAdvisingScore = 4;
+                // ✅ REMOVED: Don't override API values with hardcoded ones
+                 SelectedData.StudentSurveyScore = 4;
+                 SelectedData.AcademicAdvisingScore = 4;
+                SelectedData.TeachingLoadCompletionScore = 10;
 
                 Console.WriteLine($"After setting - StudentSurveyScore: {SelectedData?.StudentSurveyScore}");
                 Console.WriteLine($"After setting - AcademicAdvisingScore: {SelectedData?.AcademicAdvisingScore}");
@@ -764,15 +774,30 @@
 
     private async Task HandleSaveSuccess()
     {
+        Console.WriteLine("🔵 HandleSaveSuccess called - reloading evaluation data");
+
         // Reload the evaluation data after save
         if (SelectedData != null)
         {
+            // First, refresh the evaluations list
+            await FetchEvaluationsAsync();
+
+            // Find the updated evaluation
             var eval = Evaluations.FirstOrDefault(e => e.evaluationId == SelectedData.EvaluationId);
+
             if (eval != null)
             {
+                // Close HOD modal
                 IsHodModalVisible = false;
-                IsModalVisible = false;
-                OpenModal(eval);
+
+                // Reload the Dean modal with fresh data
+                IsModalVisible = false; // Close first
+                StateHasChanged();
+                await Task.Delay(100); // Small delay to ensure clean state
+
+                OpenModal(eval); // Reopen with fresh data
+
+                Console.WriteLine("✅ Evaluation data reloaded successfully");
             }
         }
     }
@@ -806,28 +831,33 @@
             _ => "badge bg-secondary"
         };
     }
-    private int CalculateTotalScore()
+    private decimal CalculateTotalScore()
     {
         if (SelectedData == null)
             return 0;
 
         return SelectedData.TotalScore;
     }
-    // Or if you want to calculate it from individual scores:
+    
+    // ✅ FIXED: Match HOD component calculation exactly
     private decimal CalculateTotalScoreDetailed()
     {
         if (SelectedData == null)
             return 0;
 
-        return SelectedData.TeachingActivitiesTotal +
-               SelectedData.StudentActivitiesTotal +
-               SelectedData.PersonalTraitsTotal +
-               SelectedData.AdministrativeTotal +
-               SelectedData.ScientificActivityScore +
-               SelectedData.StudentSurveyScore +
-               SelectedData.AcademicAdvisingScore +
-               +8+
-               SelectedData.ProfessorAverageCourseScore;
+        // Teaching Load Score = Professor Average + Teaching Load Completion + Teaching Activities
+        decimal teachingLoadScore = 
+            SelectedData.ProfessorAverageCourseScore +    // Average of professor evaluations (max 30)
+            SelectedData.TeachingLoadCompletionScore +     // Teaching load completion (0 or 10)
+            SelectedData.TeachingActivitiesTotal;          // Teaching activities criteria (max 10)
+
+        return teachingLoadScore +                         // 50 points
+               SelectedData.ScientificActivityScore +      // 10 points
+               SelectedData.AdministrativeTotal +          // 10 points
+               SelectedData.StudentActivitiesTotal +       // 10 points
+               SelectedData.StudentSurveyScore +           // Student survey (max 5)
+               SelectedData.AcademicAdvisingScore +        // Academic advising (max 5)
+               SelectedData.PersonalTraitsTotal;           // 10 points
     }
 
     private void ShowToast(string message, string type = "success")
@@ -878,7 +908,7 @@
     }
 
     private string GetGradeBadgeClass(string? grade) =>
-        grade == "ããÊÇÒ" ? "badge bg-success" : "badge bg-warning text-dark";
+        grade == "ممتاز" ? "badge bg-success" : "badge bg-warning text-dark";
 
     private class DeanPermissions
     {

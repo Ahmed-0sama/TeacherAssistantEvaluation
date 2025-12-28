@@ -1,0 +1,86 @@
+@inherits LayoutComponentBase
+
+<div id="wrapper">
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <!-- Logo and Brand -->
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                <img src="Template/img/AASTLogoTran.png" alt="AAST Logo" height="50" class="me-3" />
+                <div class="sidebar-brand-text">
+                    <h3 class="mb-0">
+                        «·√ﬂ«œÌ„Ì… «·⁄—»Ì…
+                        <small>AASTMT</small>
+                    </h3>
+                    <h4 class="mb-0">‰Ÿ«„  ﬁÌÌ„ „”«⁄œÌ «· œ—Ì”</h4>
+                </div>
+            </a>
+            
+            <!-- Toggler for mobile -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <!-- Navbar items -->
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">
+                            <i class="fas fa-home me-2"></i>
+                            «·—∆Ì”Ì…
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dean">
+                            <i class="fas fa-user-tie me-2"></i>
+                            «·⁄„Ìœ
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/hod">
+                            <i class="fas fa-user-graduate me-2"></i>
+                            —∆Ì” «·ﬁ”„
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" 
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-user-circle me-2"></i>
+                            «·Õ”«»
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" href="/profile">
+                                <i class="fas fa-user me-2"></i>
+                                «·„·› «·‘Œ’Ì
+                            </a></li>
+                            <li><a class="dropdown-item" href="/settings">
+                                <i class="fas fa-cog me-2"></i>
+                                «·≈⁄œ«œ« 
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/logout">
+                                <i class="fas fa-sign-out-alt me-2"></i>
+                                 ”ÃÌ· «·Œ—ÊÃ
+                            </a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div id="content-wrapper" class="d-flex flex-column">
+        <div id="content">
+            @Body
+        </div>
+        
+        <footer class="sticky-footer bg-white">
+            <div class="container my-auto">
+                <div class="copyright text-center my-auto">
+                    <span>‰Ÿ«„  ﬁÌÌ„ „”«⁄œÌ «· œ—Ì” © @DateTime.Now.Year - «·√ﬂ«œÌ„Ì… «·⁄—»Ì… ··⁄·Ê„ Ê«· ﬂ‰Ê·ÊÃÌ« Ê«·‰ﬁ· «·»Õ—Ì</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+</div>

@@ -60,12 +60,44 @@ namespace Srs.Controllers
         {
             try
             {
+                Console.WriteLine($"🔵 Dean Controller - Received update request");
+                Console.WriteLine($"   - EvaluationId: {dto.EvaluationId}");
+                Console.WriteLine($"   - Criterion Count: {dto.CriterionRatings?.Count ?? 0}");
+                Console.WriteLine($"   - CreatedByUserId: {dto.CreatedByUserId}");
+
+                if (dto == null)
+                {
+                    Console.WriteLine("❌ DTO is null");
+                    return BadRequest("Request body is empty");
+                }
+
+                if (dto.CriterionRatings == null || !dto.CriterionRatings.Any())
+                {
+                    Console.WriteLine("❌ No criterion ratings provided");
+                    return BadRequest("No criterion ratings provided");
+                }
+
                 var result = await _deanService.UpdateEvaluationCriteriaAsync(dto);
-                return Ok(result);
+
+                if (result.Success)
+                {
+                    Console.WriteLine($"✅ Update successful: {result.Message}");
+                    return Ok(result);
+                }
+
+                Console.WriteLine($"⚠️ Update failed: {result.Message}");
+                return BadRequest(result);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                Console.WriteLine($"❌ Exception in controller: {ex.Message}");
+                Console.WriteLine($"   Stack Trace: {ex.StackTrace}");
+                return StatusCode(500, new DeanActionResponseDto
+                {
+                    Success = false,
+                    Message = $"Server error: {ex.Message}",
+                    EvaluationId = dto?.EvaluationId ?? 0
+                });
             }
         }
     }

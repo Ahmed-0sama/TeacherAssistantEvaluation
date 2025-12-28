@@ -329,7 +329,9 @@ namespace DataAccess.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("HodevalId"));
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
 
                     b.Property<int>("CreatedByUserId")
                         .HasColumnType("int");
@@ -343,7 +345,9 @@ namespace DataAccess.Migrations
                         .HasColumnName("EvaluationID");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
 
                     b.Property<int>("RatingId")
                         .HasColumnType("int")
@@ -351,17 +355,19 @@ namespace DataAccess.Migrations
 
                     b.Property<string>("SourceRole")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasDefaultValue("HOD");
 
                     b.HasKey("HodevalId")
                         .HasName("PK__HODEvalu__6A4AF4FA7D98075F");
 
                     b.HasIndex("CriterionId");
 
-                    b.HasIndex("RatingId");
+                    b.HasIndex("EvaluationId");
 
-                    b.HasIndex(new[] { "EvaluationId", "CriterionId" }, "UQ_HODEval")
-                        .IsUnique();
+                    b.HasIndex("RatingId");
 
                     b.ToTable("HODEvaluations", "taEvaluation");
                 });
