@@ -1,18 +1,24 @@
-@inherits LayoutComponentBase
+๏ปฟ@inherits LayoutComponentBase
 
 <div id="wrapper">
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark">
+    <nav class="navbar navbar-expand-lg navbar-dark" dir="rtl">
         <div class="container-fluid">
             <!-- Logo and Brand -->
             <a class="navbar-brand d-flex align-items-center" href="/">
-                <img src="Template/img/AASTLogoTran.png" alt="AAST Logo" height="50" class="me-3" />
+                <!-- Lazy load logo image with placeholder -->
+                <img src="Template/img/logo300.jpg" 
+                     alt="AAST Logo" 
+                     height="50" 
+                     class="me-3" 
+                     loading="lazy"
+                     decoding="async" />
                 <div class="sidebar-brand-text">
                     <h3 class="mb-0">
-                        วแร฿วฯํใํษ วแฺัศํษ
+                        ุงูุฃูุงุฏูู…ูุฉ ุงูุนุฑุจูุฉ
                         <small>AASTMT</small>
                     </h3>
-                    <h4 class="mb-0">ไูวใ สÞํํใ ใำวฺฯํ วแสฯัํำ</h4>
+                    <h4 class="mb-0">ูุธุงู… ุชูููู… ู…ุณุงุนุฏู ุงูุชุฏุฑูุณ</h4>
                 </div>
             </a>
             
@@ -28,40 +34,40 @@
                     <li class="nav-item">
                         <a class="nav-link" href="/">
                             <i class="fas fa-home me-2"></i>
-                            วแัฦํำํษ
+                            ุงูุฑุฆูุณูุฉ
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="/dean">
                             <i class="fas fa-user-tie me-2"></i>
-                            วแฺใํฯ
+                            ุงูุนู…ูุฏ
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="/hod">
                             <i class="fas fa-user-graduate me-2"></i>
-                            ัฦํำ วแÞำใ
+                            ุฑุฆูุณ ุงููุณู…
                         </a>
                     </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" 
                            data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-user-circle me-2"></i>
-                            วแอำวศ
+                            ุงูุญุณุงุจ
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
                             <li><a class="dropdown-item" href="/profile">
                                 <i class="fas fa-user me-2"></i>
-                                วแใแÝ วแิฮีํ
+                                ุงูู…ูู ุงูุดุฎุตู
                             </a></li>
                             <li><a class="dropdown-item" href="/settings">
                                 <i class="fas fa-cog me-2"></i>
-                                วแลฺฯวฯวส
+                                ุงูุฅุนุฏุงุฏุงุช
                             </a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="/logout">
                                 <i class="fas fa-sign-out-alt me-2"></i>
-                                สำฬํแ วแฮัๆฬ
+                                ุชุณุฌูู ุงูุฎุฑูุฌ
                             </a></li>
                         </ul>
                     </li>
@@ -78,7 +84,7 @@
         <footer class="sticky-footer bg-white">
             <div class="container my-auto">
                 <div class="copyright text-center my-auto">
-                    <span>ไูวใ สÞํํใ ใำวฺฯํ วแสฯัํำ ฉ @DateTime.Now.Year - วแร฿วฯํใํษ วแฺัศํษ แแฺแๆใ ๆวแส฿ไๆแๆฬํว ๆวแไÞแ วแศอัํ</span>
+                    <span>ูุธุงู… ุชูููู… ู…ุณุงุนุฏู ุงูุชุฏุฑูุณ ยฉ @DateTime.Now.Year - ุงูุฃูุงุฏูู…ูุฉ ุงูุนุฑุจูุฉ ููุนููู… ูุงูุชูููููุฌูุง ูุงูููู ุงูุจุญุฑู</span>
                 </div>
             </div>
         </footer>

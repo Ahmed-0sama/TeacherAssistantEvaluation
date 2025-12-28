@@ -52,6 +52,7 @@ else
     app.UseHsts();
 }
 
+
 app.UseHttpsRedirection();
 app.UseCors("AllowBlazorWasm");
 

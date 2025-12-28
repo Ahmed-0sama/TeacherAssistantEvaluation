@@ -68,37 +68,37 @@
                 <div class="card-body">
                     <EditForm Model="@userData">
                         <DataAnnotationsValidator />
-                        <h3 style="color:cornflowerblue">البيانات الشخصية</h3>
+                        <h3 style="color:cornflowerblue; text-align: right;">البيانات الشخصية</h3>
                         <hr style="color:cornflowerblue" />
-                        <div class="row g-3">
+                        <div class="row g-3" dir="rtl">
                             <div class="col-md-4">
                                 <div class="mb-3">
-                                    <label for="name" class="form-label">الاسم</label>
-                                    <InputText id="name" class="form-control" @bind-Value="userData.Name" readonly />
+                                    <label for="name" class="form-label" style="text-align: right; display: block;">الاسم</label>
+                                    <InputText id="name" class="form-control" style="text-align: right;" @bind-Value="userData.Name" readonly />
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="mb-3">
-                                    <label for="employeeNumber" class="form-label">الرقم الوظيفي</label>
-                                    <InputNumber id="employeeNumber" class="form-control" @bind-Value="userData.EmployeeNumber" readonly />
+                                    <label for="employeeNumber" class="form-label" style="text-align: right; display: block;">الرقم الوظيفي</label>
+                                    <InputNumber id="employeeNumber" class="form-control" style="text-align: right;" @bind-Value="userData.EmployeeNumber" readonly />
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="mb-3">
-                                    <label for="qualification" class="form-label">المؤهل</label>
-                                    <InputText id="qualification" class="form-control" @bind-Value="userData.Qualification" readonly />
+                                    <label for="qualification" class="form-label" style="text-align: right; display: block;">المؤهل</label>
+                                    <InputText id="qualification" class="form-control" style="text-align: right;" @bind-Value="userData.Qualification" readonly />
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="mb-3">
-                                    <label for="department" class="form-label">القسم</label>
-                                    <InputText id="department" class="form-control" @bind-Value="userData.Department" readonly />
+                                    <label for="department" class="form-label" style="text-align: right; display: block;">القسم</label>
+                                    <InputText id="department" class="form-control" style="text-align: right;" @bind-Value="userData.Department" readonly />
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="mb-3">
-                                    <label for="college" class="form-label">الكلية/الفرع </label>
-                                    <InputText id="college" class="form-control" @bind-Value="userData.College" readonly />
+                                    <label for="college" class="form-label" style="text-align: right; display: block;">الكلية/الفرع </label>
+                                    <InputText id="college" class="form-control" style="text-align: right;" @bind-Value="userData.College" readonly />
                                 </div>
                             </div>
                         </div>
@@ -291,7 +291,7 @@
         {
             userData = new Shared.Dtos.UserDataDto
             {
-                Id = 1234,
+                Id = 12,
                 Name = "علياء احمد",
                 EmployeeNumber = 111,
                 Qualification = "ماجستير في علوم الحاسب",
