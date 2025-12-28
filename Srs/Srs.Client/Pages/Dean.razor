@@ -336,13 +336,21 @@
                 </button>
 
                 <button type="button"
-                        class="btn btn-primary px-4"
+                        class="btn btn-info px-4"
                         @onclick="ShowDetailsModal"
                         disabled="@IsDetailLoading">
                     <i class="bi bi-eye me-2"></i>عرض تقييم رئيس القسم
                 </button>
+
                 @if (IsPendingApproval())
                 {
+                    <button type="button"
+                            class="btn btn-warning px-4"
+                            @onclick="ShowEditModal"
+                            disabled="@IsDetailLoading">
+                        <i class="bi bi-pencil-square me-2"></i>تعديل التقييم
+                    </button>
+
                     <button type="button"
                             class="btn btn-danger px-4"
                             @onclick="ReturnEvaluation"
@@ -508,13 +516,13 @@
         // Create a fresh userData object with all required fields
         userData = new UserDataDto
         {
-     Id = SelectedData.TaEmployeeId,
+            Id = SelectedData.TaEmployeeId,
             Name = SelectedData.TaName ?? $"TA #{SelectedData.TaEmployeeId}",
             EmployeeNumber = SelectedData.TaEmployeeId,
             Department = SelectedData.TaEmail ?? "غير محدد",
             EvaluationId = SelectedData.EvaluationId,
-    College = "" // Set if available from SelectedData
- };
+            College = "" // Set if available from SelectedData
+        };
 
         Console.WriteLine($"✅ User Data populated:");
         Console.WriteLine($"   - ID: {userData.Id}");
@@ -522,13 +530,51 @@
         Console.WriteLine($"   - EvaluationId: {userData.EvaluationId}");
         Console.WriteLine($"   - EmployeeNumber: {userData.EmployeeNumber}");
 
-        // Close Dean modal and open HOD modal
+        // Close Dean modal and open HOD modal in VIEW mode
         IsModalVisible = false;
+        isViewMode = true;
         IsHodModalVisible = true;
 
         Console.WriteLine($"✅ Modal state changed:");
         Console.WriteLine($"   - IsModalVisible: {IsModalVisible}");
         Console.WriteLine($"   - IsHodModalVisible: {IsHodModalVisible}");
+        Console.WriteLine($"   - IsViewMode: {isViewMode}");
+
+        StateHasChanged();
+    }
+
+    private async void ShowEditModal()
+    {
+        if (SelectedData == null)
+        {
+            Console.WriteLine("⚠️ SelectedData is null, cannot show HOD modal");
+            return;
+        }
+
+        Console.WriteLine($"🔵 ShowEditModal called for evaluation: {SelectedData.EvaluationId}");
+
+        // Create a fresh userData object with all required fields
+        userData = new UserDataDto
+        {
+            Id = SelectedData.TaEmployeeId,
+            Name = SelectedData.TaName ?? $"TA #{SelectedData.TaEmployeeId}",
+            EmployeeNumber = SelectedData.TaEmployeeId,
+            Department = SelectedData.TaEmail ?? "غير محدد",
+            EvaluationId = SelectedData.EvaluationId,
+            College = "" // Set if available from SelectedData
+        };
+
+        Console.WriteLine($"✅ Opening HOD Component in EDIT mode for Dean");
+
+        // Close Dean modal and open HOD modal in EDIT mode
+        IsModalVisible = false;
+        isViewMode = false; // Allow editing
+        IsHodModalVisible = true;
+
+        Console.WriteLine($"✅ Modal state changed:");
+        Console.WriteLine($"   - IsModalVisible: {IsModalVisible}");
+        Console.WriteLine($"   - IsHodModalVisible: {IsHodModalVisible}");
+        Console.WriteLine($"   - IsViewMode: {isViewMode}");
 
         StateHasChanged();
     }
@@ -716,63 +762,6 @@
         }
     }
 
-    private void ShowToast(string message, string type = "success")
-    {
-        _toastCancellationTokenSource?.Cancel();
-        _toastCancellationTokenSource = new CancellationTokenSource();
-
-        ToastMessage = message;
-        ToastType = type;
-        StateHasChanged();
-
-        Task.Delay(4000, _toastCancellationTokenSource.Token).ContinueWith(_ =>
-        {
-            if (!_toastCancellationTokenSource.Token.IsCancellationRequested)
-            {
-                ToastMessage = null;
-                InvokeAsync(StateHasChanged);
-            }
-        });
-    }
-
-    private bool IsPendingApproval()
-    {
-        return SelectedData?.StatusId == 5;
-    }
-
-    private void UpdatePermissions()
-    {
-        // Only allow approve/return if status is "ReviewedByDean" (5)
-        if (SelectedData?.StatusId == 5)
-        {
-            Permissions = new DeanPermissions
-            {
-                CanPrintReports = true,
-                CanApproveFinalReport = true,
-                CanReturnFinalReport = true
-            };
-        }
-        else
-        {
-            Permissions = new DeanPermissions
-            {
-                CanPrintReports = true,
-                CanApproveFinalReport = false,
-                CanReturnFinalReport = false
-            };
-        }
-    }
-
-    private string GetGradeBadgeClass(string? grade) =>
-        grade == "ããÊÇÒ" ? "badge bg-success" : "badge bg-warning text-dark";
-
-    private class DeanPermissions
-    {
-        public bool CanPrintReports { get; set; } = true;
-        public bool CanApproveFinalReport { get; set; }
-        public bool CanReturnFinalReport { get; set; }
-    }
-
     private async Task HandleSaveSuccess()
     {
         // Reload the evaluation data after save
@@ -839,5 +828,62 @@
                SelectedData.AcademicAdvisingScore +
                +8+
                SelectedData.ProfessorAverageCourseScore;
+    }
+
+    private void ShowToast(string message, string type = "success")
+    {
+        _toastCancellationTokenSource?.Cancel();
+        _toastCancellationTokenSource = new CancellationTokenSource();
+
+        ToastMessage = message;
+        ToastType = type;
+        StateHasChanged();
+
+        Task.Delay(4000, _toastCancellationTokenSource.Token).ContinueWith(_ =>
+        {
+            if (!_toastCancellationTokenSource.Token.IsCancellationRequested)
+            {
+                ToastMessage = null;
+                InvokeAsync(StateHasChanged);
+            }
+        });
+    }
+
+    private bool IsPendingApproval()
+    {
+        return SelectedData?.StatusId == 5;
+    }
+
+    private void UpdatePermissions()
+    {
+        // Only allow approve/return if status is "ReviewedByDean" (5)
+        if (SelectedData?.StatusId == 5)
+        {
+            Permissions = new DeanPermissions
+            {
+                CanPrintReports = true,
+                CanApproveFinalReport = true,
+                CanReturnFinalReport = true
+            };
+        }
+        else
+        {
+            Permissions = new DeanPermissions
+            {
+                CanPrintReports = true,
+                CanApproveFinalReport = false,
+                CanReturnFinalReport = false
+            };
+        }
+    }
+
+    private string GetGradeBadgeClass(string? grade) =>
+        grade == "ããÊÇÒ" ? "badge bg-success" : "badge bg-warning text-dark";
+
+    private class DeanPermissions
+    {
+        public bool CanPrintReports { get; set; } = true;
+        public bool CanApproveFinalReport { get; set; }
+        public bool CanReturnFinalReport { get; set; }
     }
 }

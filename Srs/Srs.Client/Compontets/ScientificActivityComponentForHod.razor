@@ -331,9 +331,13 @@
      </div>
      </div>
     <div class="card bg-primary bg-opacity-10 shadow-sm mx-auto mt-3 mb-4" style="max-width: 800px;">
-        <div class="card-body text-center py-4">
+        <div class="card-body text-center py-4 @GetDeanModifiedClass(20)">
             <h5 class="text-primary fw-semibold mb-2">
                 تقييم المشاركة في اللجان
+                @if (IsDeanModified(20))
+                {
+                    <span class="badge bg-warning text-dark ms-2">تم التعديل من قبل العميد</span>
+                }
             </h5>
 
             @if (IsViewMode)
@@ -358,6 +362,7 @@
                            max="10"
                            @bind="administrativeCommitteeScore"
                            @bind:after="ValidateAndUpdateAdminScore"
+                           disabled="@IsDeanModified(20)"
                            onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.charCode === 8" />
                     <span class="text-primary fw-bold fs-3">/ 10</span>
                 </div>
@@ -365,6 +370,16 @@
         </div>
     </div>
     </div>
+
+<style>
+    .dean-modified-row {
+        background-color: #fff3cd;
+        border-left: 4px solid #ffc107;
+        padding: 10px;
+        border-radius: 4px;
+    }
+</style>
+
 @code {
     MastersDto mastersData = new MastersDto();
     private bool isLoading = true;
@@ -378,6 +393,7 @@
     [Parameter] public bool IsViewMode { get; set; }
     [Parameter] public EventCallback<decimal> OnScientificTotalChanged { get; set; }
     [Parameter] public Dictionary<int, int>? ExistingRatings { get; set; }
+    [Parameter] public Dictionary<int, string>? CriterionSources { get; set; }
     [Parameter] public int EvaluationId { get; set; }
     [Parameter] public int EvaluationPeriodId { get; set; }
     [Parameter] public int TaEmployeeId { get; set; }
@@ -391,6 +407,16 @@
     private ResearchPaperDto currentPaper = new ResearchPaperDto();
     private decimal scientificScore;
 
+    private bool IsDeanModified(int criterionId)
+    {
+        return CriterionSources?.TryGetValue(criterionId, out var source) == true && source == "Dean";
+    }
+
+    private string GetDeanModifiedClass(int criterionId)
+    {
+        return IsDeanModified(criterionId) ? "dean-modified-row" : "";
+    }
+
     protected override async Task OnInitializedAsync()
     {
         await LoadActivityData();
@@ -398,6 +424,13 @@
     }
     private void ValidateAndUpdateAdminScore()
     {
+        // ✅ Don't allow updates to Dean-modified criteria
+        if (IsDeanModified(20))
+        {
+            Console.WriteLine($"🚫 Cannot update Dean-modified criterion 20");
+            return;
+        }
+
         // Constrain the value
         if (administrativeCommitteeScore < 0)
             administrativeCommitteeScore = 0;

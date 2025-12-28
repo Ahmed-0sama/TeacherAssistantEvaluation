@@ -128,7 +128,8 @@ namespace Business_Access.Services
                 RatingId = e.RatingId,
                 RatingName = e.Rating.RatingName,
                 ScoreValue = e.Rating.ScoreValue,
-                ActualPoints = MapScoreToPoints(e.Rating.ScoreValue, e.Criterion.CriterionType)
+                ActualPoints = MapScoreToPoints(e.Rating.ScoreValue, e.Criterion.CriterionType),
+                SourceRole = e.SourceRole ?? "HOD" // Include SourceRole
             }).ToList();
 
             var response = new HodEvaluationResponseDto
@@ -175,7 +176,8 @@ namespace Business_Access.Services
                     RatingId = h.RatingId,
                     RatingName = h.Rating.RatingName,
                     ScoreValue = h.Rating.ScoreValue,
-                    ActualPoints = MapScoreToPoints(h.Rating.ScoreValue, h.Criterion.CriterionType)
+                    ActualPoints = MapScoreToPoints(h.Rating.ScoreValue, h.Criterion.CriterionType),
+                    SourceRole = h.SourceRole ?? "HOD" // Include SourceRole
                 }).ToList();
 
                 // Section totals using ActualPoints (NOT raw ScoreValue)
@@ -236,10 +238,12 @@ namespace Business_Access.Services
                 var activeRows = await _db.Hodevaluations
                  .Where(h => h.EvaluationId == evaluationId && h.IsActive)
                  .ToListAsync();
-                if (!activeRows.Any(x => x.SourceRole == "HOD"))
+                if (activeRows.Any(x => x.SourceRole == "Dean"))
                 {
-                    throw new Exception("HOD cannot edit grades overridden by Dean");
+                    throw new Exception("Cannot edit evaluation - Dean has already reviewed and modified this evaluation");
                 }
+
+                // If we reach here, all rows are from HOD, so HOD can edit
                 foreach (var item in dto.CriterionRatings)
                 {
                     var activeRow = activeRows
@@ -248,11 +252,7 @@ namespace Business_Access.Services
                     if (activeRow == null)
                         continue;
 
-                    // HOD can only edit his own grades
-                    if (activeRow.SourceRole != "HOD")
-                        continue;
-
-                    // In-place update
+                    // Update (we already know SourceRole is "HOD")
                     activeRow.RatingId = item.RatingId;
                     activeRow.CreatedAt = DateTime.UtcNow;
                     activeRow.CreatedByUserId = dto.CreatedByUserId;

@@ -55,5 +55,18 @@ namespace Srs.Controllers
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
+        [HttpPut("updateEvaluationCriteria")]
+        public async Task<IActionResult> UpdateEvaluationCriteria([FromBody] UpdateDeanEvaluationDto dto)
+        {
+            try
+            {
+                var result = await _deanService.UpdateEvaluationCriteriaAsync(dto);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
     }
 }

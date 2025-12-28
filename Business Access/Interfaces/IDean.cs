@@ -14,6 +14,7 @@ namespace Business_Access.Interfaces
         Task<DeanActionResponseDto> AcceptEvaluationAsync(AcceptEvaluationDto dto);
 
         Task<DeanActionResponseDto> ReturnEvaluationAsync(ReturnEvaluationDto dto);
+        Task<DeanActionResponseDto> UpdateEvaluationCriteriaAsync(UpdateDeanEvaluationDto dto);
 
     }
 }

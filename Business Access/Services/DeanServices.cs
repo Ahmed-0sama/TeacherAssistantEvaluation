@@ -2,6 +2,7 @@
 using DataAccess.Entities;
 using Microsoft.EntityFrameworkCore;
 using Shared.Dtos.DeanDto;
+using Shared.Dtos.GSDean;
 using Shared.Dtos.HODEvaluation;
 using Shared.Dtos.Notifications;
 using Shared.Dtos.TASubmissions;
@@ -157,6 +158,131 @@ namespace Business_Access.Services
                 DeanReturnComment = evaluation.DeanReturnComment
             };
         }
+        public async Task<DeanActionResponseDto> UpdateEvaluationCriteriaAsync(UpdateDeanEvaluationDto dto)
+        {
+            using (var transaction = await _db.Database.BeginTransactionAsync())
+            {
+                try
+                {
+                    // ✅ 1. Validate evaluation exists
+                    var evaluation = await _db.Evaluations.FindAsync(dto.EvaluationId);
+                    if (evaluation == null)
+                    {
+                        await transaction.RollbackAsync();
+                        return new DeanActionResponseDto
+                        {
+                            Success = false,
+                            Message = "Evaluation not found",
+                            EvaluationId = dto.EvaluationId
+                        };
+                    }
+
+                    // ✅ 2. Validate evaluation is in correct status (5 = Pending Dean Approval or 7 = Returned by Dean)
+                    if (evaluation.StatusId != 5 && evaluation.StatusId != 7)
+                    {
+                        await transaction.RollbackAsync();
+                        return new DeanActionResponseDto
+                        {
+                            Success = false,
+                            Message = "Evaluation must be in pending or returned status to edit",
+                            EvaluationId = dto.EvaluationId
+                        };
+                    }
+
+                    // ✅ 3. Get all active HOD evaluation rows
+                    var activeRows = await _db.Hodevaluations
+                        .Where(h => h.EvaluationId == dto.EvaluationId && h.IsActive)
+                        .ToListAsync();
+
+                    if (!activeRows.Any())
+                    {
+                        await transaction.RollbackAsync();
+                        return new DeanActionResponseDto
+                        {
+                            Success = false,
+                            Message = "No HOD evaluation found for this evaluation",
+                            EvaluationId = dto.EvaluationId
+                        };
+                    }
+
+                    // ✅ 4. Process each criterion rating update
+                    foreach (var item in dto.CriterionRatings)
+                    {
+                        var activeRow = activeRows
+                            .FirstOrDefault(x => x.CriterionId == item.CriterionId);
+
+                        if (activeRow == null)
+                            continue;
+
+                        // ✅ 5. Check if the rating is actually different
+                        if (activeRow.RatingId == item.RatingId)
+                            continue; // No change needed
+
+                        // ✅ 6. Deactivate the old row (preserve history)
+                        activeRow.IsActive = false;
+
+                        // ✅ 7. Create a NEW row with Dean as the source
+                        var newDeanRow = new Hodevaluation
+                        {
+                            EvaluationId = dto.EvaluationId,
+                            CriterionId = item.CriterionId,
+                            RatingId = item.RatingId,
+                            SourceRole = "Dean",  // ← Mark this as Dean's edit
+                            IsActive = true,
+                            CreatedAt = DateTime.UtcNow,  // ← Timestamp of Dean's edit
+                            CreatedByUserId = dto.CreatedByUserId  // Dean's user ID
+                        };
+
+                        _db.Hodevaluations.Add(newDeanRow);
+                    }
+
+                    // ✅ 8. Update evaluation totals and comments if provided
+                    if (dto.TotalScore.HasValue)
+                    {
+                        evaluation.TotalScore = dto.TotalScore.Value;
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(dto.DeanComments))
+                    {
+                        evaluation.DeanReturnComment = dto.DeanComments;
+                    }
+
+                    // ✅ 9. Keep status as 5 (still pending Dean approval until final accept)
+                    // Dean can make multiple edits before final acceptance
+
+                    // ✅ 10. Send notification to TA
+                    SendNotificationDto notificationdto = new SendNotificationDto
+                    {
+                        recipientId = evaluation.TaEmployeeId,
+                        message = "Your evaluation has been modified by the Dean."
+                    };
+                    await _notificationService.SendNotificationAsync(notificationdto);
+
+                    // ✅ 11. Save all changes
+                    await _db.SaveChangesAsync();
+                    await transaction.CommitAsync();
+
+                    return new DeanActionResponseDto
+                    {
+                        Success = true,
+                        Message = "Evaluation criteria updated successfully by Dean",
+                        EvaluationId = dto.EvaluationId,
+                        NewStatus = "Modified by Dean"
+                    };
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    return new DeanActionResponseDto
+                    {
+                        Success = false,
+                        Message = $"An error occurred: {ex.Message}",
+                        EvaluationId = dto.EvaluationId
+                    };
+                }
+            }
+        }
+            
         // ⭐ Add the MapScoreToPoints method (SAME AS HOD SERVICE)
         private decimal MapScoreToPoints(int scoreValue, string criterionType)
         {

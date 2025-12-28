@@ -22,6 +22,18 @@
             }
             else
             {
+                    @if (hodEvaluationData?.Evaluations?.Any(e => e.SourceRole == "Dean") == true)
+                    {
+                        <div class="alert alert-warning" role="alert">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                <div>
+                                    <strong>تنبيه:</strong> تم تعديل بعض المعايير من قبل عميد الكلية.
+                                    المعايير المعدلة محددة باللون الأصفر ولا يمكن تعديلها.
+                                </div>
+                            </div>
+                        </div>
+                    }
                 <div class="border rounded p-3 bg-light mb-3">
 
                     <h5 class="mb-3 text-primary">البيانات الأساسية</h5>
@@ -215,23 +227,27 @@
 
                 <!-- Child Components -->
                     <Srs.Client.Compontets.TeachingActivitiesEvaluation TeachingLoadScore="@TotalTeachingLoad"
-                                                                    OnRatingsChanged="OnTeachingActivitiesRatingsChanged"
-                                                                    IsViewMode="@IsViewMode"
-                                                                    ExistingRatings="@GetExistingRatings("DirectTeaching")" />
+                                                                        OnRatingsChanged="OnTeachingActivitiesRatingsChanged"
+                                                                        IsViewMode="@IsViewMode"
+                                                                        ExistingRatings="@GetExistingRatings("DirectTeaching")"
+                                                                        CriterionSources="@GetCriterionSources("DirectTeaching")" />
 
-                <Srs.Client.Compontets.ScientificActivityComponentForHod EvaluationId="@(SelectedTA?.EvaluationId ?? 0)"
-                                                                         EvaluationPeriodId="EvaluationPeriodId"
-                                                                         TaEmployeeId="SelectedTA.Id"
-                                                                         OnRatingsChanged="OnScientificActivityRatingsChanged"
-                                                                         OnScientificTotalChanged="OnScientificTotalReceived"
-                                                                         IsViewMode="@IsViewMode"
-                                                                         ExistingRatings="@GetAdministrativeRatings()" />
+                    <Srs.Client.Compontets.ScientificActivityComponentForHod EvaluationId="@(SelectedTA?.EvaluationId ?? 0)"
+                                                                             EvaluationPeriodId="EvaluationPeriodId"
+                                                                             TaEmployeeId="SelectedTA.Id"
+                                                                             OnRatingsChanged="OnScientificActivityRatingsChanged"
+                                                                             OnScientificTotalChanged="OnScientificTotalReceived"
+                                                                             IsViewMode="@IsViewMode"
+                                                                             ExistingRatings="@GetAdministrativeRatings()"
+                                                                             CriterionSources="@GetCriterionSources("Administrative")" />
 
-                <Srs.Client.Compontets.GradesComponent OnPersonalTraitsChanged="OnPersonalTraitsRatingsChanged"
-                                                       OnStudentActivitiesChanged="OnStudentActivitiesRatingsChanged"
-                                                       IsViewMode="@IsViewMode"
-                                                       ExistingPersonalTraits="@GetExistingRatings("PersonalTraits")"
-                                                       ExistingStudentActivities="@GetExistingRatings("StudentActivities")" />
+                    <Srs.Client.Compontets.GradesComponent OnPersonalTraitsChanged="OnPersonalTraitsRatingsChanged"
+                                                           OnStudentActivitiesChanged="OnStudentActivitiesRatingsChanged"
+                                                           IsViewMode="@IsViewMode"
+                                                           ExistingPersonalTraits="@GetExistingRatings("PersonalTraits")"
+                                                           ExistingStudentActivities="@GetExistingRatings("StudentActivities")"
+                                                           PersonalTraitsSources="@GetCriterionSources("PersonalTraits")"
+                                                           StudentActivitiesSources="@GetCriterionSources("StudentActivities")" />
 
                 <div class="card bg-success bg-opacity-10 shadow-lg mx-auto mt-4 mb-4" style="max-width: 900px;">
                     <div class="card-body text-center py-5">
@@ -670,6 +686,15 @@
             StateHasChanged();
             Console.WriteLine("🔵 LoadData finished, isLoadingModal = false");
         }
+    }
+    private Dictionary<int, string> GetCriterionSources(string criterionType)
+    {
+        if (hodEvaluationData?.Evaluations == null)
+            return new Dictionary<int, string>();
+
+        return hodEvaluationData.Evaluations
+            .Where(e => e.CriterionType == criterionType)
+            .ToDictionary(e => e.CriterionId, e => e.SourceRole ?? "HOD");
     }
     private Dictionary<int, int> GetAdministrativeRatings()
     {
