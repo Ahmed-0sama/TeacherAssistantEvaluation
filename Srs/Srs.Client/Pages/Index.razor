@@ -60,7 +60,7 @@
             </div>
         }
         <div class="position-fixed top-0 start-0 m-3" style="z-index: 1050;">
-         <Srs.Client.Compontets.NotificationComponent EmployeeId="@userData.Id.ToString()" />
+         <Srs.Client.Compontets.NotificationComponent EmployeeId="@userData.employeeId.ToString()" />
         </div>
         @*  Personal Data Card *@
         <div class="w-75 mb-4 shadow-sm">
@@ -74,7 +74,7 @@
                             <div class="col-md-4">
                                 <div class="mb-3">
                                     <label for="name" class="form-label" style="text-align: right; display: block;">الاسم</label>
-                                    <InputText id="name" class="form-control" style="text-align: right;" @bind-Value="userData.Name" readonly />
+                                    <InputText id="name" class="form-control" style="text-align: right;" @bind-Value="userData.employeeName" readonly />
                                 </div>
                             </div>
                             <div class="col-md-4">
@@ -86,7 +86,7 @@
                             <div class="col-md-4">
                                 <div class="mb-3">
                                     <label for="qualification" class="form-label" style="text-align: right; display: block;">المؤهل</label>
-                                    <InputText id="qualification" class="form-control" style="text-align: right;" @bind-Value="userData.Qualification" readonly />
+                                    <InputText id="qualification" class="form-control" style="text-align: right;" @bind-Value="userData.jobTitle" readonly />
                                 </div>
                             </div>
                             <div class="col-md-4">
@@ -98,7 +98,7 @@
                             <div class="col-md-4">
                                 <div class="mb-3">
                                     <label for="college" class="form-label" style="text-align: right; display: block;">الكلية/الفرع </label>
-                                    <InputText id="college" class="form-control" style="text-align: right;" @bind-Value="userData.College" readonly />
+                                    <InputText id="college" class="form-control" style="text-align: right;" @bind-Value="userData.college" readonly />
                                 </div>
                             </div>
                         </div>
@@ -109,6 +109,9 @@
 
         <div class="w-75 mb-4 shadow-sm">
             <Srs.Client.Compontets.EducationalActivityComponent OnActivityLoaded="HandleEducationalData"
+                                                                employeeid="@userData.employeeId"
+                                                                evaluationPeriod="@evaluationPeriodId"
+
                                                                  />
         </div>
 
@@ -117,7 +120,7 @@
             <Srs.Client.Compontets.SentificِActivityComponent EvaluationId="@evaluationId"
                                                               InitialResearchPapers="@researchPapers"
                                                               InitialOtherActivities="@otherActivities"
-                                                              TAEmployeeId="@userData.Id"
+                                                              TAEmployeeId="@userData.employeeId"
                                                               OnResearchPapersLoaded="@HandleResearchPapersLoaded"
                                                               OnOtherActivitiesLoaded="@HandleOtherActivitiesLoaded"
                                                               IsReadOnly="@viewonly" />
@@ -138,7 +141,6 @@
         <div class="w-75 mb-4 shadow-sm">
             <Srs.Client.Compontets._ِAcademicAdvisingComponent IsReadOnly="@viewonly" />
         </div>
-
         @if (!string.IsNullOrEmpty(successMessage))
         {
             <div class="w-75 mb-4">
@@ -158,20 +160,20 @@
                 </div>
             </div>
         }
-        @if (StatusId == 6 && viewonly && !isLoading && userData != null && evaluationPeriodId > 0)
-        {
-            <div class="w-75 mb-4">
-                <div class="alert alert-success shadow-sm text-center" role="alert">
-                    <h5 class="alert-heading">
-                        <i class="bi bi-check-circle-fill"></i>تم قبول تقييمك
-                    </h5>
-                    <p class="mb-3">يمكنك الآن عرض تقييم النهائي</p>
-                    <button class="btn btn-primary" @onclick="OpenHodModal">
-                        <i class="bi bi-eye"></i> عرض تقييم
-                    </button>
-                </div>
-            </div>
-        }
+        if (StatusId == 6 && viewonly && !isLoading && userData != null && evaluationPeriodId > 0)
+                {
+                    <div class="w-75 mb-4">
+                        <div class="alert alert-success shadow-sm text-center" role="alert">
+                            <h5 class="alert-heading">
+                                <i class="bi bi-check-circle-fill"></i>تم قبول تقييمك
+                            </h5>
+                            <p class="mb-3">يمكنك الآن عرض تقييم النهائي</p>
+                            <button class="btn btn-primary" @onclick="OpenHodModal">
+                                <i class="bi bi-eye"></i> عرض تقييم
+                            </button>
+                        </div>
+                    </div>
+                }
 
         @*button is clicked *@
         @if (ShowHodModal && userData != null && evaluationPeriodId > 0)
@@ -286,22 +288,41 @@
     {
         isLoading = true;
         errorMessage = null;
-
         try
         {
-            userData = new Shared.Dtos.UserDataDto
+            var response = await http.GetAsync($"https://corsproxy.io/?https://aastmtic.aast.edu/TAEvaluation_api/api/hr/get-employee-info/{6995}");
+
+            if (response.IsSuccessStatusCode)
             {
-                Id = 12,
-                Name = "علياء احمد",
-                EmployeeNumber = 111,
-                Qualification = "ماجستير في علوم الحاسب",
-                Department = "قسم علوم الحاسب",
-                College = "AASTMT"
-            };
+                var result = await response.Content.ReadFromJsonAsync<UserDataDto>();
 
-            Console.WriteLine("User data loaded successfully");
+                if (result != null)
+                {
+                    userData = new UserDataDto
+                    {
+                        employeeId = result.employeeId,
+                        // Use 'result', not 'response'
+                        EmployeeNumber = result.employeeId,
+                        employeeName = result.employeeName,
+                        college = result.college, 
+                        // Fixed typo
+                        jobTitle = result.jobTitle,
+                        Department = result.Department
+                    };
 
-            await GetOrCreateEvaluation();
+                    Console.WriteLine("User data loaded successfully");
+                    await GetOrCreateEvaluation();
+                }
+                else
+                {
+                    errorMessage = "فشل في قراءة البيانات";
+                    Console.WriteLine("Deserialization returned null");
+                }
+            }
+            else
+            {
+                errorMessage = $"خطأ في الخادم: {response.StatusCode}";
+            }
         }
         catch (Exception ex)
         {
@@ -319,7 +340,7 @@
     {
         try
         {
-            var response = await http.PostAsync($"/api/Evaluation/getorcreate?taEmployeeId={userData.Id}&periodId={evaluationPeriodId}", null);
+            var response = await http.PostAsync($"/api/Evaluation/getorcreate?taEmployeeId={userData.employeeId}&periodId={evaluationPeriodId}", null);
 
             if (response.IsSuccessStatusCode)
             {
@@ -668,9 +689,9 @@
     }
     private async Task OpenHodModal()
     {
-        Console.WriteLine($"Opening HOD Modal - userData: {userData?.Name}, evaluationPeriodId: {evaluationPeriodId}");
+        Console.WriteLine($"Opening HOD Modal - userData: {userData?.employeeName}, evaluationPeriodId: {evaluationPeriodId}");
 
-        if (userData == null || userData.Id == 0)
+        if (userData == null || userData.employeeId == 0)
         {
             errorMessage = "بيانات المستخدم غير متوفرة";
             StateHasChanged();

@@ -103,7 +103,7 @@
                             @foreach (var evaluation in FilteredTAList)
                             {
                                 <tr>
-                                    <td>@evaluation.Name</td>
+                                    <td>@evaluation.employeeName</td>
                                     <td>@evaluation.Department</td>
                                     <td>@evaluation.Department</td>
                                     <td>
@@ -159,7 +159,7 @@
             var searchLower = SearchTerm.ToLower().Trim();
 
             return taList.Where(ta =>
-                (ta.Name?.ToLower().Contains(searchLower) ?? false) ||
+                (ta.employeeName?.ToLower().Contains(searchLower) ?? false) ||
                 (ta.EmployeeNumber.ToString().Contains(searchLower)) ||
                 (ta.Department?.ToLower().Contains(searchLower) ?? false) ||
                 (GetStatusText(ta.statusid).ToLower().Contains(searchLower))
@@ -176,7 +176,7 @@
 
     private void OpenModal(UserDataDto ta)
     {
-        Console.WriteLine($"Opening modal for: {ta.Name}, EvaluationId: {ta.EvaluationId}");
+        Console.WriteLine($"Opening modal for: {ta.employeeName}, EvaluationId: {ta.EvaluationId}");
         selectedTA = ta;
         showHodModal = true;
         StateHasChanged();
@@ -243,11 +243,11 @@
 
             taList = hodEvaluations.Select(h => new UserDataDto
             {
-                Name = h.TaName ?? $"TA #{h.TaEmployeeId}",
+                employeeName = h.TaName ?? $"TA #{h.TaEmployeeId}",
                 Department = h.TaName,
                 EmployeeNumber = h.TaEmployeeId,
                 EvaluationId = h.EvaluationId,
-                Id = h.TaEmployeeId,
+                employeeId = h.TaEmployeeId,
                 statusid = h.StatusId,
                 HasHodEvaluation = true,
                 HodEvaluationData = h

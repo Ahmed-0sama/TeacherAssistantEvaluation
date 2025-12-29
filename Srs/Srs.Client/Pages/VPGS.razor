@@ -45,7 +45,7 @@
                                 @foreach (var ta in taList)
                                 {
                                     <tr>
-                                        <td>@ta.Name</td>
+                                        <td>@ta.employeeName</td>
                                         <td>@ta.Department</td>
                                         <td>
                                             <span class="result-pill">@(ta.HasVpgsEvaluation == true ? "تم التقييم" : " انتظار التقييم")</span>
@@ -93,7 +93,7 @@
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label fw-bold">اسم مساعد التدريس</label>
-                                    <input type="text" class="form-control" disabled value="@selectedTA?.Name" />
+                                    <input type="text" class="form-control" disabled value="@selectedTA?.employeeName" />
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label fw-bold">الرقم الوظيفي:</label>
@@ -367,7 +367,7 @@
             {
                 taList = evaluations.Select(e => new UserDataDto
                 {
-                    Name = $"TA #{e.TaEmployeeId}",
+                    employeeName = $"TA #{e.TaEmployeeId}",
                     Department = e.PeriodName,
                     EmployeeNumber = e.TaEmployeeId,
                     statusid = e.StatusId,
@@ -408,7 +408,7 @@
     private async Task OpenModal(UserDataDto ta)
     {
         selectedTA = ta;
-        selectedTA.Id = ta.EmployeeNumber;
+        selectedTA.employeeId = ta.EmployeeNumber;
         ModalVisable = true;
         isLoadingModalData = true;
 
@@ -466,7 +466,7 @@
     {
         try
         {
-            var response = await Http.GetAsync($"/api/GSDean/GetByEvaluationForGSDeanPeriodAndTAAsync/{evaluationperiodid}/{selectedTA.Id}");
+            var response = await Http.GetAsync($"/api/GSDean/GetByEvaluationForGSDeanPeriodAndTAAsync/{evaluationperiodid}/{selectedTA.employeeId}");
 
             if (response.IsSuccessStatusCode)
             {

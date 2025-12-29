@@ -524,17 +524,17 @@
         // Create a fresh userData object with all required fields
         userData = new UserDataDto
         {
-            Id = SelectedData.TaEmployeeId,
-            Name = SelectedData.TaName ?? $"TA #{SelectedData.TaEmployeeId}",
+            employeeId = SelectedData.TaEmployeeId,
+            employeeName = SelectedData.TaName ?? $"TA #{SelectedData.TaEmployeeId}",
             EmployeeNumber = SelectedData.TaEmployeeId,
             Department = SelectedData.TaEmail ?? "غير محدد",
             EvaluationId = SelectedData.EvaluationId,
-            College = "" // Set if available from SelectedData
+            college = "" // Set if available from SelectedData
         };
 
         Console.WriteLine($"✅ User Data populated:");
-        Console.WriteLine($"   - ID: {userData.Id}");
-        Console.WriteLine($"   - Name: {userData.Name}");
+        Console.WriteLine($"   - ID: {userData.employeeId}");
+        Console.WriteLine($"   - Name: {userData.employeeName}");
         Console.WriteLine($"   - EvaluationId: {userData.EvaluationId}");
         Console.WriteLine($"   - EmployeeNumber: {userData.EmployeeNumber}");
 
@@ -564,12 +564,12 @@
         // Create a fresh userData object with all required fields
         userData = new UserDataDto
         {
-            Id = SelectedData.TaEmployeeId,
-            Name = SelectedData.TaName ?? $"TA #{SelectedData.TaEmployeeId}",
+            employeeId = SelectedData.TaEmployeeId,
+            employeeName = SelectedData.TaName ?? $"TA #{SelectedData.TaEmployeeId}",
             EmployeeNumber = SelectedData.TaEmployeeId,
             Department = SelectedData.TaEmail ?? "غير محدد",
             EvaluationId = SelectedData.EvaluationId,
-            College = "" // Set if available from SelectedData
+            college = "" // Set if available from SelectedData
         };
 
         Console.WriteLine($"✅ Opening HOD Component in EDIT mode for Dean");
@@ -627,8 +627,8 @@
 
                 Console.WriteLine($"After setting - StudentSurveyScore: {SelectedData?.StudentSurveyScore}");
                 Console.WriteLine($"After setting - AcademicAdvisingScore: {SelectedData?.AcademicAdvisingScore}");
-                userData.Id = SelectedData.TaEmployeeId;
-                userData.Name = $"TA #{SelectedData?.TaName}";
+                userData.employeeId = SelectedData.TaEmployeeId;
+                userData.employeeName = $"TA #{SelectedData?.TaName}";
                 userData.EmployeeNumber = SelectedData.TaEmployeeId;
                 userData.Department = SelectedData.TaEmail;
                 userData.EvaluationId = SelectedData.EvaluationId;

@@ -42,7 +42,7 @@
                     <div class="row">
                         <div class="col-md-4 mb-3">
                             <label class="form-label fw-bold">اسم مساعد التدريس</label>
-                            <input type="text" class="form-control" disabled value="@SelectedTA?.Name" />
+                            <input type="text" class="form-control" disabled value="@SelectedTA?.employeeName" />
                         </div>
                         <div class="col-md-4 mb-3">
                             <label class="form-label fw-bold">الرقم الوظيفي:</label>
@@ -57,11 +57,11 @@
                     <div class="row">
                         <div class="col-md-4 mb-3">
                             <label class="form-label fw-bold">القسم</label>
-                            <input type="text" class="form-control" disabled value="@SelectedTA?.College" />
+                            <input type="text" class="form-control" disabled value="@SelectedTA?.college" />
                         </div>
                         <div class="col-md-4 mb-3">
                             <label class="form-label fw-bold">الكلية</label>
-                            <input type="text" class="form-control" disabled value="@SelectedTA?.College" />
+                            <input type="text" class="form-control" disabled value="@SelectedTA?.college" />
                         </div>
                         <div class="col-md-4 mb-3">
                             <label class="form-label fw-bold">العبئ الدراسي</label>
@@ -74,7 +74,7 @@
                         <ReminderComponent Name="مساعد التدريس"
                                            EvaluationId="SelectedTA.EvaluationId"
                                            EmployeeId="selectedProfessorId"
-                                           RecieverId="SelectedTA.Id"                   />
+                                           RecieverId="SelectedTA.employeeId"                   />
                     }
                     @if (SelectedTA.statusid == 7)
                     {
@@ -186,42 +186,84 @@
                                 </table>
                             </div>
 
-                            <div class="mt-3 p-3 bg-light rounded shadow-sm">
-                                <h6 class="fw-bold mb-3 text-primary">
-                                    <i class="bi bi-book-half me-1"></i>اكتمال ساعات النصاب (10)
-                                </h6>
+                                <div class="mt-3 p-3 bg-light rounded shadow-sm">
+                                    <h6 class="fw-bold mb-3 text-primary">
+                                        <i class="bi bi-book-half me-1"></i>اكتمال ساعات النصاب
+                                    </h6>
 
-                                <div class="row text-center">
-                                    <div class="col">
-                                        <div class="p-2 bg-white rounded border">
-                                            <i class="bi bi-clock-history fs-4 d-block text-secondary"></i>
-                                            <span class="fw-bold">التدريس المتوقع</span>
-                                            <div>@teachingdto.ExpectedTeachingLoad</div>
+                                    @if (semesterTeachingLoads.Any())
+                                    {
+                                        <div class="row g-3">
+                                            @foreach (var semester in semesterTeachingLoads)
+                                            {
+                                                <div class="col-md-6">
+                                                    <div class="card border-@(semester.score == 10 ? "success" : "danger")">
+                                                        <div class="card-header bg-@(semester.score == 10 ? "success" : "danger") bg-opacity-10">
+                                                            <h6 class="mb-0 fw-bold">@semester.semestername</h6>
+                                                        </div>
+                                                        <div class="card-body">
+                                                            <div class="row text-center">
+                                                                <div class="col-4">
+                                                                    <div class="p-2">
+                                                                        <i class="bi bi-clock-history fs-4 d-block text-secondary"></i>
+                                                                        <span class="fw-bold d-block">المتوقع</span>
+                                                                        <span class="fs-5">@semester.ExpectedTeachingLoad</span>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-4">
+                                                                    <div class="p-2">
+                                                                        <i class="bi bi-check-circle fs-4 d-block text-@(semester.score == 10 ? "success" : "danger")"></i>
+                                                                        <span class="fw-bold d-block">الفعلي</span>
+                                                                        <span class="fs-5">@semester.ActualTeachingLoad</span>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-4">
+                                                                    <div class="p-2">
+                                                                        <i class="bi bi-star-fill fs-4 d-block text-warning"></i>
+                                                                        <span class="fw-bold d-block">الدرجة</span>
+                                                                        <span class="badge bg-@(semester.score == 10 ? "success" : "danger") fs-6">
+                                                                            @semester.score / 10
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            }
                                         </div>
-                                    </div>
-                                    <div class="col">
-                                        <div class="p-2 bg-white rounded border">
-                                            <i class="bi bi-check-circle fs-4 d-block text-success"></i>
-                                            <span class="fw-bold">التدريس الفعلي</span>
-                                            <div>@teachingdto.ActualTeachingLoad</div>
+
+                                        <!-- Average Score Display -->
+                                        <div class="card bg-primary bg-opacity-10 shadow-sm mt-3">
+                                            <div class="card-body text-center py-3">
+                                                <h6 class="text-primary fw-semibold mb-2">متوسط درجة اكتمال النصاب</h6>
+                                                <p class="text-primary fw-bold fs-4 mb-0">
+                                                    @AverageTeachingLoadGrade().ToString("F2") / 10
+                                                </p>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div class="col">
-                                        <div class="p-2 bg-white rounded border">
-                                            <i class="bi bi-star-fill fs-4 d-block text-warning"></i>
-                                            <span class="fw-bold">التقييم</span>
-                                                <div>@teachingLoadGrade(teachingdto.ActualTeachingLoad, teachingdto.ExpectedTeachingLoad)/10</div>
+                                    }
+                                    else
+                                    {
+                                        <div class="alert alert-warning mb-0">
+                                            <i class="bi bi-exclamation-triangle me-2"></i>
+                                            لا توجد بيانات عبء تدريسي متاحة
                                         </div>
+                                    }
+                                </div>
+
+                                <div class="card bg-primary bg-opacity-10 shadow-sm mx-auto mt-4" style="max-width: 600px; border-radius: 12px;">
+                                    <div class="card-body text-center py-4">
+                                        <h3 class="text-primary fw-semibold mb-2" style="direction: rtl; font-size: 18px;">المجموع الكلي للعبء التدريسي</h3>
+                                        <p class="text-primary fw-bold fs-4 mb-0" style="direction: ltr;">
+                                            @(TotalTeachingLoad.ToString("F2")) / 40
+                                        </p>
+                                        <small class="text-muted d-block mt-2">
+                                            تقييم الأساتذة: @CalculateAverageScore() +
+                                            متوسط النصاب: @AverageTeachingLoadGrade().ToString("F2")
+                                        </small>
                                     </div>
                                 </div>
-                            </div>
-
-                            <div class="card bg-primary bg-opacity-10 shadow-sm mx-auto mt-4" style="max-width: 600px; border-radius: 12px;">
-                                <div class="card-body text-center py-4">
-                                    <h3 class="text-primary fw-semibold mb-2" style="direction: rtl; font-size: 18px;">المجموع الكلي للعبء التدريسي</h3>
-                                        <p class="text-primary fw-bold fs-4 mb-0" style="direction: ltr;">@(TotalTeachingLoad) / 40</p>
-                                </div>
-                            </div>
                         }
                     </div>
                 </div>
@@ -236,7 +278,7 @@
 
                     <Srs.Client.Compontets.ScientificActivityComponentForHod EvaluationId="@(SelectedTA?.EvaluationId ?? 0)"
                                                                              EvaluationPeriodId="EvaluationPeriodId"
-                                                                             TaEmployeeId="SelectedTA.Id"
+                                                                             TaEmployeeId="SelectedTA.employeeId"
                                                                              OnRatingsChanged="OnScientificActivityRatingsChanged"
                                                                              OnScientificTotalChanged="OnScientificTotalReceived"
                                                                              IsViewMode="@IsViewMode"
@@ -396,7 +438,7 @@
                             <div>
                                 <i class="bi bi-person me-2"></i>
                                 <span>إرجاع إلى مساعد التدريس</span>
-                                <div class="small text-muted">@SelectedTA?.Name</div>
+                                <div class="small text-muted">@SelectedTA?.employeeName</div>
                             </div>
                         </div>
                     </button>
@@ -520,6 +562,16 @@
 
     // Computed properties - العبء التدريسي = Professor evaluations (30) + Teaching load completion (10) + Teaching Activities (10)
     decimal teachingLoadScore => (CalculateAverageScore()) + teachingLoadGrade(teachingdto.ActualTeachingLoad,teachingdto.ExpectedTeachingLoad) + GetTeachingActivitiesTotal();
+    private List<TeachingDataDto> semesterTeachingLoads = new List<TeachingDataDto>();
+
+    // ✅ UPDATE: Calculate average teaching load grade
+    private decimal AverageTeachingLoadGrade()
+    {
+        if (!semesterTeachingLoads.Any())
+            return 0;
+
+        return semesterTeachingLoads.Average(s => s.score);
+    }
 
     protected override async Task OnParametersSetAsync()
     {
@@ -532,11 +584,12 @@
     private async Task LoadData()
     {
         isLoadingModal = true;
-        Console.WriteLine($"🔵 Starting LoadData - SelectedTA: {SelectedTA?.Name}, EvaluationId: {SelectedTA?.EvaluationId}, PeriodId: {EvaluationPeriodId}");
+        Console.WriteLine($"🔵 Starting LoadData - SelectedTA: {SelectedTA?.employeeName}");
 
         // Reset data
         profdto = new List<ProfessorEvaluationResponseDto>();
         hodEvaluationData = null;
+        semesterTeachingLoads.Clear(); // ✅ Clear semester data
         teachingActivitiesRatings.Clear();
         scientificActivityRatings.Clear();
         personalTraitsRatings.Clear();
@@ -546,46 +599,62 @@
 
         try
         {
-            // Validate that we have the required data
-            if (SelectedTA == null)
+            if (SelectedTA == null || SelectedTA.EvaluationId == 0 || EvaluationPeriodId == 0)
             {
-                Console.WriteLine("❌ SelectedTA is null");
-                await JS.InvokeVoidAsync("alert", "خطأ: بيانات المستخدم غير متوفرة");
+                await JS.InvokeVoidAsync("alert", "خطأ: بيانات التقييم غير متوفرة");
                 isLoadingModal = false;
                 return;
             }
 
-            if (SelectedTA.EvaluationId == 0)
-            {
-                Console.WriteLine("❌ EvaluationId is 0");
-                await JS.InvokeVoidAsync("alert", "خطأ: معرف التقييم غير متوفر");
-                isLoadingModal = false;
-                return;
-            }
-
-            if (EvaluationPeriodId == 0)
-            {
-                Console.WriteLine("❌ EvaluationPeriodId is 0");
-                await JS.InvokeVoidAsync("alert", "خطأ: معرف فترة التقييم غير متوفر");
-                isLoadingModal = false;
-                return;
-            }
-
-            // Load professor evaluations
+            // ✅ Load teaching data from API (both semesters)
             try
             {
-                Console.WriteLine($"📡 Fetching professor evaluations: /api/ProfessorEvaluation/GetByPeriodAndTA/{EvaluationPeriodId}/{SelectedTA.Id}");
+                Console.WriteLine($"📡 Fetching teaching data for employee {SelectedTA.employeeId}");
+
+                var response = await Http.GetAsync(
+                    $"https://corsproxy.io/?https://aastmtic.aast.edu/TAEvaluation_api/api/LMS/teaching-data/{SelectedTA.employeeId}/2024-01-01/2025-12-31");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var teachingDataList = await response.Content.ReadFromJsonAsync<List<TeachingDataDto>>();
+
+                    if (teachingDataList != null && teachingDataList.Any())
+                    {
+                        // Convert to semester teaching load DTOs with scores
+                        semesterTeachingLoads = teachingDataList.Select(td =>
+                       {
+                           td.score = td.ActualTeachingLoad >= td.ExpectedTeachingLoad ? 10 : 0;
+                           return td;
+                       }).ToList();
+
+                        Console.WriteLine($"✅ Loaded {semesterTeachingLoads.Count} semesters teaching data");
+                        Console.WriteLine($"   Average Score: {AverageTeachingLoadGrade()}");
+                    }
+                    else
+                    {
+                        Console.WriteLine("⚠️ No teaching data found");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"⚠️ Failed to load teaching data: {response.StatusCode}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error loading teaching data: {ex.Message}");
+            }
+
+            // ✅ Load professor evaluations
+            try
+            {
                 var profEvaluations = await Http.GetFromJsonAsync<List<ProfessorEvaluationResponseDto>>(
-                    $"api/ProfessorEvaluation/GetByPeriodAndTA/{EvaluationPeriodId}/{SelectedTA.Id}");
+                    $"api/ProfessorEvaluation/GetByPeriodAndTA/{EvaluationPeriodId}/{SelectedTA.employeeId}");
 
                 if (profEvaluations != null && profEvaluations.Any())
                 {
                     profdto = profEvaluations;
                     Console.WriteLine($"✅ Loaded {profdto.Count} professor evaluations");
-                }
-                else
-                {
-                    Console.WriteLine("⚠️ No professor evaluations found");
                 }
             }
             catch (Exception ex)
@@ -593,88 +662,43 @@
                 Console.WriteLine($"❌ Error loading professor evaluations: {ex.Message}");
             }
 
-            // Load teaching data
-            if (SelectedTA.EvaluationId != 0)
-            {
-                teachingdto = new TeachingDataDto
-                {
-                    ActualTeachingLoad = 12,
-                    ExpectedTeachingLoad = 10,
-                    ClassCount = 3
-                };
-                Console.WriteLine("✅ Teaching data initialized");
-            }
-
-            // Try to load existing HOD evaluation
+            // ✅ Load existing HOD evaluation
             try
             {
-                Console.WriteLine($"📡 Fetching HOD evaluation: /api/HodEvaluation/HodEvaluationByEvaluationId/{SelectedTA.EvaluationId}");
                 var response = await Http.GetAsync($"api/HodEvaluation/HodEvaluationByEvaluationId/{SelectedTA.EvaluationId}");
-
-                Console.WriteLine($"📥 HOD evaluation response status: {response.StatusCode}");
 
                 if (response.IsSuccessStatusCode)
                 {
                     hodEvaluationData = await response.Content.ReadFromJsonAsync<HodEvaluationResponseDto>();
 
-                    if (hodEvaluationData != null)
+                    if (hodEvaluationData != null && hodEvaluationData.Evaluations?.Any() == true)
                     {
-                        Console.WriteLine($"✅ HOD evaluation loaded - StatusId: {hodEvaluationData.StatusId}, Evaluations count: {hodEvaluationData.Evaluations?.Count ?? 0}");
+                        hodStrengths = hodEvaluationData.HodStrengths ?? string.Empty;
+                        hodWeaknesses = hodEvaluationData.HodWeaknesses ?? string.Empty;
+                        DeanComments = hodEvaluationData.DeanReturnComments ?? string.Empty;
+                        statusid = hodEvaluationData.StatusId;
 
-                        if (hodEvaluationData.Evaluations?.Any() == true)
+                        foreach (var eval in hodEvaluationData.Evaluations)
                         {
-                            hodStrengths = hodEvaluationData.HodStrengths ?? string.Empty;
-                            hodWeaknesses = hodEvaluationData.HodWeaknesses ?? string.Empty;
-                            DeanComments = hodEvaluationData.DeanReturnComments ?? string.Empty;
-                            statusid = hodEvaluationData.StatusId;
-
-                            // ✅ Populate ALL rating dictionaries with existing data
-                            foreach (var eval in hodEvaluationData.Evaluations)
-                            {
-                                if (eval.CriterionType == "DirectTeaching")
-                                {
-                                    teachingActivitiesRatings[eval.CriterionId] = eval.RatingId;
-                                }
-                                else if (eval.CriterionType == "Scientific")
-                                {
-                                    scientificActivityRatings[eval.CriterionId] = eval.RatingId;
-                                }
-                                else if (eval.CriterionType == "Administrative" || eval.CriterionType == "AdministrativeTotal")
-                                {
-                                    scientificActivityRatings[eval.CriterionId] = eval.RatingId;
-                                }
-                                else if (eval.CriterionType == "StudentActivities")
-                                {
-                                    studentActivitiesRatings[eval.CriterionId] = eval.RatingId;
-                                }
-                                else if (eval.CriterionType == "PersonalTraits")
-                                {
-                                    personalTraitsRatings[eval.CriterionId] = eval.RatingId;
-                                }
-                            }
-
-                            Console.WriteLine($"✅ Loaded ratings - Teaching: {teachingActivitiesRatings.Count}, Scientific: {scientificActivityRatings.Count}, Student: {studentActivitiesRatings.Count}, Personal: {personalTraitsRatings.Count}");
+                            if (eval.CriterionType == "DirectTeaching")
+                                teachingActivitiesRatings[eval.CriterionId] = eval.RatingId;
+                            else if (eval.CriterionType == "Scientific")
+                                scientificActivityRatings[eval.CriterionId] = eval.RatingId;
+                            else if (eval.CriterionType == "Administrative" || eval.CriterionType == "AdministrativeTotal")
+                                scientificActivityRatings[eval.CriterionId] = eval.RatingId;
+                            else if (eval.CriterionType == "StudentActivities")
+                                studentActivitiesRatings[eval.CriterionId] = eval.RatingId;
+                            else if (eval.CriterionType == "PersonalTraits")
+                                personalTraitsRatings[eval.CriterionId] = eval.RatingId;
                         }
-                        else
-                        {
-                            Console.WriteLine("⚠️ HOD evaluation exists but has no evaluations");
-                        }
+
+                        Console.WriteLine($"✅ Loaded ratings from existing HOD evaluation");
                     }
-                    else
-                    {
-                        Console.WriteLine("⚠️ HOD evaluation response was null");
-                    }
-                }
-                else
-                {
-                    var errorContent = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine($"⚠️ HOD evaluation not found - Status: {response.StatusCode}, Content: {errorContent}");
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"❌ Error loading HOD evaluation: {ex.Message}");
-                Console.WriteLine($"Stack trace: {ex.StackTrace}");
             }
 
             Console.WriteLine("✅ LoadData completed successfully");
@@ -682,14 +706,12 @@
         catch (Exception ex)
         {
             Console.WriteLine($"❌ Critical error in LoadData: {ex.Message}");
-            Console.WriteLine($"Stack trace: {ex.StackTrace}");
             await JS.InvokeVoidAsync("alert", $"حدث خطأ: {ex.Message}");
         }
         finally
         {
             isLoadingModal = false;
             StateHasChanged();
-            Console.WriteLine("🔵 LoadData finished, isLoadingModal = false");
         }
     }
     private Dictionary<int, string> GetCriterionSources(string criterionType)
@@ -853,9 +875,9 @@
                 evaluationId=SelectedTA.EvaluationId,
                 EvaluationPeriodId = EvaluationPeriodId,
                 ProfessorId = selectedProfessorId, // ✅ Use the selected professor
-                TAId = SelectedTA.Id,
+                TAId = SelectedTA.employeeId,
                 HodComments = HodReturnComment ,// ✅ Add this property to your DTO if not exists
-                TaName = SelectedTA.Name
+                TaName = SelectedTA.employeeName
             };
 
             var response = await Http.PostAsJsonAsync(

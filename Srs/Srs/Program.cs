@@ -31,15 +31,16 @@ builder.Services.AddHttpClient();
 //allow  cors policy 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowBlazorWasm", policy =>
+    options.AddPolicy("AllowBlazorApp", policy =>
     {
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
+        policy.WithOrigins("https://localhost:7223") // Your Blazor app URL
+              .AllowAnyHeader()
+              .AllowAnyMethod();
     });
 });
 
 var app = builder.Build();
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

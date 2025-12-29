@@ -50,7 +50,7 @@
                                 @foreach (var ta in taList)
                                 {
                                     <tr>
-                                        <td>@ta.Name</td>
+                                        <td>@ta.employeeName</td>
                                         <td>@ta.Department</td>
                                         <td>@ta.statusid</td>
                                         <td>
@@ -169,11 +169,11 @@
             // Now build the TA list from the HOD data
             taList = hodEvaluations.Select(h => new UserDataDto
             {
-                Name = h.TaName ?? $"TA #{h.TaEmployeeId}",
+                employeeName = h.TaName ?? $"TA #{h.TaEmployeeId}",
                 Department = h.TaName,
                 EmployeeNumber = h.TaEmployeeId,
                 EvaluationId = h.EvaluationId,
-                Id = h.TaEmployeeId,
+                employeeId = h.TaEmployeeId,
                 statusid = h.StatusId,
                 
                 // There IS a HOD evaluation because this DTO exists

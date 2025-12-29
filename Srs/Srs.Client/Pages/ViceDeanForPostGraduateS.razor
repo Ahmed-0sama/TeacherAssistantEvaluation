@@ -43,7 +43,7 @@
                                 @foreach (var ta in taList)
                                 {
                                     <tr>
-                                        <td>@ta.Name</td>
+                                        <td>@ta.employeeName</td>
                                         <td>@ta.Department</td>
                                         <td>
                                             @if (ta.statusid == 2)
@@ -99,7 +99,7 @@
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label fw-bold">اسم مساعد التدريس</label>
-                                    <input type="text" class="form-control" disabled value="@selectedTA?.Name" />
+                                    <input type="text" class="form-control" disabled value="@selectedTA?.employeeName" />
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label fw-bold">الرقم الوظيفي:</label>
@@ -272,7 +272,7 @@
             // Map GetEvaluationDto to UserDataDto
             taList = evaluations.Select(e => new UserDataDto
             {
-                Name = $"TA #{e.TaEmployeeId}",
+                employeeName = $"TA #{e.TaEmployeeId}",
                 Department = e.PeriodName,
                 EmployeeNumber = e.TaEmployeeId,
                 statusid = 1,
@@ -282,7 +282,7 @@
             {//to be removed when api is ready 
             new UserDataDto
             {
-                Name = "TA #1011",
+                employeeName = "TA #1011",
                 Department = "Fall 2025",
                 EmployeeNumber = 1011,
                 statusid = 1,
@@ -290,7 +290,7 @@
             },
             new UserDataDto
             {
-                Name = "TA #1022",
+                employeeName = "TA #1022",
                 Department = "Fall 2025",
                 EmployeeNumber = 1022,
                 statusid = 1,
@@ -298,7 +298,7 @@
             },
             new UserDataDto
             {
-                Name = "TA #1033",
+                employeeName = "TA #1033",
                 Department = "Spring 2025",
                 EmployeeNumber = 1033,
                 statusid = 1,
@@ -306,7 +306,7 @@
             },
             new UserDataDto
             {
-                Name = "TA #1044",
+                employeeName = "TA #1044",
                 Department = "Spring 2025",
                 EmployeeNumber = 1044,
                 statusid = 1,
@@ -314,7 +314,7 @@
             },
             new UserDataDto
             {
-                Name = "TA #1055",
+                employeeName = "TA #1055",
                 Department = "Spring 2025",
                 EmployeeNumber = 7,
                 statusid = 1,
@@ -322,7 +322,7 @@
             },
             new UserDataDto
             {
-                Name = "TA #10",
+                employeeName = "TA #10",
                 Department = "Spring 2025",
                 EmployeeNumber = 10,
                 statusid = 1,
@@ -330,7 +330,7 @@
             },
             new UserDataDto
             {
-                Name = "TA #11",
+                employeeName = "TA #11",
                 Department = "Spring 2025",
                 EmployeeNumber = 11,
                 statusid = 1,
@@ -338,7 +338,7 @@
             },
             new UserDataDto
             {
-                Name = "TA #20",
+                employeeName = "TA #20",
                 Department = "Spring 2025",
                 EmployeeNumber = 20,
                 statusid = 1,
@@ -346,7 +346,7 @@
             },
             new UserDataDto
             {
-                Name = "TA #1811",
+                employeeName = "TA #1811",
                 Department = "Spring 2025",
                 EmployeeNumber = 1811,
                 statusid = 1,
@@ -354,7 +354,7 @@
             },
             new UserDataDto
             {
-                Name = "TA #888",
+                employeeName = "TA #888",
                 Department = "Spring 2025",
                 EmployeeNumber = 888,
                 statusid = 1,
@@ -362,7 +362,7 @@
             },
             new UserDataDto
             {
-                Name = "TA #777",
+                employeeName = "TA #777",
                 Department = "Spring 2025",
                 EmployeeNumber = 777,
                 statusid = 1,
@@ -370,7 +370,7 @@
             },
             new UserDataDto
             {
-                Name = "TA #999",
+                employeeName = "TA #999",
                 Department = "Spring 2025",
                 EmployeeNumber = 999,
                 statusid = 1,
@@ -378,7 +378,7 @@
             },
             new UserDataDto
             {
-                Name = "TA #7474",
+                employeeName = "TA #7474",
                 Department = "Spring 2025",
                 EmployeeNumber = 7474,
                 statusid = 1,
@@ -386,7 +386,7 @@
             },
             new UserDataDto
             {
-                Name = "TA #120",
+                employeeName = "TA #120",
                 Department = "Spring 2025",
                 EmployeeNumber = 120,
                 statusid = 1,
@@ -394,7 +394,7 @@
             },
             new UserDataDto
             {
-                Name = "TA #22",
+                employeeName = "TA #22",
                 Department = "Spring 2025",
                 EmployeeNumber = 22,
                 statusid = 1,
@@ -402,7 +402,7 @@
             },
             new UserDataDto
             {
-                Name = "TA #1000",
+                employeeName = "TA #1000",
                 Department = "Spring 2025",
                 EmployeeNumber = 1000,
                 statusid = 1,
@@ -410,7 +410,7 @@
             },
             new UserDataDto
             {
-                Name = "TA #1100",
+                employeeName = "TA #1100",
                 Department = "Spring 2025",
                 EmployeeNumber = 1100,
                 statusid = 1,
@@ -418,9 +418,9 @@
             },
             new UserDataDto
             {
-                Name = "TA #22",
+                employeeName = "TA #6995",
                 Department = "Spring 2025",
-                EmployeeNumber = 22,
+                EmployeeNumber = 6995,
                 statusid = 1,
                 EvaluationId = 5
             }
@@ -461,7 +461,7 @@
     private async Task OpenModal(UserDataDto ta)
     {
         selectedTA = ta;
-        selectedTA.Id = ta.EmployeeNumber;
+        selectedTA.employeeId = ta.EmployeeNumber;
         ModalVisable = true;
         isLoadingModalData = true;
 
@@ -474,7 +474,7 @@
         try
         {
             // Try to fetch existing GSDean evaluation data
-            var response = await Http.GetAsync($"/api/GSdean/GetByEvaluationForGSDeanPeriodAndTAAsync/{EvaluationPeriodId}/{ta.Id}");
+            var response = await Http.GetAsync($"/api/GSdean/GetByEvaluationForGSDeanPeriodAndTAAsync/{EvaluationPeriodId}/{ta.employeeId}");
 
             if (response.IsSuccessStatusCode)
             {
@@ -532,7 +532,7 @@
             {
                 
                 GsSupervisorId = 1, // Should get from logged in user context
-                TaEmployeeId = selectedTA.Id,
+                TaEmployeeId = selectedTA.employeeId,
                 EvaluationPeriodId = EvaluationPeriodId,
                 ProgramName = dto.Major,
                 CompletedHours = dto.HoursGained,

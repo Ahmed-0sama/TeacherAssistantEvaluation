@@ -25,29 +25,31 @@
         }
         else if (!string.IsNullOrEmpty(errorMessage))
         {
-            <div class="alert alert-danger">@errorMessage</div>
+            <div class="alert alert-danger">
+                @errorMessage
+                <button class="btn btn-sm btn-primary mt-2" @onclick="LoadData">إعادة المحاولة</button>
+            </div>
         }
         else if (!evaluationsList.Any())
         {
             <div class="alert alert-info text-center">
                 <i class="bi bi-info-circle me-2"></i>
                 لا توجد تقييمات متاحة حالياً
-                <br />
-                <small class="text-muted">Debug: isLoading=@isLoading, Count=@evaluationsList.Count, Error=@(string.IsNullOrEmpty(errorMessage) ? "none" : errorMessage)</small>
             </div>
         }
         else
         {
-
             <div class="position-fixed top-0 start-0 m-3" style="z-index: 1050;">
                 <Srs.Client.Compontets.NotificationComponent EmployeeId="@currentProfessorId.ToString()" />
             </div>
+
             <div class="table-responsive">
                 <table class="table table-hover table-striped" dir="rtl">
                     <thead class="table-primary">
                         <tr>
                             <th>اسم مساعد التدريس</th>
                             <th>المقرر</th>
+                            <th>النتيجة</th>
                             <th>الحالة</th>
                             <th>إجراء</th>
                         </tr>
@@ -57,50 +59,88 @@
                         {
                             <tr>
                                 <td>@eval.TAName</td>
-                                <td>@eval.StatusId</td>
+                                <td>@eval.CourseName.Trim()</td>
                                 <td>
                                     @if (eval.ProfessorEvaluationTotal.HasValue)
                                     {
-                                        <span class="result-pill" style="background-color:#e6f7e6; color:#006600;">
-                                            النتيجة: @eval.ProfessorEvaluationTotal/30
+                                        <span class="badge bg-success">
+                                            @eval.ProfessorEvaluationTotal/30
                                         </span>
                                     }
                                     else
                                     {
-                                        <span class="result-pill" style="background-color:#ffe6e6; color:#b30000;">
-                                            غير مقيّم
+                                        <span class="badge bg-secondary">
+                                            لم يتم التقييم
                                         </span>
                                     }
                                 </td>
                                 <td>
-                                    @if (eval.StatusId==0)
+                                    @if (eval.StatusId == 0)
                                     {
-                                        //<span class="badge bg-danger me-2">تم الإرجاع</span>
-                                        <button type="button"
-                                                class="btn btn-sm btn-primary"
-                                                @onclick="() => OpenModal(eval)">
-                                            تققيم
-                                        </button>
+                                        <span class="badge bg-secondary">بانتظار تقديم الطالب</span>
+                                    }
+                                    else if (eval.StatusId == 1)
+                                    {
+                                        <span class="badge bg-warning text-dark">بانتظار التقييم</span>
+                                    }
+                                    else if (eval.StatusId == 2)
+                                    {
+                                        <span class="badge bg-success">تم التقييم</span>
                                     }
                                     else if (eval.StatusId == 4)
                                     {
-                                        <span class="badge bg-danger me-2">تم الإرجاع</span>
+                                        <span class="badge bg-danger">تم الإرجاع من رئيس القسم</span>
+                                    }
+                                    else if (eval.StatusId == 5)
+                                    {
+                                        <span class="badge bg-info">تم التقييم من رئيس القسم</span>
+                                    }
+                                    else if (eval.StatusId == 6)
+                                    {
+                                        <span class="badge bg-success">تم القبول من العميد</span>
+                                    }
+                                    else if (eval.StatusId == 7)
+                                    {
+                                        <span class="badge bg-danger">مرتجع من العميد</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (eval.StatusId == 0)
+                                    {
+                                        <button type="button"
+                                                class="btn btn-sm btn-secondary"
+                                                disabled
+                                                title="بانتظار تقديم مساعد التدريس">
+                                            بانتظار التقديم
+                                        </button>
+                                    }
+                                    else if (eval.StatusId == 1)
+                                    {
                                         <button type="button"
                                                 class="btn btn-sm btn-primary"
                                                 @onclick="() => OpenModal(eval)">
+                                            <i class="bi bi-pencil-square me-1"></i>
+                                            تقييم
+                                        </button>
+                                    }
+                                    else if (eval.StatusId == 4 || eval.StatusId == 7)
+                                    {
+                                        <button type="button"
+                                                class="btn btn-sm btn-warning"
+                                                @onclick="() => OpenModal(eval)">
+                                            <i class="bi bi-arrow-clockwise me-1"></i>
                                             تعديل التقييم
                                         </button>
                                     }
                                     else
                                     {
-                                        <span class="badge bg-success me-2">تم التقييم</span>
                                         <button type="button"
                                                 class="btn btn-sm btn-info"
                                                 @onclick="() => OpenModal(eval)">
+                                            <i class="bi bi-eye me-1"></i>
                                             عرض التقييم
                                         </button>
                                     }
-
                                 </td>
                             </tr>
                         }
@@ -120,20 +160,29 @@
                 <h5 class="m-0">تقييم استاذ المقرر</h5>
                 <button type="button" class="btn-close btn-close-white" @onclick="HideModal" aria-label="Close"></button>
             </div>
-            @if (selectedEvaluation.StatusId == 4 && !string.IsNullOrEmpty(ReturnComment))
+
+            @if ((selectedEvaluation.StatusId == 4 || selectedEvaluation.StatusId == 7) && !string.IsNullOrEmpty(ReturnComment))
             {
-                <div class="alert alert-warning border-warning shadow-sm mb-4" role="alert">
+                <div class="alert alert-warning border-warning shadow-sm m-3" role="alert">
                     <div class="d-flex align-items-start">
                         <i class="bi bi-arrow-return-right fs-4 me-3 text-warning"></i>
                         <div class="flex-grow-1">
                             <h6 class="alert-heading fw-bold mb-2">
-                                تم الإرجاع من رئيس القسم
+                                @if (selectedEvaluation.StatusId == 4)
+                                {
+                                    <text>تم الإرجاع من رئيس القسم</text>
+                                }
+                                else
+                                {
+                                    <text>تم الإرجاع من العميد</text>
+                                }
                             </h6>
                             <p class="mb-0 text-dark">@ReturnComment</p>
                         </div>
                     </div>
                 </div>
             }
+
             <div class="modal-body">
                 <div class="info-section mb-4">
                     <div class="row g-3">
@@ -153,7 +202,7 @@
                             <p class="mb-2"><strong>عدد الحصص:</strong> @selectedEvaluation.NumberOfClasses</p>
                         </div>
                         <div class="col-6">
-                            <p class="mb-2"><strong>الفصل الدراسي</strong> @selectedEvaluation.SemesterName</p>
+                            <p class="mb-2"><strong>الفصل الدراسي:</strong> @selectedEvaluation.SemesterName</p>
                         </div>
                         <div class="col-6">
                             <p class="mb-2"><strong>الفترة:</strong> @selectedEvaluation.PeriodName</p>
@@ -301,7 +350,7 @@
     private Dictionary<string, string> validationErrors = new();
 
     // TODO: Replace with actual logged-in professor ID from authentication
-    private int currentProfessorId = 123;
+    private int currentProfessorId = 118963;
 
     private int evaluationperiodid;
 
@@ -316,6 +365,7 @@
         await GetEvaluationPeriod();
         await LoadData();
     }
+
     private async Task GetEvaluationPeriod()
     {
         try
@@ -326,20 +376,21 @@
             {
                 var result = await response.Content.ReadFromJsonAsync<GetEvaluationPeriodDto>();
                 evaluationperiodid = result.PeriodId;
-                Console.WriteLine($"✅ evaluationPeriod retrieved{evaluationperiodid}");
+                Console.WriteLine($"✅ evaluationPeriod retrieved: {evaluationperiodid}");
             }
         }
         catch (Exception ex)
         {
-            errorMessage = $"لا توجد فترة تقييم حاليا {ex.Message}";
-            Console.WriteLine($"No Active EvaluationPeriod  {ex.Message}");
+            errorMessage = $"لا توجد فترة تقييم حاليا: {ex.Message}";
+            Console.WriteLine($"No Active EvaluationPeriod: {ex.Message}");
         }
     }
+
     private async Task LoadData()
     {
         isLoading = true;
         errorMessage = null;
-        evaluationsList.Clear(); // ✅ Clear existing data
+        evaluationsList.Clear();
 
         try
         {
@@ -356,7 +407,7 @@
         finally
         {
             isLoading = false;
-            StateHasChanged(); // ✅ Force UI update
+            StateHasChanged();
         }
     }
 
@@ -364,32 +415,65 @@
     {
         try
         {
-            // ✅ OPTION 1: Load using Period-based approach (RECOMMENDED)
-            Console.WriteLine($"Loading evaluations for period {evaluationperiodid}...");
+            Console.WriteLine($"Loading data for professor {currentProfessorId} and period {evaluationperiodid}...");
 
-            // Step 1: Get all evaluations for this period
-            var evaluationsResponse = await Http.GetAsync($"api/evaluation/period/{evaluationperiodid}");
+            // Step 1: Get professor's courses and TAs from LMS API
+            var lmsResponse = await Http.GetAsync(
+                $"https://corsproxy.io/?https://aastmtic.aast.edu/TAEvaluation_api/api/lms/professor-data/{currentProfessorId}/2025-01-01/2025-12-31");
 
-            if (!evaluationsResponse.IsSuccessStatusCode)
+            if (!lmsResponse.IsSuccessStatusCode)
             {
-                var error = await evaluationsResponse.Content.ReadAsStringAsync();
-                throw new Exception($"Failed to load evaluations: {error}");
+                var error = await lmsResponse.Content.ReadAsStringAsync();
+                throw new Exception($"Failed to load LMS data: {error}");
             }
 
-            var allEvaluations = await evaluationsResponse.Content.ReadFromJsonAsync<List<EvaluationApiResponseDto>>()
-                ?? new List<EvaluationApiResponseDto>();
+            var professorData = await lmsResponse.Content.ReadFromJsonAsync<ProfessorDataResponseDto>();
 
-            Console.WriteLine($"✅ Loaded {allEvaluations.Count} evaluations from API");
-
-            if (!allEvaluations.Any())
+            if (professorData == null || !professorData.Courses.Any())
             {
-                Console.WriteLine("⚠️ No evaluations found for this period");
+                Console.WriteLine("⚠️ No courses found for this professor");
                 return;
             }
 
-            // Step 2: Get existing professor evaluations for this professor
+            Console.WriteLine($"✅ Loaded {professorData.Courses.Count} courses from LMS");
+
+            // Step 2: Get all TAs from all courses (flattened)
+            var allTAs = professorData.Courses
+                .SelectMany(course => course.GTAs.Select(ta => new
+                {
+                    TA = ta,
+                    Course = course
+                }))
+                .ToList();
+
+            Console.WriteLine($"✅ Found {allTAs.Count} TA-Course combinations");
+
+            if (!allTAs.Any())
+            {
+                Console.WriteLine("⚠️ No TAs found in any course");
+                return;
+            }
+
+            // Step 3: Get unique TA employee IDs
+            var taEmployeeIds = allTAs.Select(x => x.TA.employeeId).Distinct().ToList();
+
+            // Step 4: Get evaluations for these TAs in this period
+            var evaluationsResponse = await Http.GetAsync($"api/evaluation/period/{evaluationperiodid}");
+
+            var allEvaluations = new List<EvaluationApiResponseDto>();
+            if (evaluationsResponse.IsSuccessStatusCode)
+            {
+                allEvaluations = await evaluationsResponse.Content.ReadFromJsonAsync<List<EvaluationApiResponseDto>>()
+                    ?? new List<EvaluationApiResponseDto>();
+                Console.WriteLine($"✅ Loaded {allEvaluations.Count} evaluations");
+            }
+
+            // Create a map of TA ID -> Evaluation
+            var evaluationMap = allEvaluations.ToDictionary(e => e.taEmployeeId);
+
+            // Step 5: Get existing professor evaluations
             var profEvalResponse = await Http.GetAsync($"api/ProfessorEvaluation/GetByProfessor/{currentProfessorId}");
-            var existingProfEvaluations = new Dictionary<int, List<ProfessorEvaluationResponseDto>>();
+            var existingProfEvaluations = new Dictionary<string, ProfessorEvaluationResponseDto>();
 
             if (profEvalResponse.IsSuccessStatusCode)
             {
@@ -398,80 +482,55 @@
 
                 Console.WriteLine($"✅ Loaded {profEvals.Count} professor evaluations");
 
-                // Group by TA employee ID for easier lookup
+                // Create composite key: TA_ID + Course_Code
                 existingProfEvaluations = profEvals
                     .Where(pe => pe.EvaluationPeriodId == evaluationperiodid)
-                    .GroupBy(pe => pe.TaEmployeeId)
-                    .ToDictionary(g => g.Key, g => g.ToList());
-            }
-            else
-            {
-                Console.WriteLine("⚠️ No existing professor evaluations found");
+                    .ToDictionary(pe => $"{pe.TaEmployeeId}_{pe.CourseCode?.Trim()}");
             }
 
-            // Step 3: Build the view models
-            foreach (var evaluation in allEvaluations)
+            // Step 6: Build view models for each TA-Course combination
+            foreach (var item in allTAs)
             {
-                int taEmployeeId = evaluation.taEmployeeId;
+                var ta = item.TA;
+                var course = item.Course;
+                var taEmployeeId = ta.employeeId;
+                var courseCode = course.CourseCode.Trim();
+                var compositeKey = $"{taEmployeeId}_{courseCode}";
 
-                // Check if this TA has been evaluated by this professor
-                if (existingProfEvaluations.TryGetValue(taEmployeeId, out var profEvalsForTA))
+                // Check if this specific TA-Course combination has been evaluated
+                var hasProfEval = existingProfEvaluations.TryGetValue(compositeKey, out var profEval);
+
+                // Check if TA has submitted their evaluation
+                var hasSubmittedEvaluation = evaluationMap.TryGetValue(taEmployeeId, out var evaluation);
+
+                var viewModel = new TAEvaluationViewModelDto
                 {
-                    // TA has been evaluated - create entry for each course
-                    foreach (var profEval in profEvalsForTA)
-                    {
-                        var viewModel = new TAEvaluationViewModelDto
-                        {
-                            EvaluationId=evaluation.evaluationId,
-                            ProfEvalId = profEval.ProfEvalId,
-                            EvaluationPeriodId = evaluationperiodid,
-                            TAEmployeeId = taEmployeeId,
-                            PeriodId = evaluationperiodid,
-                            PeriodName = evaluation.periodName ?? "فترة غير معروفة",
+                    EvaluationId = evaluation?.evaluationId ?? 0,
+                    ProfEvalId = profEval?.ProfEvalId,
+                    EvaluationPeriodId = evaluationperiodid,
+                    TAEmployeeId = taEmployeeId,
+                    PeriodId = evaluationperiodid,
+                    PeriodName = evaluation?.periodName ?? "فترة التقييم الحالية",
 
-                            StatusId = profEval.StatusId,
-                            StatusName = profEval.StatusName ?? "قيد الانتظار",
-                            CanEdit = (profEval.StatusId == 4),
+                    // Status logic
+                    StatusId = DetermineStatus(hasSubmittedEvaluation, hasProfEval, profEval),
+                    StatusName = GetStatusName(DetermineStatus(hasSubmittedEvaluation, hasProfEval, profEval)),
+                    CanEdit = CanEditEvaluation(DetermineStatus(hasSubmittedEvaluation, hasProfEval, profEval)),
 
-                            SemesterName = profEval.SemesterName,
-                            TAName = $"TA #{taEmployeeId}",
-                            CourseCode = profEval.CourseCode ?? "CS1010",
-                            CourseName = profEval.CourseName ?? "ComputerScience1",
-                            NumberOfClasses = 12,
-                            ReturnComments = profEval.HodReturnComment,
-                            ProfessorEvaluationTotal = profEval.TotalScore
-                        };
+                    // Course and TA info from LMS
+                    SemesterName = $"Semester {professorData.SemesterNumber} - {professorData.SemesterYear}",
+                    TAName = ta.employeeName.Trim(),
+                    CourseCode = courseCode,
+                    CourseName = course.CourseName.Trim(),
+                    NumberOfClasses = course.TeachingHours > 0 ? course.TeachingHours : 12,
 
-                        evaluationsList.Add(viewModel);
-                        Console.WriteLine($"Added evaluated TA: {viewModel.TAName} - Course: {viewModel.CourseName}");
-                    }
-                }
-                else
-                {
-                    // TA hasn't been evaluated yet by this professor
-                    var viewModel = new TAEvaluationViewModelDto
-                    {
-                        ProfEvalId = null,
-                        EvaluationPeriodId = evaluationperiodid,
-                        TAEmployeeId = taEmployeeId,
-                        PeriodId = evaluationperiodid,
-                        PeriodName = evaluation.periodName ?? "فترة غير معروفة",
+                    // Evaluation data
+                    ReturnComments = profEval?.HodReturnComment,
+                    ProfessorEvaluationTotal = profEval?.TotalScore
+                };
 
-                        StatusId = 0,
-                        StatusName = "قيد الانتظار",
-                        CanEdit = true,
-
-                        SemesterName = "FirstSemester2025",
-                        TAName = $"TA #{taEmployeeId}",
-                        CourseCode = "css",
-                        CourseName = "cs1",
-                        NumberOfClasses = 12,
-                        ProfessorEvaluationTotal = null
-                    };
-
-                    evaluationsList.Add(viewModel);
-                    Console.WriteLine($"Added unevaluated TA: {viewModel.TAName}");
-                }
+                evaluationsList.Add(viewModel);
+                Console.WriteLine($"Added: {viewModel.TAName} - {viewModel.CourseName} - Status: {viewModel.StatusName}");
             }
 
             Console.WriteLine($"✅ Total view models created: {evaluationsList.Count}");
@@ -484,22 +543,28 @@
         catch (Exception ex)
         {
             Console.WriteLine($"❌ Unexpected error: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
             throw;
         }
     }
 
     private void OpenModal(TAEvaluationViewModelDto eval)
     {
-        Console.WriteLine($"Opening modal for TA: {eval.TAName}");
+        Console.WriteLine($"Opening modal for TA: {eval.TAName} - Course: {eval.CourseName}");
 
         selectedEvaluation = eval;
         validationErrors.Clear();
         saveMessage = null;
-        isReadOnly = (eval.StatusId == 2);
-        if (eval.StatusId == 4)
+
+        // Determine read-only based on status
+        isReadOnly = !eval.CanEdit;
+
+        // Load return comments if returned
+        if (eval.StatusId == 4 || eval.StatusId == 7)
         {
             ReturnComment = eval.ReturnComments ?? "لا توجد ملاحظات";
         }
+
         if (eval.IsEvaluated && eval.ProfEvalId.HasValue)
         {
             Console.WriteLine($"Loading existing evaluation with ID: {eval.ProfEvalId}");
@@ -508,24 +573,22 @@
         else
         {
             Console.WriteLine("Creating new evaluation");
-            // New evaluation
+            // New evaluation with actual course data from LMS
             currentProfEval = new ProfessorEvaluationResponseDto
             {
-                
                 EvaluationPeriodId = eval.EvaluationPeriodId,
                 TaEmployeeId = eval.TAEmployeeId,
                 ProfessorEmployeeId = currentProfessorId,
-                CourseCode = "cs",
-                CourseName = "ComputerScience321",
+                CourseCode = eval.CourseCode,      // Use actual course code
+                CourseName = eval.CourseName,      // Use actual course name
+                SemesterName = eval.SemesterName,
                 OfficeHoursScore = 0,
                 AttendanceScore = 0,
                 PerformanceScore = 0,
-                SemesterName = eval.SemesterName,
                 Comments = "",
                 StatusId = eval.StatusId,
-                HodReturnComment=eval.ReturnComments
+                HodReturnComment = eval.ReturnComments
             };
-            isReadOnly = false;
         }
 
         isModalVisible = true;
@@ -548,8 +611,9 @@
                 {
                     currentProfEval = profEvalDetail;
 
-                    // ✅ Load ReturnComment from API if status is 4
-                    if (profEvalDetail.StatusId == 4 && !string.IsNullOrEmpty(profEvalDetail.HodReturnComment))
+                    // Load ReturnComment from API if status is 4 or 7
+                    if ((profEvalDetail.StatusId == 4 || profEvalDetail.StatusId == 7)
+                        && !string.IsNullOrEmpty(profEvalDetail.HodReturnComment))
                     {
                         ReturnComment = profEvalDetail.HodReturnComment;
                         Console.WriteLine($"✅ Loaded ReturnComment from API: {ReturnComment}");
@@ -568,18 +632,50 @@
                 Console.WriteLine($"⚠️ Failed to load evaluation: {response.StatusCode} - {error}");
             }
 
-            // ✅ Fix: Consistent isReadOnly logic - StatusId 2,5,6 are view-only
-            isReadOnly = !(eval.StatusId == 0||eval.StatusId==4);
             StateHasChanged();
         }
         catch (Exception ex)
         {
             Console.WriteLine($"❌ Error loading evaluation: {ex.Message}");
-
-            // ✅ Fix: Consistent isReadOnly logic
-            isReadOnly = !(eval.StatusId==2||eval.StatusId==4);
             StateHasChanged();
         }
+    }
+
+    private int DetermineStatus(bool hasSubmittedEvaluation, bool hasProfEval, ProfessorEvaluationResponseDto? profEval)
+{
+
+        // Status 4: Returned by HOD for re-evaluation
+        if (hasProfEval && profEval?.StatusId == 4)
+            return 4;
+
+        // Status 2: Evaluated and submitted to HOD
+        if (hasProfEval && profEval?.StatusId == 2)
+            return 2;
+
+        // Status 5: Evaluated by HOD
+        if (hasProfEval && profEval?.StatusId == 5)
+            return 5;
+
+        // Default: Waiting for professor evaluation (TA submitted, professor hasn't evaluated yet)
+        return 1;
+    }
+
+    private string GetStatusName(int statusId)
+    {
+        return statusId switch
+        {
+            0 => "بانتظار التقييم",
+            1 => "بانتظار التقييم",
+            2 => "تم التقييم",
+            4 => "مرتجع من رئيس القسم",
+            _ => "غير معروف"
+        };
+    }
+
+    private bool CanEditEvaluation(int statusId)
+    {
+        // Can edit if: not yet evaluated (1) OR returned for re-evaluation (4 or 7)
+        return statusId == 1 || statusId == 4 || statusId == 7;
     }
 
     private void HideModal()
@@ -671,8 +767,7 @@
                 // Update existing evaluation
                 var updateDto = new UpdateProfessorEvaluationDto
                 {
-                    
-					EvalId = selectedEvaluation.EvaluationId??0,
+                    EvalId = selectedEvaluation.EvaluationId ?? 0,
                     CourseCode = currentProfEval.CourseCode,
                     SemesterName = currentProfEval.SemesterName,
                     CourseName = currentProfEval.CourseName,
@@ -738,7 +833,6 @@
 
             if (saveSuccess)
             {
-                await Task.Delay(1500);
                 await LoadData(); // Reload data
                 HideModal();
             }
