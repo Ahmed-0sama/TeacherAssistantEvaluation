@@ -96,7 +96,7 @@
                             <tr>
                                 <td>@($"TA #{eval.taEmployeeId}")</td>
                                 <td>@eval.taEmployeeId</td>
-                                <td>@(eval.statusName ?? "غير محدد")</td>
+                                <td>@(eval.department ?? "غير محدد")</td>
                                 <td>@(eval.periodName ?? "غير محدد")</td>
                                 <td>
                                     <span class="@GetStatusBadgeClass(eval.statusId)">
@@ -423,6 +423,7 @@
     private UserDataDto userData = new UserDataDto();
     private int EvaluationPeriodId ;
     private bool isViewMode = true;
+    private const int SUPERVISOR_ID = 7150; // Example supervisor ID
     private string SelectedDepartment { get; set; } = string.Empty;
     private string SelectedPeriod { get; set; } = string.Empty;
     private IEnumerable<EvaluationApiResponseDto> FilteredEvaluations
@@ -436,14 +437,14 @@
             {
                 filtered = filtered.Where(e =>
                     e.taEmployeeId.ToString().Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
-                    (e.statusName?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                    (e.periodName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)) ||
                     (e.periodName?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false));
             }
 
             // Apply department filter
             if (!string.IsNullOrWhiteSpace(SelectedDepartment))
             {
-                filtered = filtered.Where(e => e.statusName == SelectedDepartment);
+                filtered = filtered.Where(e => e.department == SelectedDepartment);
             }
 
             // Apply period filter
@@ -458,9 +459,19 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await GetEvaluationPeriod();
-        Console.WriteLine("?? Dean page initializing...");
-        await FetchEvaluationsAsync();
+        try
+        {
+            await GetEvaluationPeriod();
+            await LoadGTAList(); // ✅ Use this instead of the old method
+        }
+        catch (Exception ex)
+        {
+            ToastMessage = $"حدث خطأ أثناء تحميل البيانات: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
     private async Task GetEvaluationPeriod()
     {
@@ -481,34 +492,114 @@
             Console.WriteLine($"No Active EvaluationPeriod  {ex.Message}");
         }
     }
-    private async Task FetchEvaluationsAsync()
+    private async Task LoadGTAList()
     {
-        Console.WriteLine("?? Starting FetchEvaluationsAsync...");
-        IsLoading = true;
-        LoadError = null;
-        StateHasChanged();
-
         try
         {
-            var url = $"/api/evaluation/period/{EvaluationPeriodId}";
-            Console.WriteLine($"?? Making API call to: {url}");
-            var evaluations = await Http.GetFromJsonAsync<List<EvaluationApiResponseDto>>(url) ?? new List<EvaluationApiResponseDto>();
-            Console.WriteLine($"? Received {evaluations.Count} evaluations");
-            Evaluations = evaluations;
+            Console.WriteLine($"📡 Fetching GTA list for supervisor {SUPERVISOR_ID}");
+
+            // Fetch GTA list from HR API
+            var response = await Http.GetAsync(
+                $"https://corsproxy.io/?https://aastmtic.aast.edu/TAEvaluation_api/api/HR/GTA_List/{SUPERVISOR_ID}/2025-01-01");
+
+            if (response.IsSuccessStatusCode)
+            {
+                // ✅ FIXED: Deserialize to GTADto first
+                var gtaList = await response.Content.ReadFromJsonAsync<List<UserDataDto>>();
+
+                if (gtaList != null && gtaList.Any())
+                {
+                    Console.WriteLine($"✅ Loaded {gtaList.Count} GTAs from API");
+
+                    // ✅ FIXED: Map GTADto to EvaluationApiResponseDto for Dean page
+                    Evaluations = gtaList.Select(gta => new EvaluationApiResponseDto
+                    {
+                        taEmployeeId = gta.employeeId,
+                        // You'll need to get evaluation data for each GTA
+                        taName = gta.employeeName,
+                        evaluationId = 0, // Will be populated when we fetch evaluation details
+                        statusName = gta.statusid,
+                        periodName = "2025", // Or get from evaluation period
+                        statusId = 1 // Default - will be updated from evaluation data
+                    }).ToList();
+
+                    // Now fetch evaluation details for each GTA
+                    await LoadEvaluationDetailsForGTAs();
+                }
+                else
+                {
+                    Console.WriteLine("⚠️ No GTAs found for this supervisor");
+                    LoadError = "لا يوجد مساعدي تدريس مسجلين";
+                }
+            }
+            else
+            {
+                Console.WriteLine($"❌ Failed to load GTA list: {response.StatusCode}");
+                var errorContent = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"Error details: {errorContent}");
+                LoadError = "فشل تحميل قائمة مساعدي التدريس";
+            }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"? Exception in FetchEvaluationsAsync: {ex.Message}");
-            LoadError = $"خطأ في تحميل البيانات: {ex.Message}";
-            ShowToast(LoadError, "error");
-        }
-        finally
-        {
-            IsLoading = false;
-            StateHasChanged();
+            Console.WriteLine($"❌ Error loading GTA list: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            LoadError = $"خطأ في تحميل قائمة مساعدي التدريس: {ex.Message}";
         }
     }
+    private async Task LoadEvaluationDetailsForGTAs()
+    {
+        try
+        {
+            Console.WriteLine($"📡 Fetching evaluation details for {Evaluations.Count} GTAs");
 
+            var updatedEvaluations = new List<EvaluationApiResponseDto>();
+
+            foreach (var eval in Evaluations)
+            {
+                try
+                {
+                    // Try to get evaluation details for this TA
+                    var response = await Http.GetAsync(
+                        $"/api/evaluation/ta/{eval.taEmployeeId}/period/{EvaluationPeriodId}");
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var evaluationDetail = await response.Content.ReadFromJsonAsync<EvaluationApiResponseDto>();
+
+                        if (evaluationDetail != null)
+                        {
+                            updatedEvaluations.Add(evaluationDetail);
+                            Console.WriteLine($"✅ Found evaluation for TA {eval.taEmployeeId}");
+                        }
+                        else
+                        {
+                            // No evaluation yet, keep the default
+                            updatedEvaluations.Add(eval);
+                        }
+                    }
+                    else
+                    {
+                        // No evaluation found, keep the default
+                        updatedEvaluations.Add(eval);
+                        Console.WriteLine($"⚠️ No evaluation found for TA {eval.taEmployeeId}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"⚠️ Error fetching evaluation for TA {eval.taEmployeeId}: {ex.Message}");
+                    updatedEvaluations.Add(eval);
+                }
+            }
+
+            Evaluations = updatedEvaluations;
+            Console.WriteLine($"✅ Loaded evaluation details for GTAs");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error loading evaluation details: {ex.Message}");
+        }
+    }
     private async void ShowDetailsModal()
     {
         if (SelectedData == null)
@@ -696,7 +787,7 @@
             {
                 var result = await response.Content.ReadFromJsonAsync<DeanActionResponseDto>();
                 ShowToast(result?.Message ?? "تم اعتماد التقييم النهائي بنجاح.", "success");
-                await FetchEvaluationsAsync();
+                await LoadGTAList();
 
                 var eval = Evaluations.FirstOrDefault(e => e.evaluationId == SelectedData.EvaluationId);
                 if (eval != null)
@@ -748,7 +839,7 @@
             {
                 var result = await response.Content.ReadFromJsonAsync<DeanActionResponseDto>();
                 ShowToast(result?.Message ?? "تم إرجاع التقييم إلى رئيس القسم بنجاح.", "success");
-                await FetchEvaluationsAsync();
+                await LoadGTAList();
 
                 var eval = Evaluations.FirstOrDefault(e => e.evaluationId == SelectedData.EvaluationId);
                 if (eval != null)
@@ -780,7 +871,7 @@
         if (SelectedData != null)
         {
             // First, refresh the evaluations list
-            await FetchEvaluationsAsync();
+            await LoadGTAList();
 
             // Find the updated evaluation
             var eval = Evaluations.FirstOrDefault(e => e.evaluationId == SelectedData.EvaluationId);

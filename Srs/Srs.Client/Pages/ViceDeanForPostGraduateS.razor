@@ -261,6 +261,7 @@
     private MastersDto mastersDto = new MastersDto();
     private bool ModalVisable = false;
     private bool IsReadOnly = false;
+    private const int SUPERVISOR_ID = 7150; // Replace with actual logged-in supervisor ID
 
     protected override async Task OnInitializedAsync()
     {
@@ -268,167 +269,7 @@
         {
             await GetEvaluationPeriod();
             var evaluations = await Http.GetFromJsonAsync<List<GetEvaluationDto>>("/api/evaluation/period/1");
-
-            // Map GetEvaluationDto to UserDataDto
-            taList = evaluations.Select(e => new UserDataDto
-            {
-                employeeName = $"TA #{e.TaEmployeeId}",
-                Department = e.PeriodName,
-                EmployeeNumber = e.TaEmployeeId,
-                statusid = 1,
-                EvaluationId = e.EvaluationId
-            }
-            ).ToList(); var mockData = new List<UserDataDto>
-            {//to be removed when api is ready 
-            new UserDataDto
-            {
-                employeeName = "TA #1011",
-                Department = "Fall 2025",
-                EmployeeNumber = 1011,
-                statusid = 1,
-                EvaluationId = 5001
-            },
-            new UserDataDto
-            {
-                employeeName = "TA #1022",
-                Department = "Fall 2025",
-                EmployeeNumber = 1022,
-                statusid = 1,
-                EvaluationId = 5002
-            },
-            new UserDataDto
-            {
-                employeeName = "TA #1033",
-                Department = "Spring 2025",
-                EmployeeNumber = 1033,
-                statusid = 1,
-                EvaluationId = 5003
-            },
-            new UserDataDto
-            {
-                employeeName = "TA #1044",
-                Department = "Spring 2025",
-                EmployeeNumber = 1044,
-                statusid = 1,
-                EvaluationId = 5004
-            },
-            new UserDataDto
-            {
-                employeeName = "TA #1055",
-                Department = "Spring 2025",
-                EmployeeNumber = 7,
-                statusid = 1,
-                EvaluationId = 5005
-            },
-            new UserDataDto
-            {
-                employeeName = "TA #10",
-                Department = "Spring 2025",
-                EmployeeNumber = 10,
-                statusid = 1,
-                EvaluationId = 10
-            },
-            new UserDataDto
-            {
-                employeeName = "TA #11",
-                Department = "Spring 2025",
-                EmployeeNumber = 11,
-                statusid = 1,
-                EvaluationId = 10
-            },
-            new UserDataDto
-            {
-                employeeName = "TA #20",
-                Department = "Spring 2025",
-                EmployeeNumber = 20,
-                statusid = 1,
-                EvaluationId = 10
-            },
-            new UserDataDto
-            {
-                employeeName = "TA #1811",
-                Department = "Spring 2025",
-                EmployeeNumber = 1811,
-                statusid = 1,
-                EvaluationId = 5
-            },
-            new UserDataDto
-            {
-                employeeName = "TA #888",
-                Department = "Spring 2025",
-                EmployeeNumber = 888,
-                statusid = 1,
-                EvaluationId = 5
-            },
-            new UserDataDto
-            {
-                employeeName = "TA #777",
-                Department = "Spring 2025",
-                EmployeeNumber = 777,
-                statusid = 1,
-                EvaluationId = 5
-            },
-            new UserDataDto
-            {
-                employeeName = "TA #999",
-                Department = "Spring 2025",
-                EmployeeNumber = 999,
-                statusid = 1,
-                EvaluationId = 5
-            },
-            new UserDataDto
-            {
-                employeeName = "TA #7474",
-                Department = "Spring 2025",
-                EmployeeNumber = 7474,
-                statusid = 1,
-                EvaluationId = 5
-            },
-            new UserDataDto
-            {
-                employeeName = "TA #120",
-                Department = "Spring 2025",
-                EmployeeNumber = 120,
-                statusid = 1,
-                EvaluationId = 5
-            },
-            new UserDataDto
-            {
-                employeeName = "TA #22",
-                Department = "Spring 2025",
-                EmployeeNumber = 22,
-                statusid = 1,
-                EvaluationId = 5
-            },
-            new UserDataDto
-            {
-                employeeName = "TA #1000",
-                Department = "Spring 2025",
-                EmployeeNumber = 1000,
-                statusid = 1,
-                EvaluationId = 5
-            },
-            new UserDataDto
-            {
-                employeeName = "TA #1100",
-                Department = "Spring 2025",
-                EmployeeNumber = 1100,
-                statusid = 1,
-                EvaluationId = 5
-            },
-            new UserDataDto
-            {
-                employeeName = "TA #6995",
-                Department = "Spring 2025",
-                EmployeeNumber = 6995,
-                statusid = 1,
-                EvaluationId = 5
-            }
-        };
-
-            // Append mock data to the list
-            taList.AddRange(mockData);
-
+            await LoadGTAList();
         }
         catch (Exception ex)
         {
@@ -456,6 +297,99 @@
         {
             errorMessage = $"لا توجد فترة تقييم حاليا {ex.Message}";
             Console.WriteLine($"No Active EvaluationPeriod  {ex.Message}");
+        }
+    }
+    private async Task LoadGTAList()
+    {
+        try
+        {
+            Console.WriteLine($"📡 Fetching GTA list for supervisor {SUPERVISOR_ID}");
+
+            // Fetch GTA list from HR API
+            var response = await Http.GetAsync(
+                $"https://corsproxy.io/?https://aastmtic.aast.edu/TAEvaluation_api/api/HR/GTA_List/{SUPERVISOR_ID}/2025-01-01");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var gtaList = await response.Content.ReadFromJsonAsync<List<UserDataDto>>();
+
+                if (gtaList != null && gtaList.Any())
+                {
+                    Console.WriteLine($"✅ Loaded {gtaList.Count} GTAs from API");
+
+                    // Map GTADto to UserDataDto
+                    taList = gtaList.Select(gta => new UserDataDto
+                    {
+                        employeeName = gta.employeeName,
+                        Department = gta.Department,
+                        college = gta.college,
+                        EmployeeNumber = gta.employeeId,
+                        employeeId = gta.employeeId,
+                        statusid = 1, // Default status - will be updated from evaluation data
+                        EvaluationId = 0 // Will be set when evaluation exists
+                    }).ToList();
+
+                    // Now check which GTAs have existing evaluations
+                    await LoadEvaluationStatuses();
+                }
+                else
+                {
+                    Console.WriteLine("⚠️ No GTAs found for this supervisor");
+                    errorMessage = "لا يوجد مساعدي تدريس مسجلين تحت إشرافك";
+                }
+            }
+            else
+            {
+                Console.WriteLine($"❌ Failed to load GTA list: {response.StatusCode}");
+                var errorContent = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"Error details: {errorContent}");
+                errorMessage = "فشل تحميل قائمة مساعدي التدريس";
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error loading GTA list: {ex.Message}");
+            errorMessage = $"خطأ في تحميل قائمة مساعدي التدريس: {ex.Message}";
+        }
+    }
+    private async Task LoadEvaluationStatuses()
+    {
+        try
+        {
+            // For each GTA, check if they have an evaluation
+            foreach (var ta in taList)
+            {
+                try
+                {
+                    var response = await Http.GetAsync(
+                        $"/api/GSdean/GetByEvaluationForGSDeanPeriodAndTAAsync/{EvaluationPeriodId}/{ta.employeeId}");
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var evaluation = await response.Content.ReadFromJsonAsync<GsdeanEvaluationDto>();
+
+                        if (evaluation != null)
+                        {
+                            ta.statusid = 2; // Has evaluation - read only
+                            
+                            Console.WriteLine($"✅ Found evaluation for {ta.employeeName}");
+                        }
+                    }
+                    else if (response.StatusCode != System.Net.HttpStatusCode.NotFound)
+                    {
+                        Console.WriteLine($"⚠️ Error checking evaluation for {ta.employeeName}: {response.StatusCode}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"⚠️ Error checking evaluation status for {ta.employeeName}: {ex.Message}");
+                    // Continue with default status
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error loading evaluation statuses: {ex.Message}");
         }
     }
     private async Task OpenModal(UserDataDto ta)

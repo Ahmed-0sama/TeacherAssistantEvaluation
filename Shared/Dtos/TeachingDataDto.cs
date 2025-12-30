@@ -11,7 +11,7 @@ namespace Shared.Dtos
         public int semestercode { get; set; }
         public int semesterYear { get; set; }
         public int semesterNumber { get; set; }
-        public string semestername { get; set; }
+        public string semesterName { get; set; }
         public int ActualTeachingLoad { get; set; }      
         public int ExpectedTeachingLoad { get; set; }    
         public int ClassCount { get; set; }

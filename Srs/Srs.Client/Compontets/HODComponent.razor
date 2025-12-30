@@ -199,7 +199,7 @@
                                                 <div class="col-md-6">
                                                     <div class="card border-@(semester.score == 10 ? "success" : "danger")">
                                                         <div class="card-header bg-@(semester.score == 10 ? "success" : "danger") bg-opacity-10">
-                                                            <h6 class="mb-0 fw-bold">@semester.semestername</h6>
+                                                            <h6 class="mb-0 fw-bold">@semester.semesterName</h6>
                                                         </div>
                                                         <div class="card-body">
                                                             <div class="row text-center">
@@ -612,7 +612,7 @@
                 Console.WriteLine($"📡 Fetching teaching data for employee {SelectedTA.employeeId}");
 
                 var response = await Http.GetAsync(
-                    $"https://corsproxy.io/?https://aastmtic.aast.edu/TAEvaluation_api/api/LMS/teaching-data/{SelectedTA.employeeId}/2024-01-01/2025-12-31");
+                    $"https://corsproxy.io/?https://aastmtic.aast.edu/TAEvaluation_api/api/LMS/teaching-data/{SelectedTA.employeeId}/2025-1-1/2025-12-31");
 
                 if (response.IsSuccessStatusCode)
                 {
