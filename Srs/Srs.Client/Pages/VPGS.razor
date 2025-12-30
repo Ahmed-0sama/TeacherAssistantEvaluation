@@ -416,6 +416,12 @@
         {
             // Get the evaluation ID for this TA
             int evaluationId = ta.EvaluationId;
+            UserDataDto? employeeInfo = await FetchEmployeeInfo(ta.EmployeeNumber);
+            if (employeeInfo != null)
+            {
+                selectedTA.employeeName = employeeInfo.employeeName;
+                selectedTA.Department = employeeInfo.Department;
+            }
 
             // Try to fetch existing VPGS evaluation
             var response = await Http.GetAsync($"/api/Vpgs/evaluation/{evaluationId}");
@@ -655,7 +661,33 @@
             isSaving = false;
         }
     }
+    private async Task<UserDataDto?> FetchEmployeeInfo(int employeeId)
+    {
+        try
+        {
+            Console.WriteLine($"📡 Fetching employee info for ID: {employeeId}");
 
+            var response = await Http.GetAsync(
+                $"https://corsproxy.io/?https://aastmtic.aast.edu/TAEvaluation_api/api/hr/get-employee-info/{employeeId}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var employeeInfo = await response.Content.ReadFromJsonAsync<UserDataDto>();
+                Console.WriteLine($"✅ Employee info loaded: {employeeInfo?.employeeName}");
+                return employeeInfo;
+            }
+            else
+            {
+                Console.WriteLine($"⚠️ Failed to load employee info: {response.StatusCode}");
+                return null;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error fetching employee info: {ex.Message}");
+            return null;
+        }
+    }
     private string GetStatusName(int status)
     {
         return status switch

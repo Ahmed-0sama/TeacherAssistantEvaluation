@@ -15,7 +15,7 @@ namespace Shared.Dtos.ProfessorEvaluationDto
         public string periodName { get; set; } = string.Empty;
         public int statusId { get; set; }
         public string department { get; set; } 
-        public int statusName { get; set; }
+        public string statusName { get; set; }
         public bool canEdit { get; set; }
 
         public string currentStage { get; set; } = string.Empty;

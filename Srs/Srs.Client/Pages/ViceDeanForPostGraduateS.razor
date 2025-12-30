@@ -280,6 +280,33 @@
             isLoading = false;
         }
     }
+    private async Task<UserDataDto?> FetchEmployeeInfo(int employeeId)
+    {
+        try
+        {
+            Console.WriteLine($"📡 Fetching employee info for ID: {employeeId}");
+
+            var response = await Http.GetAsync(
+                $"https://corsproxy.io/?https://aastmtic.aast.edu/TAEvaluation_api/api/hr/get-employee-info/{employeeId}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var employeeInfo = await response.Content.ReadFromJsonAsync<UserDataDto>();
+                Console.WriteLine($"✅ Employee info loaded: {employeeInfo?.employeeName}");
+                return employeeInfo;
+            }
+            else
+            {
+                Console.WriteLine($"⚠️ Failed to load employee info: {response.StatusCode}");
+                return null;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error fetching employee info: {ex.Message}");
+            return null;
+        }
+    }
     private async Task GetEvaluationPeriod()
     {
         try
@@ -407,6 +434,13 @@
 
         try
         {
+            UserDataDto? employeeInfo = await FetchEmployeeInfo(ta.EmployeeNumber);
+            if (employeeInfo != null)
+            {
+                selectedTA.employeeName = employeeInfo.employeeName;
+                selectedTA.Department = employeeInfo.Department;
+                selectedTA.college = employeeInfo.college;
+            }
             // Try to fetch existing GSDean evaluation data
             var response = await Http.GetAsync($"/api/GSdean/GetByEvaluationForGSDeanPeriodAndTAAsync/{EvaluationPeriodId}/{ta.employeeId}");
 

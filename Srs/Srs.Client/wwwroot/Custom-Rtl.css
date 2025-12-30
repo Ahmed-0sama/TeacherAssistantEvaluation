@@ -4,7 +4,24 @@
 @font-face {
     font-display: swap; /* Ensures text remains visible during font load */
 }
+.table td, .table th {
+    white-space: normal !important;
+    word-wrap: break-word;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    max-width: 200px; /* Adjust as needed */
+}
 
+    /* Specific fix for name column */
+    .table td:first-child {
+        min-width: 150px;
+        max-width: 250px;
+    }
+
+/* Ensure RTL text displays correctly */
+[dir="rtl"] .table {
+    text-align: right;
+}
 /* Reduce layout shift during image loading */
 img {
     height: auto;
