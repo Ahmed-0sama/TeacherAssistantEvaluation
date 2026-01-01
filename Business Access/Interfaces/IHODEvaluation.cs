@@ -1,4 +1,5 @@
-﻿using Shared.Dtos.HODEvaluation;
+﻿using Shared.Dtos;
+using Shared.Dtos.HODEvaluation;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,6 +18,7 @@ namespace Business_Access.Interfaces
         Task<bool> ReturnToTaAsync(ReturnEvaluationHODDto dto);
         Task<bool> ReturnToProfessorAsync(ReturnToProfessor dto);
 
+        Task<List<UserDataDto>> GetTAsForHODAsync(int periodId, int hodDepartmentId, DateOnly startDate);
 
 
     }

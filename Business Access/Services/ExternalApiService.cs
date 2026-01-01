@@ -36,8 +36,6 @@ namespace Business_Access.Services
         {
             var url = $"{_baseUrl}/TAEvaluation_api/api/HR/GTA_List/{supervisorId}/{startDate:yyyy-MM-dd}";
 
-            Console.WriteLine($"📡 Calling: {url}");
-
             var response = await _httpClient.GetAsync(url);
             response.EnsureSuccessStatusCode();
 
@@ -51,19 +49,20 @@ namespace Business_Access.Services
         {
             var url = $"{_baseUrl}/TAEvaluation_api/api/hr/get-employee-info/{employeeId}";
 
-            Console.WriteLine($"📡 Calling: {url}");
-
             var response = await _httpClient.GetAsync(url);
 
             if (!response.IsSuccessStatusCode)
             {
-                Console.WriteLine($"⚠️ Failed to get employee info: {response.StatusCode}");
                 return null;
             }
 
             var jsonString = await response.Content.ReadAsStringAsync();
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
             var data = JsonSerializer.Deserialize<UserDataDto>(jsonString, options);
+            UserDataDto name=new UserDataDto();
+            name.EmployeeNumber=data.EmployeeNumber;
+            name.employeeName=data.employeeName;
+            name.employeeId = data.employeeId;
             return data;
         }
     }

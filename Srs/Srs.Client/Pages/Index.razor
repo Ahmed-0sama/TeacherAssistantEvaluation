@@ -208,6 +208,7 @@
 @code {
     private UserDataDto userData = new UserDataDto();
     private bool isLoading = true;
+    const int TA_EMPLOYEE_ID = 6492;
     private int evaluationId;
     private int evaluationPeriodId;
     private int? submissionId;
@@ -288,46 +289,80 @@
     {
         isLoading = true;
         errorMessage = null;
+
         try
         {
-            var response = await http.GetAsync($"https://corsproxy.io/?https://aastmtic.aast.edu/TAEvaluation_api/api/hr/get-employee-info/{6492}");
 
-            if (response.IsSuccessStatusCode)
+            Console.WriteLine($"📡 Loading GTA info for employee {TA_EMPLOYEE_ID}...");
+
+            // ✅ Single API call to get enriched data
+            var response = await http.GetAsync(
+                $"api/Evaluation/GetGTAInfoWithEvaluation?taEmployeeId={TA_EMPLOYEE_ID}&periodId={evaluationPeriodId}");
+
+            if (!response.IsSuccessStatusCode)
             {
-                var result = await response.Content.ReadFromJsonAsync<UserDataDto>();
+                var error = await response.Content.ReadAsStringAsync();
+                throw new Exception($"Failed to load user data: {error}");
+            }
 
-                if (result != null)
+            var result = await response.Content.ReadFromJsonAsync<UserDataDto>();
+
+            if (result != null)
+            {
+                userData = result;
+                userData.EmployeeNumber = result.employeeId;
+                evaluationId = result.EvaluationId;
+
+                Console.WriteLine($"✅ User data loaded: {userData.employeeName}");
+                Console.WriteLine($"✅ EvaluationId: {evaluationId}, StatusId: {result.statusid}");
+
+                // Check if there's an existing submission
+                if (result.HasSubmitted)
                 {
-                    userData = new UserDataDto
-                    {
-                        employeeId = result.employeeId,
-                        // Use 'result', not 'response'
-                        EmployeeNumber = result.employeeId,
-                        employeeName = result.employeeName,
-                        college = result.college, 
-                        // Fixed typo
-                        jobTitle = result.jobTitle,
-                        Department = result.Department
-                    };
-
-                    Console.WriteLine("User data loaded successfully");
-                    await GetOrCreateEvaluation();
+                    await LoadExistingTAData();
+                    isExistingSubmission = true;
+                    Console.WriteLine("✅ Existing submission loaded");
                 }
                 else
                 {
-                    errorMessage = "فشل في قراءة البيانات";
-                    Console.WriteLine("Deserialization returned null");
+                    Console.WriteLine("ℹ️ No existing submission found - new evaluation");
                 }
+
+                // Handle view-only mode based on status
+                if (result.statusid == 6)
+                {
+                    StatusId = result.statusid;
+                }
+
+                if (result.statusid == 3)
+                {
+                    // Get return message from evaluation
+                    var evalResponse = await http.GetAsync($"api/Evaluation/{evaluationId}");
+                    if (evalResponse.IsSuccessStatusCode)
+                    {
+                        var evalData = await evalResponse.Content.ReadFromJsonAsync<GetEvaluationDto>();
+                        ReturnMessage = evalData?.HodRetrunMessage ?? "";
+                    }
+                    viewonly = false;
+                }
+                else if (result.statusid >= 2)
+                {
+                    viewonly = true;
+                    Console.WriteLine($"View-only mode enabled (StatusId: {result.statusid})");
+                }
+
+                StateHasChanged();
             }
             else
             {
-                errorMessage = $"خطأ في الخادم: {response.StatusCode}";
+                errorMessage = "فشل في قراءة البيانات";
+                Console.WriteLine("Deserialization returned null");
             }
         }
         catch (Exception ex)
         {
             errorMessage = $"فشل تحميل البيانات: {ex.Message}";
-            Console.WriteLine($"Error: {ex.Message}");
+            Console.WriteLine($"❌ Error: {ex.Message}");
         }
         finally
         {
@@ -346,6 +381,7 @@
             {
                 var result = await response.Content.ReadFromJsonAsync<GetEvaluationDto>();
                 evaluationId = result.EvaluationId;
+                
                 Console.WriteLine($"✅ Evaluation retrieved/created with ID: {evaluationId}");
 
                 var submissionResponse = await http.GetAsync($"/api/Evaluation/GetTASubmission/{evaluationId}");

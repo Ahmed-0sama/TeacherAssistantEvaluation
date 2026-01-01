@@ -1,6 +1,7 @@
 ﻿using Business_Access.Interfaces;
 using DataAccess.Entities;
 using Microsoft.EntityFrameworkCore;
+using Shared.Dtos;
 using Shared.Dtos.TASubmissions;
 using System;
 using System.Collections.Generic;
@@ -13,9 +14,11 @@ namespace Business_Access.Services
     public class EvaluationServices:IEvaluation
     {
         private readonly SrsDbContext db;
-        public EvaluationServices(SrsDbContext db)
+        private readonly IExternalApiService _externalApiService;
+        public EvaluationServices(SrsDbContext db, IExternalApiService externalApiService)
         {
             this.db = db;
+            _externalApiService = externalApiService;
         }
         public async Task<GetEvaluationDto> GetOrCreateEvaluationAsync(int taEmployeeId, int periodId)
         {
@@ -472,27 +475,39 @@ namespace Business_Access.Services
                 throw new Exception($"Error getting evaluations for period {periodId}", ex);
             }
         }
-        //i will use the getOrCreate instead of this method
-        //public async Task<int?> CanTAEditEvaluationAsync(int taEmployeeId)
-        //{
-        //    try
-        //    {
-        //        var evaluation = await db.Evaluations
-        //            .FirstOrDefaultAsync(e => e.TaEmployeeId == taEmployeeId);
+        public async Task<UserDataDto> GetGTAInfoWithEvaluationAsync(int taEmployeeId, int periodId)
+        {
+            try
+            {
+                var employeeInfo = await _externalApiService.GetEmployeeInfoAsync(taEmployeeId);
 
-        //        if (evaluation == null)
-        //            return null;
-        //        if (evaluation.StatusId == 1)
-        //        {
-        //            return evaluation.EvaluationId;
-        //        }
-        //        return null;
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        throw new Exception($"Error checking if TA can edit evaluation {taEmployeeId}", ex);
-        //    }
-        //}
+                if (employeeInfo == null)
+                {
+                    throw new Exception($"Employee with ID {taEmployeeId} not found");
+                }
+
+                Console.WriteLine($"✅ Loaded employee info: {employeeInfo.employeeName}");
+
+                var evaluation = await GetOrCreateEvaluationAsync(taEmployeeId, periodId);
+
+                employeeInfo.EvaluationId = evaluation.EvaluationId;
+                employeeInfo.statusid = evaluation.StatusId;
+
+                var submission = await db.Tasubmissions
+                    .FirstOrDefaultAsync(s => s.EvaluationId == evaluation.EvaluationId);
+
+                employeeInfo.HasSubmitted = submission != null;
+
+                Console.WriteLine($"✅ Enriched employee data - EvaluationId: {employeeInfo.EvaluationId}, Status: {employeeInfo.statusid}");
+
+                return employeeInfo;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error in GetGTAInfoWithEvaluationAsync: {ex.Message}");
+                throw new Exception($"Failed to get GTA info with evaluation: {ex.Message}", ex);
+            }
+        }
 
         private static GetEvaluationDto MapToGetEvaluationDto(Evaluation evaluation)
         {

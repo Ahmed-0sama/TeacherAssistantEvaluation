@@ -1,4 +1,5 @@
-﻿using Shared.Dtos.TASubmissions;
+﻿using Shared.Dtos;
+using Shared.Dtos.TASubmissions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,5 +28,6 @@ namespace Business_Access.Interfaces
         Task<GetEvaluationDto> GetOrCreateEvaluationAsync(int taEmployeeId, int periodId);
 
         Task<GetEvaluationDto> SubmitEvaluation(int evaluationId, UpdateTASubmissionsDto submissionDto);
+        Task<UserDataDto> GetGTAInfoWithEvaluationAsync(int taEmployeeId, int periodId);
     }
 }

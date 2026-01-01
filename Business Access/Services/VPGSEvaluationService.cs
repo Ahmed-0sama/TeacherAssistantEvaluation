@@ -15,9 +15,11 @@ namespace Business_Access.Services
     public class VPGSEvaluationService : IVPGSEvaluation
     {
         private readonly SrsDbContext _db;
-        public VPGSEvaluationService(SrsDbContext db)
+        private readonly IExternalApiService _externalApiService;
+        public VPGSEvaluationService(SrsDbContext db , IExternalApiService externalApiService)
         {
             _db = db;
+            _externalApiService = externalApiService;
         }
 
         public async Task<int> CreateVpgsEvaluationAsync(CreateVpgsEvaluationDto evaluationDto)
@@ -157,6 +159,81 @@ namespace Business_Access.Services
                 .ToListAsync();
 
             return vpgsEvaluations.Select(ve => MapToResponseDto(ve)).ToList();
+        }
+        public async Task<List<UserDataDto>> GetGTAsForVPGSAsync(int periodId, int supervisorId, DateOnly startDate)
+        {
+            try
+            {
+                Console.WriteLine($"📡 Loading GTAs for VPGS - Period: {periodId}, Supervisor: {supervisorId}");
+
+                // Step 1: Get GTA list from external API
+                var gtaList = await _externalApiService.GetGTAListAsync(supervisorId, startDate);
+
+                if (gtaList == null || !gtaList.Any())
+                {
+                    Console.WriteLine("⚠️ No GTAs found from external API");
+                    return new List<UserDataDto>();
+                }
+
+                Console.WriteLine($"✅ Loaded {gtaList.Count} GTAs from external API");
+
+                // Step 2: Get all evaluations for this period
+                var evaluations = await _db.Evaluations
+                    .Include(e => e.Period)
+                    .Include(e => e.Status)
+                    .Include(e => e.Tasubmission)
+                    .Where(e => e.PeriodId == periodId)
+                    .ToListAsync();
+
+                var evaluationMap = evaluations.ToDictionary(e => e.TaEmployeeId);
+
+                Console.WriteLine($"✅ Found {evaluations.Count} evaluations in database");
+
+                // Step 3: Get VPGS evaluations for this period
+                var vpgsEvaluations = await _db.VpgsEvaluations
+                    .Where(ve => evaluations.Select(e => e.EvaluationId).Contains(ve.EvaluationId ?? 0))
+                    .ToListAsync();
+
+                var vpgsMap = vpgsEvaluations.ToDictionary(ve => ve.EvaluationId ?? 0);
+
+                Console.WriteLine($"✅ Found {vpgsEvaluations.Count} VPGS evaluations");
+
+                // Step 4: Enrich GTA list with evaluation and VPGS data
+                foreach (var gta in gtaList)
+                {
+                    if (evaluationMap.TryGetValue(gta.employeeId, out var evaluation))
+                    {
+                        // GTA has an evaluation
+                        gta.EvaluationId = evaluation.EvaluationId;
+                        gta.statusid = evaluation.StatusId;
+                        gta.HasSubmitted = evaluation.StatusId >= 2; // StatusId >= 2 means submitted
+                        gta.HasVpgsEvaluation = vpgsMap.ContainsKey(evaluation.EvaluationId);
+
+                        Console.WriteLine($"✅ Enriched GTA: {gta.employeeName} - StatusId: {evaluation.StatusId} - HasSubmitted: {gta.HasSubmitted} - HasVPGS: {gta.HasVpgsEvaluation}");
+                    }
+                    else
+                    {
+                        // GTA doesn't have an evaluation yet
+                        gta.EvaluationId = 0;
+                        gta.statusid = 0; // No evaluation
+                        gta.HasSubmitted = false;
+                        gta.HasVpgsEvaluation = false;
+
+                        Console.WriteLine($"ℹ️ GTA {gta.employeeName} has no evaluation yet");
+                    }
+
+                    gta.EmployeeNumber = gta.employeeId;
+                }
+
+                Console.WriteLine($"✅ Total GTAs processed: {gtaList.Count}");
+
+                return gtaList;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error in GetGTAsForVPGSAsync: {ex.Message}");
+                throw new Exception($"Failed to get GTAs for VPGS: {ex.Message}", ex);
+            }
         }
         private VpgsEvaluationResponseDto MapToResponseDto(VpgsEvaluation vpgsEval)
         {

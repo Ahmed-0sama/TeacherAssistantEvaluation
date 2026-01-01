@@ -1,6 +1,7 @@
 ﻿using Business_Access.Interfaces;
 using DataAccess.Entities;
 using Microsoft.EntityFrameworkCore;
+using Shared.Dtos;
 using Shared.Dtos.HODEvaluation;
 using Shared.Dtos.Notifications;
 using System;
@@ -14,11 +15,13 @@ namespace Business_Access.Services
     public class HODEvaluationService : IHODEvaluation
     {
         private readonly SrsDbContext _db;
+        private readonly IExternalApiService _externalApiService;
         private readonly INotification _notificationService;
-        public HODEvaluationService(SrsDbContext db, INotification notificationService)
+        public HODEvaluationService(SrsDbContext db, INotification notificationService, IExternalApiService externalApiService)
         {
             _db = db;
             _notificationService = notificationService;
+            _externalApiService = externalApiService;
         }
         public async Task<int> CreateHodEvaluationAsync(CreateHodEvaluationDto dto)
         {
@@ -361,7 +364,82 @@ namespace Business_Access.Services
             }
 
         }
+        public async Task<List<UserDataDto>> GetTAsForHODAsync(int periodId, int hodDepartmentId, DateOnly startDate)
+        {
+            try
+            {
+                Console.WriteLine($"📡 Loading TAs for HOD - Period: {periodId}, Department: {hodDepartmentId}");
 
+                // Step 1: Get TA list from external API
+                var taList = await _externalApiService.GetGTAListAsync(hodDepartmentId, startDate);
+
+                if (taList == null || !taList.Any())
+                {
+                    Console.WriteLine("⚠️ No TAs found from external API");
+                    return new List<UserDataDto>();
+                }
+
+                Console.WriteLine($"✅ Loaded {taList.Count} TAs from external API");
+
+                // Step 2: Get all evaluations for this period
+                var evaluations = await _db.Evaluations
+                    .Include(e => e.Period)
+                    .Include(e => e.Status)
+                    .Include(e => e.Tasubmission)
+                    .Where(e => e.PeriodId == periodId)
+                    .ToListAsync();
+
+                var evaluationMap = evaluations.ToDictionary(e => e.TaEmployeeId);
+
+                Console.WriteLine($"✅ Found {evaluations.Count} evaluations in database");
+
+                // Step 3: Get HOD evaluations for this period
+                var hodEvaluations = await _db.Hodevaluations
+                    .Where(h => evaluations.Select(e => e.EvaluationId).Contains(h.EvaluationId) && h.IsActive)
+                    .ToListAsync();
+
+                var hodEvaluationMap = hodEvaluations
+                    .GroupBy(h => h.EvaluationId)
+                    .ToDictionary(g => g.Key, g => g.ToList());
+
+                Console.WriteLine($"✅ Found {hodEvaluationMap.Count} HOD evaluations");
+
+                // Step 4: Enrich TA list with evaluation and HOD data
+                foreach (var ta in taList)
+                {
+                    if (evaluationMap.TryGetValue(ta.employeeId, out var evaluation))
+                    {
+                        // TA has an evaluation
+                        ta.EvaluationId = evaluation.EvaluationId;
+                        ta.statusid = evaluation.StatusId;
+                        ta.HasHodEvaluation = hodEvaluationMap.ContainsKey(evaluation.EvaluationId);
+
+                        Console.WriteLine($"✅ Enriched TA: {ta.employeeName} - StatusId: {evaluation.StatusId} - HasHOD: {ta.HasHodEvaluation}");
+                    }
+                    else
+                    {
+                        // ✅ TA doesn't have an evaluation yet - show as waiting
+                        ta.EvaluationId = 0;
+                        ta.statusid = 0; // No evaluation - will show "انتظار"
+                        ta.HasHodEvaluation = false;
+
+                        Console.WriteLine($"ℹ️ TA {ta.employeeName} has no evaluation yet - will show as waiting");
+                    }
+
+                    ta.EmployeeNumber = ta.employeeId;
+                }
+
+                // ✅ CHANGED: Return ALL TAs, not just submitted ones
+                Console.WriteLine($"✅ Total GTAs returned: {taList.Count}");
+
+                return taList; // Return all GTAs
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error in GetTAsForHODAsync: {ex.Message}");
+                throw new Exception($"Failed to get TAs for HOD: {ex.Message}", ex);
+            }
+        }
         public async Task<bool> HasHodEvaluationAsync(int evaluationId)
         {
             return await _db.Hodevaluations

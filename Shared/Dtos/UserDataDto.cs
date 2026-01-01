@@ -29,6 +29,7 @@ namespace Shared.Dtos
             public int statusid { get; set; }
              public int EvaluationId { get; set; }
              public bool HasVpgsEvaluation { get; set; }
+        public bool HasSubmitted { get; set; }
         [JsonPropertyName("evaluation")]
         public ProfessorEvaluationResponseDto? Evaluation { get; set; }
         [JsonPropertyName("isEvaluated")]
@@ -37,7 +38,8 @@ namespace Shared.Dtos
         [JsonPropertyName("evaluationStatus")]
         public string EvaluationStatus { get; set; } = "Not Graded";
         public bool HasHodEvaluation { get; set; }
-        public int HodEvaluationStatus { get; set; }  
+        public int HodEvaluationStatus { get; set; }
+
         public HodEvaluationResponseDto? HodEvaluationData { get; set; }  // New: full HOD data
     }
 }

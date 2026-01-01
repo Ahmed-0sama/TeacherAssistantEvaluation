@@ -1,4 +1,5 @@
-﻿using Shared.Dtos.VPGSEvaluation;
+﻿using Shared.Dtos;
+using Shared.Dtos.VPGSEvaluation;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,5 +19,6 @@ namespace Business_Access.Interfaces
         Task<IEnumerable<VpgsEvaluationResponseDto>> GetVpgsEvaluationsByPeriodAsync(int periodId);
 
         Task UpdateVpgsEvaluationAsync(int evaluationId, UpdateVpgsEvaluationDto evaluationDto);
+        Task<List<UserDataDto>> GetGTAsForVPGSAsync(int periodId, int supervisorId, DateOnly startDate);
     }
 }

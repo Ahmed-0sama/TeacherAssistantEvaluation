@@ -124,5 +124,21 @@ namespace Srs.Controllers
                 return StatusCode(500, new { message = "An error occurred while returning the evaluation to TA", details = ex.Message });
             }
         }
+        [HttpGet("GetTAsForHOD")]
+        public async Task<IActionResult> GetTAsForHOD([FromQuery] int periodId,[FromQuery] int hodDepartmentId,[FromQuery] DateOnly startDate)
+        {
+            try
+            {
+                Console.WriteLine($"📡 GetTAsForHOD called - Period: {periodId}, Department: {hodDepartmentId}");
+                var result = await _hodEvaluationService.GetTAsForHODAsync(periodId, hodDepartmentId, startDate);
+                Console.WriteLine($"✅ Returning {result.Count} TAs");
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error in GetTAsForHOD: {ex.Message}");
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
     }
 }

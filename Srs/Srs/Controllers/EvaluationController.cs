@@ -187,5 +187,20 @@ namespace Srs.Controllers
                 return StatusCode(500, new { message = "An error occurred while retrieving evaluations for the TA.", details = ex.Message });
             }
         }
+        [HttpGet("GetGTAInfoWithEvaluation")]
+        public async Task<IActionResult> GetGTAInfoWithEvaluation(
+            [FromQuery] int taEmployeeId,
+            [FromQuery] int periodId)
+        {
+            try
+            {
+                var result = await _evaluationService.GetGTAInfoWithEvaluationAsync(taEmployeeId, periodId);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
     }
 }
