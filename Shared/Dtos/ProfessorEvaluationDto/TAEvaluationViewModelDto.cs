@@ -35,6 +35,6 @@ namespace Shared.Dtos.ProfessorEvaluationDto
         public int? ProfEvalId { get; set; }
         public int? ProfessorEvaluationTotal { get; set; }
 
-        public bool IsEvaluated => ProfEvalId.HasValue;
+        public bool IsEvaluated { get; set; }
     }
 }

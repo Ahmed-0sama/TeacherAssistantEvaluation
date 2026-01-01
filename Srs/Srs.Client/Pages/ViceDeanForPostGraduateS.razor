@@ -48,11 +48,11 @@
                                         <td>
                                             @if (ta.statusid == 2)
                                             {
-                                                <span class="result-pill"> "عرض"</span>
+                                                <span class="result-pill">تم التقييم</span>
                                             }
                                             else if (ta.statusid == 1)
                                             {
-                                                <span class="result-pill" style="background-color: antiquewhite; color: black;">"تقييم"</span>
+                                                <span class="result-pill" style="background-color: antiquewhite; color: black;">تقييم</span>
                                             }
                                         </td>
                                         <td>
@@ -261,7 +261,7 @@
     private MastersDto mastersDto = new MastersDto();
     private bool ModalVisable = false;
     private bool IsReadOnly = false;
-    private const int SUPERVISOR_ID = 7150; // Replace with actual logged-in supervisor ID
+    private const int SUPERVISOR_ID = 9614; // Replace with actual logged-in supervisor ID
 
     protected override async Task OnInitializedAsync()
     {
@@ -278,33 +278,6 @@
         finally
         {
             isLoading = false;
-        }
-    }
-    private async Task<UserDataDto?> FetchEmployeeInfo(int employeeId)
-    {
-        try
-        {
-            Console.WriteLine($"📡 Fetching employee info for ID: {employeeId}");
-
-            var response = await Http.GetAsync(
-                $"https://corsproxy.io/?https://aastmtic.aast.edu/TAEvaluation_api/api/hr/get-employee-info/{employeeId}");
-
-            if (response.IsSuccessStatusCode)
-            {
-                var employeeInfo = await response.Content.ReadFromJsonAsync<UserDataDto>();
-                Console.WriteLine($"✅ Employee info loaded: {employeeInfo?.employeeName}");
-                return employeeInfo;
-            }
-            else
-            {
-                Console.WriteLine($"⚠️ Failed to load employee info: {response.StatusCode}");
-                return null;
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"❌ Error fetching employee info: {ex.Message}");
-            return null;
         }
     }
     private async Task GetEvaluationPeriod()
@@ -332,46 +305,20 @@
         {
             Console.WriteLine($"📡 Fetching GTA list for supervisor {SUPERVISOR_ID}");
 
-            // Fetch GTA list from HR API
+            // ✅ Single API call to get enriched data
             var response = await Http.GetAsync(
-                $"https://corsproxy.io/?https://aastmtic.aast.edu/TAEvaluation_api/api/HR/GTA_List/{SUPERVISOR_ID}/2025-01-01");
+                $"api/GSDean/GetGTAListWithEvaluations?supervisorId={SUPERVISOR_ID}&evaluationPeriodId={EvaluationPeriodId}&startDate=2025-01-01");
 
-            if (response.IsSuccessStatusCode)
+            if (!response.IsSuccessStatusCode)
             {
-                var gtaList = await response.Content.ReadFromJsonAsync<List<UserDataDto>>();
-
-                if (gtaList != null && gtaList.Any())
-                {
-                    Console.WriteLine($"✅ Loaded {gtaList.Count} GTAs from API");
-
-                    // Map GTADto to UserDataDto
-                    taList = gtaList.Select(gta => new UserDataDto
-                    {
-                        employeeName = gta.employeeName,
-                        Department = gta.Department,
-                        college = gta.college,
-                        EmployeeNumber = gta.employeeId,
-                        employeeId = gta.employeeId,
-                        statusid = 1, // Default status - will be updated from evaluation data
-                        EvaluationId = 0 // Will be set when evaluation exists
-                    }).ToList();
-
-                    // Now check which GTAs have existing evaluations
-                    await LoadEvaluationStatuses();
-                }
-                else
-                {
-                    Console.WriteLine("⚠️ No GTAs found for this supervisor");
-                    errorMessage = "لا يوجد مساعدي تدريس مسجلين تحت إشرافك";
-                }
+                var error = await response.Content.ReadAsStringAsync();
+                throw new Exception($"Failed to load GTA list: {error}");
             }
-            else
-            {
-                Console.WriteLine($"❌ Failed to load GTA list: {response.StatusCode}");
-                var errorContent = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"Error details: {errorContent}");
-                errorMessage = "فشل تحميل قائمة مساعدي التدريس";
-            }
+
+            taList = await response.Content.ReadFromJsonAsync<List<UserDataDto>>()
+                ?? new List<UserDataDto>();
+
+            Console.WriteLine($"✅ Loaded {taList.Count} GTAs with evaluation statuses");
         }
         catch (Exception ex)
         {
@@ -379,50 +326,11 @@
             errorMessage = $"خطأ في تحميل قائمة مساعدي التدريس: {ex.Message}";
         }
     }
-    private async Task LoadEvaluationStatuses()
-    {
-        try
-        {
-            // For each GTA, check if they have an evaluation
-            foreach (var ta in taList)
-            {
-                try
-                {
-                    var response = await Http.GetAsync(
-                        $"/api/GSdean/GetByEvaluationForGSDeanPeriodAndTAAsync/{EvaluationPeriodId}/{ta.employeeId}");
-
-                    if (response.IsSuccessStatusCode)
-                    {
-                        var evaluation = await response.Content.ReadFromJsonAsync<GsdeanEvaluationDto>();
-
-                        if (evaluation != null)
-                        {
-                            ta.statusid = 2; // Has evaluation - read only
-                            
-                            Console.WriteLine($"✅ Found evaluation for {ta.employeeName}");
-                        }
-                    }
-                    else if (response.StatusCode != System.Net.HttpStatusCode.NotFound)
-                    {
-                        Console.WriteLine($"⚠️ Error checking evaluation for {ta.employeeName}: {response.StatusCode}");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"⚠️ Error checking evaluation status for {ta.employeeName}: {ex.Message}");
-                    // Continue with default status
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"❌ Error loading evaluation statuses: {ex.Message}");
-        }
-    }
     private async Task OpenModal(UserDataDto ta)
     {
         selectedTA = ta;
-        selectedTA.employeeId = ta.EmployeeNumber;
+        selectedTA.employeeId = ta.employeeId;
+        selectedTA.EmployeeNumber = ta.employeeId;
         ModalVisable = true;
         isLoadingModalData = true;
 
@@ -434,13 +342,6 @@
 
         try
         {
-            UserDataDto? employeeInfo = await FetchEmployeeInfo(ta.EmployeeNumber);
-            if (employeeInfo != null)
-            {
-                selectedTA.employeeName = employeeInfo.employeeName;
-                selectedTA.Department = employeeInfo.Department;
-                selectedTA.college = employeeInfo.college;
-            }
             // Try to fetch existing GSDean evaluation data
             var response = await Http.GetAsync($"/api/GSdean/GetByEvaluationForGSDeanPeriodAndTAAsync/{EvaluationPeriodId}/{ta.employeeId}");
 

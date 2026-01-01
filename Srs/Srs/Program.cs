@@ -26,6 +26,7 @@ builder.Services.AddScoped<IDean, DeanServices>();
 builder.Services.AddScoped<INotification, NotificationService>();
 builder.Services.AddScoped<IHRService, HRService>();
 builder.Services.AddScoped<IReminderService, ReminderService>();
+builder.Services.AddScoped<IExternalApiService, ExternalApiService>();
 builder.Services.AddHttpClient();
 
 //allow  cors policy 

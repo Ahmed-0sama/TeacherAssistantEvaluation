@@ -125,5 +125,28 @@ namespace Srs.Controllers
                 return StatusCode(500, new { message = ex.Message });
             }
         }
+        [HttpGet("GetCoursesWithEvaluations")]
+        public async Task<IActionResult> GetCoursesWithEvaluations(
+            [FromQuery] int professorId,
+            [FromQuery] int evaluationPeriodId,
+            [FromQuery] DateOnly StartDate,
+            [FromQuery] DateOnly EndDate)
+        {
+            try
+            {
+                var result = await _professorEvaluation.GetProfessorCoursesWithEvaluationsAsync(
+                    professorId,
+                    evaluationPeriodId,
+                    StartDate,
+                    EndDate
+                );
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
     }
 }

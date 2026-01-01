@@ -134,5 +134,23 @@ namespace Srs.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
+        [HttpGet("GetGTAListWithEvaluations")]
+        public async Task<IActionResult> GetGTAListWithEvaluations([FromQuery] int supervisorId,[FromQuery] int evaluationPeriodId,[FromQuery] DateOnly startDate)
+        {
+            try
+            {
+                var result = await _gsDeanService.GetGTAListWithEvaluationsAsync(
+                    supervisorId,
+                    evaluationPeriodId,
+                    startDate
+                );
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
     }
 }

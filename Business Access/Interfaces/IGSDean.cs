@@ -1,4 +1,5 @@
 ﻿using DataAccess.Entities;
+using Shared.Dtos;
 using Shared.Dtos.GSDean;
 using System;
 using System.Collections.Generic;
@@ -18,6 +19,7 @@ namespace Business_Access.Interfaces
         Task<IEnumerable<GsdeanEvaluationDto>> GetByEvaluationPeriodIdAsync(int evaluationPeriodId);
         Task<IEnumerable<GsdeanEvaluationDto>> GetByTAEmployeeIdAsync(int taEmployeeId);
         Task<GsdeanEvaluationDto> GetByEvaluationForGSDeanPeriodAndTAAsync(int evaluationPeriodId, int taEmployeeId);
+        Task<List<UserDataDto>> GetGTAListWithEvaluationsAsync(int supervisorId, int evaluationPeriodId, DateOnly startDate);
 
 
     }
