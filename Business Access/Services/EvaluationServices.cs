@@ -389,7 +389,33 @@ namespace Business_Access.Services
                 throw new Exception($"Error getting evaluation with ID {evaluationId}", ex);
             }
         }
+        public async Task<List<TeachingDataDto>> GetActivityDataAsync(int evaluationid,int professorId,DateOnly startDate, DateOnly endDate)
+        {
+            var professorData = await _externalApiService
+                .GetTeachingDataForGtaAsync(professorId, startDate, endDate);
+            Console.WriteLine($"Requesting data from {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}");
 
+            if (professorData == null || !professorData.Any())
+                return new List<TeachingDataDto>();
+
+            foreach (var semesterData in professorData)
+            {
+                semesterData.score =
+                    semesterData.ActualTeachingLoad >= semesterData.ExpectedTeachingLoad
+                        ? 10
+                        : 0;
+            }
+
+            var avgScore = (int)professorData.Average(x => x.score);
+
+            var evalExists = await db.Evaluations
+                .AnyAsync(e => e.EvaluationId == evaluationid);
+
+            if (!evalExists)
+                return professorData;
+
+            return professorData;
+        }
         public async Task<GetEvaluationDto?> GetTAEvaluationForCurrentPeriodAsync(int taEmployeeId)
         {
             try
@@ -508,7 +534,42 @@ namespace Business_Access.Services
                 throw new Exception($"Failed to get GTA info with evaluation: {ex.Message}", ex);
             }
         }
+        public async Task<UserDataDto?> GetEmployeeInfoAsync(int employeeId)
+        {
+            try
+            {
+                return await _externalApiService.GetEmployeeInfoAsync(employeeId);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error fetching employee info: {ex.Message}");
+                throw new Exception($"Failed to get employee info: {ex.Message}", ex);
+            }
+        }
 
+        public async Task<List<TeachingDataDto>> GetTeachingDataAsync(int employeeId, DateOnly startDate, DateOnly endDate)
+        {
+            try
+            {
+                var teachingDataList = await _externalApiService.GetTeachingDataForGtaAsync(employeeId, startDate, endDate);
+
+                if (teachingDataList != null && teachingDataList.Any())
+                {
+                    // Calculate scores for each semester
+                    foreach (var semester in teachingDataList)
+                    {
+                        semester.score = semester.ActualTeachingLoad >= semester.ExpectedTeachingLoad ? 10 : 0;
+                    }
+                }
+
+                return teachingDataList ?? new List<TeachingDataDto>();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error fetching teaching data: {ex.Message}");
+                throw new Exception($"Failed to get teaching data: {ex.Message}", ex);
+            }
+        }
         private static GetEvaluationDto MapToGetEvaluationDto(Evaluation evaluation)
         {
             return new GetEvaluationDto

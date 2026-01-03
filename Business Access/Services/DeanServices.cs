@@ -5,6 +5,7 @@ using Shared.Dtos.DeanDto;
 using Shared.Dtos.GSDean;
 using Shared.Dtos.HODEvaluation;
 using Shared.Dtos.Notifications;
+using Shared.Dtos.ProfessorEvaluationDto;
 using Shared.Dtos.TASubmissions;
 using System;
 using System.Collections.Generic;
@@ -19,10 +20,12 @@ namespace Business_Access.Services
 
         private readonly SrsDbContext _db;
         private readonly INotification _notificationService;
-        public DeanServices(SrsDbContext db, INotification notificationService)
+        private readonly IExternalApiService _externalApiService;
+        public DeanServices(SrsDbContext db, INotification notificationService, IExternalApiService externalApiService)
         {
             _db = db;
             _notificationService = notificationService;
+            _externalApiService = externalApiService;
         }
 
 
@@ -392,7 +395,86 @@ namespace Business_Access.Services
                 }
             }
         }
+        public async Task<List<EvaluationApiResponseDto>> GetTAsForDeanAsync(int periodId, int deanDepartmentId, DateOnly startDate)
+        {
+            try
+            {
+                Console.WriteLine($"📡 Loading TAs for Dean - Period: {periodId}, Department: {deanDepartmentId}");
 
+                // Step 1: Get TA list from external API
+                var taList = await _externalApiService.GetGTAListAsync(deanDepartmentId, startDate);
+
+                if (taList == null || !taList.Any())
+                {
+                    Console.WriteLine("⚠️ No TAs found from external API");
+                    return new List<EvaluationApiResponseDto>();
+                }
+
+                Console.WriteLine($"✅ Loaded {taList.Count} TAs from external API");
+
+                // Step 2: Get all evaluations for this period
+                var evaluations = await _db.Evaluations
+                    .Include(e => e.Period)
+                    .Include(e => e.Status)
+                    .Include(e => e.Tasubmission)
+                    .Where(e => e.PeriodId == periodId)
+                    .ToListAsync();
+
+                var evaluationMap = evaluations.ToDictionary(e => e.TaEmployeeId);
+
+                Console.WriteLine($"✅ Found {evaluations.Count} evaluations in database");
+
+                // Step 3: Build response list with enriched data for ALL GTAs
+                var result = new List<EvaluationApiResponseDto>();
+
+                foreach (var ta in taList)
+                {
+                    if (evaluationMap.TryGetValue(ta.employeeId, out var evaluation))
+                    {
+                        // ✅ TA has an evaluation - show actual status
+                        var dto = new EvaluationApiResponseDto
+                        {
+                            evaluationId = evaluation.EvaluationId,
+                            taEmployeeId = ta.employeeId,
+                            taName = ta.employeeName,
+                            department = ta.Department,
+                            periodName = evaluation.Period?.PeriodName ?? "Unknown",
+                            statusName = evaluation.Status?.StatusName ?? "Unknown",
+                            statusId = evaluation.StatusId
+                        };
+
+                        result.Add(dto);
+                        Console.WriteLine($"✅ Added TA: {ta.employeeName} - StatusId: {evaluation.StatusId}");
+                    }
+                    else
+                    {
+                        // ✅ TA doesn't have an evaluation yet - show as waiting
+                        var dto = new EvaluationApiResponseDto
+                        {
+                            evaluationId = 0, // No evaluation yet
+                            taEmployeeId = ta.employeeId,
+                            taName = ta.employeeName,
+                            department = ta.Department,
+                            periodName = "Unknown",
+                            statusName = "بانتظار التقييم", // Waiting status
+                            statusId = 0 // Status 0 = no evaluation
+                        };
+
+                        result.Add(dto);
+                        Console.WriteLine($"ℹ️ TA {ta.employeeName} has no evaluation yet - showing as waiting");
+                    }
+                }
+
+                Console.WriteLine($"✅ Total TAs returned: {result.Count}");
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error in GetTAsForDeanAsync: {ex.Message}");
+                throw new Exception($"Failed to get TAs for Dean: {ex.Message}", ex);
+            }
+        }
         public async Task<DeanActionResponseDto> ReturnEvaluationAsync(ReturnEvaluationDto dto)
         {
             using (var transaction = await _db.Database.BeginTransactionAsync())

@@ -100,5 +100,24 @@ namespace Srs.Controllers
                 });
             }
         }
+        [HttpGet("GetTAsForDean")]
+        public async Task<IActionResult> GetTAsForDean(
+            [FromQuery] int periodId,
+            [FromQuery] int deanDepartmentId,
+            [FromQuery] DateOnly startDate)
+        {
+            try
+            {
+                Console.WriteLine($"📡 GetTAsForDean called - Period: {periodId}, Department: {deanDepartmentId}");
+                var result = await _deanService.GetTAsForDeanAsync(periodId, deanDepartmentId, startDate);
+                Console.WriteLine($"✅ Returning {result.Count} TAs");
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error in GetTAsForDean: {ex.Message}");
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
     }
 }

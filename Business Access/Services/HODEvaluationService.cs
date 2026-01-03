@@ -38,7 +38,26 @@ namespace Business_Access.Services
                     .AnyAsync(h => h.EvaluationId == dto.EvaluationId && h.IsActive);
                 if (existingEval)
                     throw new Exception("HOD evaluation already exists for this evaluation");
+                if (dto.TeachingLoadScore.HasValue)
+                {
+                    var scoreExists = await _db.AutoCalculatedScores
+                        .FirstOrDefaultAsync(x => x.EvaluationId == dto.EvaluationId);
 
+                    if (scoreExists != null)
+                    {
+                        // Update existing score
+                        scoreExists.TechingLoadCompletionScore = dto.TeachingLoadScore.Value;
+                    }
+                    else
+                    {
+                        // Create new score
+                        await _db.AutoCalculatedScores.AddAsync(new AutoCalculatedScore
+                        {
+                            EvaluationId = dto.EvaluationId,
+                            TechingLoadCompletionScore = dto.TeachingLoadScore.Value
+                        });
+                    }
+                }
                 // Create HOD evaluations for each criterion
                 foreach (var criterionRating in dto.CriterionRatings)
                 {

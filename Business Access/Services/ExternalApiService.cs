@@ -65,5 +65,25 @@ namespace Business_Access.Services
             name.employeeId = data.employeeId;
             return data;
         }
+        public async Task<List<TeachingDataDto>> GetTeachingDataForGtaAsync(
+            int employeeid,DateOnly startDate,DateOnly endDate)
+        {
+            var url = $"{_baseUrl}/TAEvaluation_api/api/LMS/teaching-data/{employeeid}/{startDate:yyyy-MM-dd}/{endDate:yyyy-MM-dd}";
+
+            var response = await _httpClient.GetAsync(url);
+            response.EnsureSuccessStatusCode();
+
+            var jsonString = await response.Content.ReadAsStringAsync();
+
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+            var data = JsonSerializer.Deserialize<List<TeachingDataDto>>(jsonString, options);
+
+            return data ?? new List<TeachingDataDto>();
+        }
+
     }
 }

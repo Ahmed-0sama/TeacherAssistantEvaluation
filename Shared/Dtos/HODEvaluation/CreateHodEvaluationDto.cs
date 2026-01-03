@@ -9,6 +9,7 @@ namespace Shared.Dtos.HODEvaluation
     public class CreateHodEvaluationDto
     {
         public int EvaluationId { get; set; }
+        public int? TeachingLoadScore { get; set; }
         public List<CriterionRatingDto> CriterionRatings { get; set; }
         public string HodStrengths { get; set; }
         public string HodWeaknesses { get; set; }

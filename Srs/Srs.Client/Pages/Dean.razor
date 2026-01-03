@@ -104,11 +104,51 @@
                                     </span>
                                 </td>
                                 <td class="text-center">
-                                    <button type="button"
-                                            class="btn btn-sm btn-primary"
-                                            @onclick="() => OpenModal(eval)">
-                                        عرض التفاصيل
-                                    </button>
+                                <td>
+                                    @if (eval.statusId == 0 || eval.statusId == 1)
+                                    {
+                                        <button class="btn btn-sm btn-secondary" disabled>
+                                            <i class="bi bi-hourglass-split me-1"></i>
+                                            انتظار
+
+                                        </button>
+                                        <Srs.Client.Compontets.ReminderComponent EmployeeId="SUPERVISOR_ID"
+                                                                                 RecieverId="eval.taEmployeeId"
+                                                                                 RenderAsButton="true" />
+                                    }
+                                    else if (eval.statusId == 2)
+                                    {
+                                        <!-- View button for completed or returned evaluations -->
+                                        <button class="btn btn-sm btn-info" @onclick="() => OpenModal(eval)">
+                                            <i class="bi bi-eye me-1"></i>
+                                            عرض التقييم
+                                        </button>
+                                    }
+                                    else if (eval.statusId == 6 )
+                                    {
+                                        <!-- View button for completed or returned evaluations -->
+                                        <button class="btn btn-sm btn-info" @onclick="() => OpenModal(eval)">
+                                            <i class="bi bi-eye me-1"></i>
+                                            عرض التقييم
+                                        </button>
+                                    }
+                                    else if (eval.statusId == 7)
+                                    {
+                                        <!-- Edit button for Dean-returned evaluations -->
+                                        <button class="btn btn-sm btn-warning" @onclick="() => OpenModal(eval)">
+                                            <i class="bi bi-pencil-square me-1"></i>
+                                            اعادة التقييم
+                                        </button>
+                                    }
+                                    else if (eval.statusId == 5)
+                                    {
+                                        <!-- Evaluate button for submitted evaluations -->
+                                        <button class="btn btn-sm btn-primary" @onclick="() => OpenModal(eval)">
+                                            <i class="bi bi-pencil-square me-1"></i>
+                                            تقييم
+                                        </button>
+                                    }
+                                </td>
                                 </td>
                             </tr>
                         }
@@ -494,57 +534,53 @@
     }
     private async Task LoadGTAList()
     {
+        IsLoading = true;
+        LoadError = null;
+
         try
         {
-            Console.WriteLine($"📡 Fetching GTA list for supervisor {SUPERVISOR_ID}");
+            Console.WriteLine("📡 Loading Dean page data...");
 
-            // Fetch GTA list from HR API
-            var response = await Http.GetAsync(
-                $"https://corsproxy.io/?https://aastmtic.aast.edu/TAEvaluation_api/api/HR/GTA_List/{SUPERVISOR_ID}/2025-01-01");
-
-            if (response.IsSuccessStatusCode)
+            if (EvaluationPeriodId == 0)
             {
-                // ✅ FIXED: Deserialize to GTADto first
-                var gtaList = await response.Content.ReadFromJsonAsync<List<UserDataDto>>();
-
-                if (gtaList != null && gtaList.Any())
-                {
-                    Console.WriteLine($"✅ Loaded {gtaList.Count} GTAs from API");
-
-                    // ✅ FIXED: Map GTADto to EvaluationApiResponseDto for Dean page
-                    Evaluations = gtaList.Select(gta => new EvaluationApiResponseDto
-                    {
-                        taEmployeeId = gta.employeeId,
-                        // You'll need to get evaluation data for each GTA
-                        taName = gta.employeeName,
-                        evaluationId = 0, // Will be populated when we fetch evaluation details
-                        statusName = $"{gta.statusid}",
-                        periodName = "2025", // Or get from evaluation period
-                        statusId = 1 // Default - will be updated from evaluation data
-                    }).ToList();
-
-                    // Now fetch evaluation details for each GTA
-                    await LoadEvaluationDetailsForGTAs();
-                }
-                else
-                {
-                    Console.WriteLine("⚠️ No GTAs found for this supervisor");
-                    LoadError = "لا يوجد مساعدي تدريس مسجلين";
-                }
+                LoadError = "لا توجد فترة تقييم نشطة حالياً";
+                return;
             }
-            else
+
+            var startDate = "2025-01-01"; // TODO: Get from evaluation period
+
+            // ✅ Single API call to get enriched TA list
+            var url = $"/api/Dean/GetTAsForDean?periodId={EvaluationPeriodId}&deanDepartmentId={SUPERVISOR_ID}&startDate={startDate}";
+
+            Console.WriteLine($"📡 Calling: {url}");
+
+            var response = await Http.GetAsync(url);
+
+            if (!response.IsSuccessStatusCode)
             {
-                Console.WriteLine($"❌ Failed to load GTA list: {response.StatusCode}");
-                var errorContent = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"Error details: {errorContent}");
-                LoadError = "فشل تحميل قائمة مساعدي التدريس";
+                var error = await response.Content.ReadAsStringAsync();
+                throw new Exception($"Failed to load TAs: {error}");
+            }
+
+            Evaluations = await response.Content.ReadFromJsonAsync<List<EvaluationApiResponseDto>>()
+                ?? new List<EvaluationApiResponseDto>();
+
+            Console.WriteLine($"✅ Loaded {Evaluations.Count} TAs for Dean");
+
+            if (!Evaluations.Any())
+            {
+                LoadError = "لا يوجد تقييمات جاهزة للمراجعة";
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Error loading GTA list: {ex.Message}");
-            Console.WriteLine($"Stack trace: {ex.StackTrace}");
             LoadError = $"خطأ في تحميل قائمة مساعدي التدريس: {ex.Message}";
+            Console.WriteLine($"❌ Error: {ex}");
+        }
+        finally
+        {
+            IsLoading = false;
+            StateHasChanged();
         }
     }
     private async Task LoadEvaluationDetailsForGTAs()
@@ -975,13 +1011,14 @@
     {
         return statusId switch
         {
-            1 => "مسودة",
-            2 => "مقدم",
-            5 => "تمت المراجعة من رئيس القسم",
-            4 => "مرتجع من رئيس القسم",
-            //5 => "تمت المراجعة من العميد",
-            6 => "معتمد",
-            7 => "مرتجع من العميد",
+            0 => "بانتظار إنشاء التقييم",           // No evaluation
+            1 => "مسودة - بانتظار التقديم",         // Draft
+            2 => "مقدم - بانتظار الأستاذ",         // Submitted, waiting for professor
+            3 => "مرتجع من رئيس القسم للمساعد",    // Returned to TA by HOD
+            4 => "مرتجع من رئيس القسم للأستاذ",    // Returned to Professor by HOD
+            5 => "جاهز للمراجعة",                  // Ready for Dean review
+            6 => "معتمد من العميد",                // Approved by Dean
+            7 => "مرتجع من العميد",                // Returned by Dean
             _ => "غير محدد"
         };
     }
@@ -991,14 +1028,15 @@
     {
         return statusId switch
         {
-            1 => "badge bg-secondary",      // Draft
-            2 => "badge bg-info",           // Submitted
-            5 => "badge bg-primary",        // ReviewedByHOD
-            4 => "badge bg-warning text-dark", // ReturnedByHOD
-            //5 => "badge bg-primary",        // ReviewedByDean (pending approval)
-            7 => "badge bg-danger",         // ReturnedByDean
-            6 => "badge bg-success",        // Approved
-            _ => "badge bg-secondary"
+            0 => "badge bg-secondary",              // No evaluation - gray
+            1 => "badge bg-secondary",              // Draft - gray
+            2 => "badge bg-info",                   // Submitted - blue
+            3 => "badge bg-warning text-dark",      // Returned to TA - yellow
+            4 => "badge bg-warning text-dark",      // Returned to Professor - yellow
+            5 => "badge bg-primary",                // Ready for Dean - blue
+            6 => "badge bg-success",                // Approved - green
+            7 => "badge bg-danger",                 // Returned by Dean - red
+            _ => "badge bg-secondary"               // Unknown - gray
         };
     }
     private decimal CalculateTotalScore()

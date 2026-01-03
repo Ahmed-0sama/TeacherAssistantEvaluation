@@ -1,6 +1,15 @@
-﻿@using Shared.Dtos.Reminder
+﻿@using Shared.Dtos.Notifications
+@using Shared.Dtos.Reminder
 @inject HttpClient Http
 @inject IJSRuntime JS
+@if (RenderAsButton)
+{
+    <button class="btn btn-warning fw-semibold"
+            @onclick="SendReminder">
+        إرسال تذكير
+    </button>
+}
+else{
 <div class="d-flex justify-content-between align-items-center border rounded p-2 bg-white mb-3">
     <div class="fw-bold text-primary">
         @Name
@@ -15,11 +24,14 @@
         </button>
     </div>
 </div>
+}
 @code{
+    [Parameter]
+    public bool RenderAsButton { get; set; } = false;
     [Parameter]
     public string Name { get; set; }
     [Parameter]
-    public int EvaluationId { get; set; }
+    public int? EvaluationId { get; set; }
     [Parameter]
     public int EmployeeId { get; set; }
     [Parameter]
@@ -27,22 +39,43 @@
 
     private async Task SendReminder()
     {
-        var reminder = new SendReminderDto
+        if (EvaluationId.HasValue)
         {
-            EvaluationId = EvaluationId,
-            SenderEmployeeId = EmployeeId,
-            ReciverEmployeeId = RecieverId,
-            Message = "تذكير بضرورة إكمال تقييم مساعدي التدريس."
-        };
-        var response = await Http.PostAsJsonAsync("api/reminder/sendreminder", reminder);
-        if (response.IsSuccessStatusCode)
-        {
-            await JS.InvokeVoidAsync("alert", "تم إرسال التذكير بنجاح.");
+            var reminder = new SendReminderDto
+                {
+                EvaluationId = EvaluationId.Value,
+                    SenderEmployeeId = EmployeeId,
+                    ReciverEmployeeId = RecieverId,
+                    Message = "تذكير بضرورة إكمال تقييم مساعدي التدريس."
+                };
+            var response = await Http.PostAsJsonAsync("api/reminder/sendreminder", reminder);
+            if (response.IsSuccessStatusCode)
+            {
+                await JS.InvokeVoidAsync("alert", "تم إرسال التذكير بنجاح.");
+            }
+            else
+            {
+                await JS.InvokeVoidAsync("alert", "فشل في إرسال التذكير. حاول مرة أخرى.");
+            }
         }
         else
         {
-            await JS.InvokeVoidAsync("alert", "فشل في إرسال التذكير. حاول مرة أخرى.");
+            var notification = new SendNotificationDto
+                {
+                    senderId = EmployeeId,
+                    recipientId = RecieverId,
+                    message = "تذكير بضرورة إكمال تقييم مساعدي التدريس."
+                };
+            var response = await Http.PostAsJsonAsync("api/notification/send", notification);
+            if (response.IsSuccessStatusCode)
+            {
+                await JS.InvokeVoidAsync("alert", "تم إرسال التذكير بنجاح.");
+            }
+            else
+            {
+                await JS.InvokeVoidAsync("alert", "فشل في إرسال التذكير. حاول مرة أخرى.");
+            }
         }
-        
+
     }
 }

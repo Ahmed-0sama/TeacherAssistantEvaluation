@@ -83,7 +83,8 @@
 
     [Parameter] public int employeeid { get; set; }  
     [Parameter] public int evaluationPeriod { get; set; }
-    
+    [Parameter]
+    public int evaluationid { get; set; }
     [Parameter] public EventCallback<EducationalActivityDto> OnActivityLoaded { get; set; }
 
     protected override async Task OnInitializedAsync()
@@ -98,8 +99,7 @@
             isLoading = true;
             errorMessage = null;
 
-            var response = await Http.GetAsync(
-                $"https://corsproxy.io/?https://aastmtic.aast.edu/TAEvaluation_api/api/LMS/teaching-data/{employeeid}/2025-1-1/2025-12-31");
+            var response = await Http.GetAsync($"/api/Evaluation/GetActivityData?taEmployeeId={employeeid}&periodId={evaluationPeriod}&evaluationid={evaluationid}&startDate=2025-1-1&endDate=2025-12-31");
 
             if (response.IsSuccessStatusCode)
             {

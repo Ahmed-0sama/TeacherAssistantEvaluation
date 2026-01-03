@@ -39,7 +39,7 @@ namespace Shared.Dtos
         public string EvaluationStatus { get; set; } = "Not Graded";
         public bool HasHodEvaluation { get; set; }
         public int HodEvaluationStatus { get; set; }
-
+        public decimal TotalScore { get; set; }
         public HodEvaluationResponseDto? HodEvaluationData { get; set; }  // New: full HOD data
     }
 }

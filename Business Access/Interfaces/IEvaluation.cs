@@ -29,5 +29,9 @@ namespace Business_Access.Interfaces
 
         Task<GetEvaluationDto> SubmitEvaluation(int evaluationId, UpdateTASubmissionsDto submissionDto);
         Task<UserDataDto> GetGTAInfoWithEvaluationAsync(int taEmployeeId, int periodId);
+        Task<List<TeachingDataDto>> GetActivityDataAsync(int evaluationid, int professorId, DateOnly startDate, DateOnly endDate);
+        Task<UserDataDto?> GetEmployeeInfoAsync(int employeeId);
+        Task<List<TeachingDataDto>> GetTeachingDataAsync(int employeeId, DateOnly startDate, DateOnly endDate);
+
     }
 }

@@ -13,17 +13,41 @@ namespace Srs.Controllers
         {
             _hrService = hrService;
         }
-        [HttpGet("EvaluationStatistics/{evaluationPeriod}")]
-        public async Task<IActionResult> GetEvaluationStatistics(int evaluationPeriod)
+        [HttpGet("EvaluationStatistics")]
+        public async Task<IActionResult> GetEvaluationStatistics(
+            [FromQuery] int evaluationPeriod,
+            [FromQuery] int hrDepartmentId,
+            [FromQuery] DateOnly startDate)
         {
             try
             {
-                var statistics = await _hrService.GetEvaluationStatisticsAsync(evaluationPeriod);
+                Console.WriteLine($"📡 GetEvaluationStatistics called - Period: {evaluationPeriod}");
+                var statistics = await _hrService.GetEvaluationStatisticsAsync(
+                    evaluationPeriod,
+                    hrDepartmentId,
+                    startDate);
                 return Ok(statistics);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "An error occurred while retrieving evaluation statistics.", details = ex.Message });
+                Console.WriteLine($"❌ Error in GetEvaluationStatistics: {ex.Message}");
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+        [HttpGet("GetAllTAsForHR")]
+        public async Task<IActionResult> GetAllTAsForHR([FromQuery] int periodId,[FromQuery] int hrDepartmentId,[FromQuery] DateOnly startDate)
+        {
+            try
+            {
+                Console.WriteLine($"📡 GetAllTAsForHR called - Period: {periodId}, Department: {hrDepartmentId}");
+                var result = await _hrService.GetAllTAsForHRAsync(periodId, hrDepartmentId, startDate);
+                Console.WriteLine($"✅ Returning {result.Count} TAs");
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error in GetAllTAsForHR: {ex.Message}");
+                return StatusCode(500, new { message = ex.Message });
             }
         }
     }

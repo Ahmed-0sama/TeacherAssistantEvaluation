@@ -54,8 +54,8 @@
                                         <td>
                                             @if (ta.statusid == 0)
                                             {
-                                                <!-- ✅ TA hasn't submitted evaluation yet -->
                                                 <span class="badge bg-secondary">انتظار تقديم التقييم</span>
+
                                             }
                                             else if (ta.statusid == 1)
                                             {
@@ -95,7 +95,11 @@
                                                 <button class="btn btn-sm btn-secondary" disabled>
                                                     <i class="bi bi-hourglass-split me-1"></i>
                                                     انتظار
+
                                                 </button>
+                                               <Srs.Client.Compontets.ReminderComponent EmployeeId="professorEmployeeId"
+                                                                                         RecieverId="ta.employeeId"
+                                                                                         RenderAsButton="true"/>
                                             }
                                             else if (ta.statusid == 5 || ta.statusid == 6 || ta.statusid == 3 || ta.statusid == 4)
                                             {

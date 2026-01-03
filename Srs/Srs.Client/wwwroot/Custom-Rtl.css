@@ -96,7 +96,24 @@ h3.text-center {
         float: none;
         flex-shrink: 0;
     }
-================ TABLE STYLES ==================== */
+
+/* ==================== RESPONSIVE CONTAINER ==================== */
+
+.responsive-container {
+    width: 75%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* ==================== RESPONSIVE FORM GRID ==================== */
+
+.responsive-form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+/* ==================== TABLE STYLES ==================== */
 
 .table-responsive {
     border-radius: 8px;
@@ -306,17 +323,84 @@ hr {
 
 /* ==================== RESPONSIVE ==================== */
 
+@media (max-width: 1200px) {
+    .responsive-container {
+        width: 85%;
+    }
+}
+
+@media (max-width: 992px) {
+    .responsive-container {
+        width: 90%;
+    }
+
+    .responsive-form-grid {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+}
+
 @media (max-width: 768px) {
-    .w-75 {
+    .responsive-container {
         width: 95%;
     }
 
+    .responsive-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    h3.text-center {
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .card-body {
+        padding: 1rem;
+    }
+
+    /* Make form groups stack on mobile */
+    .row.g-3 > [class*="col-"] {
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+
+    /* Button adjustments */
+    .d-flex.gap-3 {
+        flex-direction: column;
+        gap: 1rem !important;
+    }
+
+    .btn-lg {
+        width: 100%;
+        padding: 0.75rem;
+    }
+
+    /* Alert adjustments */
+    .alert {
+        padding: 1rem;
+        font-size: 0.95rem;
+    }
+
+    .alert-heading {
+        font-size: 1.1rem;
+    }
+
+    /* Modal adjustments */
     .modal-container {
         width: 95%;
+        max-height: 95vh;
+    }
+
+    .modal-container-lg,
+    .modal-container-xl {
+        max-width: 95%;
     }
 
     .modal-body {
-        padding: 1.25rem;
+        padding: 1rem;
+    }
+
+    .info-section {
+        padding: 1rem;
     }
 
     .info-section .col-6 {
@@ -325,12 +409,106 @@ hr {
 
     .modal-footer {
         flex-wrap: wrap;
+        padding: 0.75rem 1rem;
     }
 
         .modal-footer button {
-            flex: 1;
+            flex: 1 1 100%;
+            min-width: auto;
         }
+
+    /* Input field adjustments */
+    .form-control,
+    .form-select {
+        font-size: 16px; /* Prevents zoom on iOS */
+    }
+
+    /* Notification positioning */
+    .position-fixed.top-0.start-0 {
+        margin: 0.5rem !important;
+    }
 }
+
+@media (max-width: 576px) {
+    .responsive-container {
+        width: 98%;
+        padding: 0 0.5rem;
+    }
+
+    h3.text-center {
+        font-size: 1.25rem;
+        margin-bottom: 1rem;
+    }
+
+    .card {
+        margin-bottom: 1rem;
+    }
+
+    .card-body {
+        padding: 0.75rem;
+    }
+
+    /* Reduce spacing on small screens */
+    .mb-4 {
+        margin-bottom: 1rem !important;
+    }
+
+    /* Adjust form labels and inputs */
+    .form-label {
+        font-size: 0.9rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .form-control {
+        padding: 0.5rem;
+    }
+
+    /* Button sizing */
+    .btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.95rem;
+    }
+
+    .btn-lg {
+        padding: 0.65rem 1rem;
+        font-size: 1rem;
+    }
+
+    /* Alert sizing */
+    .alert {
+        padding: 0.75rem;
+        font-size: 0.9rem;
+    }
+
+    .alert-heading {
+        font-size: 1rem;
+    }
+
+    /* Spinner sizing */
+    .spinner-border {
+        width: 2rem !important;
+        height: 2rem !important;
+    }
+
+    /* Modal adjustments for very small screens */
+    .modal-container {
+        width: 98%;
+        max-height: 98vh;
+    }
+
+    .modal-header {
+        padding: 1rem;
+    }
+
+    .modal-header h5 {
+        font-size: 1rem;
+    }
+
+    .modal-body {
+        padding: 0.75rem;
+    }
+}
+
 .result-pill {
     background-color: #e6fff0; /* light green */
     color: #006b3c; /* dark green */
@@ -340,6 +518,9 @@ hr {
     font-size: 0.9rem;
     display: inline-block;
 }
+
+/* ==================== PRINT STYLES ==================== */
+
 @media print {
     /* Only apply modal print styles when modal IS PRESENT */
     body:has(.modal-overlay) {

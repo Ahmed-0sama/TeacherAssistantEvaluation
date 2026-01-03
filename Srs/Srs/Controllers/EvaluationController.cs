@@ -3,6 +3,7 @@ using Business_Access.Services;
 using DataAccess.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Shared.Dtos;
 using Shared.Dtos.TASubmissions;
 
 namespace Srs.Controllers
@@ -200,6 +201,68 @@ namespace Srs.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, new { message = ex.Message });
+            }
+        }
+        [HttpGet("GetActivityData")]
+        public async Task<IActionResult> GetActivityDataForGta(
+            [FromQuery] int taEmployeeId,
+            [FromQuery] int periodId,
+            [FromQuery]int evaluationid,
+            [FromQuery]
+            DateOnly startDate, 
+            [FromQuery]
+            DateOnly endDate
+            )
+        {
+            try
+            {
+                var result = await _evaluationService.GetActivityDataAsync(evaluationid, taEmployeeId, startDate,endDate);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+        [HttpGet("info/{employeeId}")]
+        public async Task<ActionResult<UserDataDto>> GetEmployeeInfo(int employeeId)
+        {
+            try
+            {
+                var employeeInfo = await _evaluationService.GetEmployeeInfoAsync(employeeId);
+
+                if (employeeInfo == null)
+                {
+                    return NotFound($"Employee with ID {employeeId} not found");
+                }
+
+                return Ok(employeeInfo);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error fetching employee info: {ex.Message}");
+            }
+        }
+
+        [HttpGet("teachingData/{employeeId}")]
+        public async Task<ActionResult<List<TeachingDataDto>>> GetTeachingData(
+            int employeeId,
+            [FromQuery] string startDate,
+            [FromQuery] string endDate)
+        {
+            try
+            {
+                if (!DateOnly.TryParse(startDate, out var start) || !DateOnly.TryParse(endDate, out var end))
+                {
+                    return BadRequest("Invalid date format. Use yyyy-MM-dd");
+                }
+
+                var teachingData = await _evaluationService.GetTeachingDataAsync(employeeId, start, end);
+                return Ok(teachingData);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error fetching teaching data: {ex.Message}");
             }
         }
     }

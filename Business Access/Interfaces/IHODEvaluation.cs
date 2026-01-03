@@ -19,7 +19,5 @@ namespace Business_Access.Interfaces
         Task<bool> ReturnToProfessorAsync(ReturnToProfessor dto);
 
         Task<List<UserDataDto>> GetTAsForHODAsync(int periodId, int hodDepartmentId, DateOnly startDate);
-
-
     }
 }

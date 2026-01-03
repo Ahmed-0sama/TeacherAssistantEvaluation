@@ -26,7 +26,7 @@
     }
     else if (errorMessage != null)
     {
-        <div class="w-75 mb-4">
+        <div class="responsive-container mb-4">
             <div class="alert alert-danger shadow-sm" role="alert">
                 <h4 class="alert-heading">حدث خطأ</h4>
                 <p>@errorMessage</p>
@@ -39,7 +39,7 @@
     {
         @if (viewonly)
         {
-            <div class="w-75 mb-4">
+            <div class="responsive-container mb-4">
                 <div class="alert alert-info shadow-sm" role="alert">
                     <h5 class="alert-heading">
                         <i class="bi bi-lock-fill"></i> وضع العرض فقط
@@ -50,7 +50,7 @@
         }
         @if (!string.IsNullOrEmpty(ReturnMessage))
         {
-            <div class="w-75 mb-4">
+            <div class="responsive-container mb-4">
                 <div class="alert alert-info shadow-sm" role="alert">
                     <h5 class="alert-heading">
                         <i class="bi bi-lock-fill"></i> تم الارجاع من رئيس القسم
@@ -63,7 +63,7 @@
          <Srs.Client.Compontets.NotificationComponent EmployeeId="@userData.employeeId.ToString()" />
         </div>
         @*  Personal Data Card *@
-        <div class="w-75 mb-4 shadow-sm">
+        <div class="responsive-container mb-4 shadow-sm">
             <div class="card shadow-sm" style="width: 100%;" dir="rtl">
                 <div class="card-body">
                     <EditForm Model="@userData">
@@ -71,31 +71,31 @@
                         <h3 style="color:cornflowerblue; text-align: right;">البيانات الشخصية</h3>
                         <hr style="color:cornflowerblue" />
                         <div class="row g-3" dir="rtl">
-                            <div class="col-md-4">
+                            <div class="col-12 col-sm-6 col-md-4">
                                 <div class="mb-3">
                                     <label for="name" class="form-label" style="text-align: right; display: block;">الاسم</label>
                                     <InputText id="name" class="form-control" style="text-align: right;" @bind-Value="userData.employeeName" readonly />
                                 </div>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-12 col-sm-6 col-md-4">
                                 <div class="mb-3">
                                     <label for="employeeNumber" class="form-label" style="text-align: right; display: block;">الرقم الوظيفي</label>
                                     <InputNumber id="employeeNumber" class="form-control" style="text-align: right;" @bind-Value="userData.EmployeeNumber" readonly />
                                 </div>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-12 col-sm-6 col-md-4">
                                 <div class="mb-3">
                                     <label for="qualification" class="form-label" style="text-align: right; display: block;">المؤهل</label>
                                     <InputText id="qualification" class="form-control" style="text-align: right;" @bind-Value="userData.jobTitle" readonly />
                                 </div>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-12 col-sm-6 col-md-4">
                                 <div class="mb-3">
                                     <label for="department" class="form-label" style="text-align: right; display: block;">القسم</label>
                                     <InputText id="department" class="form-control" style="text-align: right;" @bind-Value="userData.Department" readonly />
                                 </div>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-12 col-sm-6 col-md-4">
                                 <div class="mb-3">
                                     <label for="college" class="form-label" style="text-align: right; display: block;">الكلية/الفرع </label>
                                     <InputText id="college" class="form-control" style="text-align: right;" @bind-Value="userData.college" readonly />
@@ -107,16 +107,17 @@
             </div>
         </div>
 
-        <div class="w-75 mb-4 shadow-sm">
+        <div class="responsive-container mb-4 shadow-sm">
             <Srs.Client.Compontets.EducationalActivityComponent OnActivityLoaded="HandleEducationalData"
                                                                 employeeid="@userData.employeeId"
+                                                                evaluationid="@userData.EvaluationId"
                                                                 evaluationPeriod="@evaluationPeriodId"
 
                                                                  />
         </div>
 
         @* Pass evaluationId and IsReadOnly to the component *@
-        <div class="w-75 mb-4 shadow-sm">
+        <div class="responsive-container mb-4 shadow-sm">
             <Srs.Client.Compontets.SentificِActivityComponent EvaluationId="@evaluationId"
                                                               InitialResearchPapers="@researchPapers"
                                                               InitialOtherActivities="@otherActivities"
@@ -126,24 +127,24 @@
                                                               IsReadOnly="@viewonly" />
         </div>
 
-        <div class="w-75 mb-4 shadow-sm">
+        <div class="responsive-container mb-4 shadow-sm">
             <Srs.Client.Compontets.AdministrativeِِActivityComponent InitialData="administrativeData"
                                                                      OnActivityLoaded="HandleAdministrativeData"
                                                                      IsReadOnly="@viewonly" />
         </div>
 
-        <div class="w-75 mb-4 shadow-sm">
+        <div class="responsive-container mb-4 shadow-sm">
             <Srs.Client.Compontets.StudentActivityComponent InitialData="studentActivityData"
                                                             OnActivityLoaded="HandleStudentActivityData"
                                                             IsReadOnly="@viewonly" />
         </div>
 
-        <div class="w-75 mb-4 shadow-sm">
+        <div class="responsive-container mb-4 shadow-sm">
             <Srs.Client.Compontets._ِAcademicAdvisingComponent IsReadOnly="@viewonly" />
         </div>
         @if (!string.IsNullOrEmpty(successMessage))
         {
-            <div class="w-75 mb-4">
+            <div class="responsive-container mb-4">
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                     <strong>نجح!</strong> @successMessage
                     <button type="button" class="btn-close" @onclick="@(() => successMessage = null)"></button>
@@ -153,7 +154,7 @@
 
         @if (!string.IsNullOrEmpty(errorMessage))
         {
-            <div class="w-75 mb-4">
+            <div class="responsive-container mb-4">
                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
                     <strong>خطأ!</strong> @errorMessage
                     <button type="button" class="btn btn-close" @onclick="@(() => errorMessage = null)"></button>
@@ -162,7 +163,7 @@
         }
         if (StatusId == 6 && viewonly && !isLoading && userData != null && evaluationPeriodId > 0)
                 {
-                    <div class="w-75 mb-4">
+                    <div class="responsive-container mb-4">
                         <div class="alert alert-success shadow-sm text-center" role="alert">
                             <h5 class="alert-heading">
                                 <i class="bi bi-check-circle-fill"></i>تم قبول تقييمك
@@ -183,10 +184,10 @@
                                                 IsViewMode="true"
                                                 OnClose="@CloseModal" />
         }
-        @* show buttons if NOT in view mode*@
+        @* show buttons if NOT in view mode *@
         @if (!viewonly)
         {
-            <div class="w-75 mb-4 d-flex gap-3">
+            <div class="responsive-container mb-4 d-flex gap-3">
                 <button class="btn btn-outline-primary btn-lg flex-fill" @onclick="SaveDraft">
                     @if (isExistingSubmission)
                     {
@@ -208,7 +209,7 @@
 @code {
     private UserDataDto userData = new UserDataDto();
     private bool isLoading = true;
-    const int TA_EMPLOYEE_ID = 6492;
+    const int TA_EMPLOYEE_ID = 7056;
     private int evaluationId;
     private int evaluationPeriodId;
     private int? submissionId;

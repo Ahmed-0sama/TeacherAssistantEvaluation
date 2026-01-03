@@ -1,4 +1,5 @@
 ﻿using Shared.Dtos.DeanDto;
+using Shared.Dtos.ProfessorEvaluationDto;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,6 +16,8 @@ namespace Business_Access.Interfaces
 
         Task<DeanActionResponseDto> ReturnEvaluationAsync(ReturnEvaluationDto dto);
         Task<DeanActionResponseDto> UpdateEvaluationCriteriaAsync(UpdateDeanEvaluationDto dto);
+        Task<List<EvaluationApiResponseDto>> GetTAsForDeanAsync(int periodId, int deanDepartmentId, DateOnly startDate);
+
 
     }
 }
