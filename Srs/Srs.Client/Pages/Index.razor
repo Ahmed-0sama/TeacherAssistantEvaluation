@@ -226,7 +226,7 @@
     private StudentActivityDto studentActivityData = new StudentActivityDto();
     private EducationalActivityDto? educationalData;
     private HodEvaluationResponseDto? hodEvaluationData;
-
+    private bool hasActiveEvaluationPeriod = false;
     protected override async Task OnInitializedAsync()
     {
         await GetEvaluationPeriod();
@@ -247,13 +247,21 @@
             {
                 var result = await response.Content.ReadFromJsonAsync<GetEvaluationPeriodDto>();
                 evaluationPeriodId = result.PeriodId;
-                Console.WriteLine($"✅ evaluationPeriod retrieved{evaluationPeriodId}");
+                hasActiveEvaluationPeriod = true;
+                Console.WriteLine($"✅ evaluationPeriod retrieved: {evaluationPeriodId}");
+            }
+            else
+            {
+                hasActiveEvaluationPeriod = false;
+                errorMessage = "لا توجد فترة تقييم نشطة حالياً";
+                Console.WriteLine("No Active EvaluationPeriod");
             }
         }
         catch (Exception ex)
         {
-            errorMessage = $"لا توجد فترة تقييم حاليا {ex.Message}";
-            Console.WriteLine($"No Active EvaluationPeriod  {ex.Message}");
+            hasActiveEvaluationPeriod = false;
+            errorMessage = "لا توجد فترة تقييم نشطة حالياً";
+            Console.WriteLine($"No Active EvaluationPeriod: {ex.Message}");
         }
     }
     private void HandleEducationalData(EducationalActivityDto data)
@@ -293,6 +301,13 @@
 
         try
         {
+            if (!hasActiveEvaluationPeriod || evaluationPeriodId == 0)
+            {
+                errorMessage = "لا توجد فترة تقييم نشطة حالياً";
+                isLoading = false;
+                StateHasChanged();
+                return;
+            }
 
             Console.WriteLine($"📡 Loading GTA info for employee {TA_EMPLOYEE_ID}...");
 
