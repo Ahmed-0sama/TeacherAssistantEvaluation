@@ -70,7 +70,7 @@
                         </div>
                     </div>
                 </div>
-                    @if (SelectedTA.statusid == 1)
+                    @if (SelectedTA.statusid == 1||SelectedTA.statusid==0)
                     {
                         <ReminderComponent Name="مساعد التدريس"
                                            EvaluationId="SelectedTA.EvaluationId"
@@ -173,7 +173,7 @@
                                                     @eval.Comments
                                                 </td>
                                             </tr>
-                                        }
+                                            }
                                     </tbody>
                                     <tfoot class="table-light">
                                         <tr>
@@ -186,21 +186,6 @@
                                     </tfoot>
                                 </table>
                             </div>
-                                @if (SelectedTA.statusid == 2 && professorsNeedingReminder.Any())
-                                {
-                                    <div class="alert alert-warning mt-3" role="alert">
-                                        <div class="d-flex align-items-center justify-content-between">
-                                            <div>
-                                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                                                <strong>تنبيه:</strong> لم يقم بعض الأساتذة بتقديم تقييماتهم بعد
-                                            </div>
-                                            <button class="btn btn-sm btn-warning" @onclick="ShowProfessorsReminderModal">
-                                                <i class="bi bi-bell me-1"></i>
-                                                إرسال تذكير (@professorsNeedingReminder.Count)
-                                            </button>
-                                        </div>
-                                    </div>
-                                }
                                 <div class="mt-3 p-3 bg-light rounded shadow-sm">
                                     <h6 class="fw-bold mb-3 text-primary">
                                         <i class="bi bi-book-half me-1"></i>اكتمال ساعات النصاب
@@ -281,6 +266,21 @@
                                 </div>
                         }
                     </div>
+                        @if (professorsNeedingReminder.Any())
+                        {
+                            <div class="alert alert-warning mt-3" role="alert">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                        <strong>تنبيه:</strong> لم يقم بعض الأساتذة بتقديم تقييماتهم بعد
+                                    </div>
+                                    <button class="btn btn-sm btn-warning" @onclick="ShowProfessorsReminderModal">
+                                        <i class="bi bi-bell me-1"></i>
+                                        إرسال تذكير (@professorsNeedingReminder.Count)
+                                    </button>
+                                </div>
+                            </div>
+                        }
                 </div>
 
                 <!-- Child Components -->
@@ -694,7 +694,8 @@
             Console.WriteLine($"✅ Found {allProfessors.Count} total professors from teaching data");
 
             // Get professors who already submitted (from profdto)
-            var submittedProfessorIds = profdto
+            // ⚠️ KEY FIX: Handle case when profdto is null or empty
+            var submittedProfessorIds = (profdto ?? new List<ProfessorEvaluationResponseDto>())
                 .Where(p => p.IsSubmitted)
                 .Select(p => p.ProfessorEmployeeId)
                 .Distinct()
@@ -703,6 +704,7 @@
             Console.WriteLine($"✅ Found {submittedProfessorIds.Count} professors who submitted");
 
             // Find professors who haven't submitted
+            // ⚠️ KEY FIX: This will now show ALL professors if none have submitted
             professorsNeedingReminder = allProfessors
                 .Where(prof => !submittedProfessorIds.Contains(prof.ProfessorId))
                 .Select(prof => new ProfessorReminderInfo
@@ -721,7 +723,6 @@
             Console.WriteLine($"❌ Error loading professors needing reminder: {ex.Message}");
         }
     }
-
     private void ShowProfessorsReminderModal()
     {
         showProfessorsReminderModal = true;
@@ -795,31 +796,21 @@
                 return;
             }
 
+            // Load employee info
             try
             {
                 var response = await Http.GetAsync($"api/evaluation/info/{SelectedTA.employeeId}");
-
                 if (response.IsSuccessStatusCode)
                 {
                     fullEmployeeInfo = await response.Content.ReadFromJsonAsync<UserDataDto>();
-
                     if (fullEmployeeInfo != null)
                     {
-                        // Update SelectedTA with full info
                         SelectedTA.employeeName = fullEmployeeInfo.employeeName;
                         SelectedTA.Department = fullEmployeeInfo.Department ?? SelectedTA.Department;
                         SelectedTA.college = fullEmployeeInfo.college ?? SelectedTA.college;
                         SelectedTA.jobTitle = fullEmployeeInfo.jobTitle;
-
-                        Console.WriteLine($"✅ Employee info updated:");
-                        Console.WriteLine($"   - Name: {SelectedTA.employeeName}");
-                        Console.WriteLine($"   - Department: {SelectedTA.Department}");
-                        Console.WriteLine($"   - College: {SelectedTA.college}");
+                        Console.WriteLine($"✅ Employee info updated");
                     }
-                }
-                else
-                {
-                    Console.WriteLine($"⚠️ Failed to load employee info: {response.StatusCode}");
                 }
             }
             catch (Exception ex)
@@ -827,31 +818,18 @@
                 Console.WriteLine($"❌ Error loading employee info: {ex.Message}");
             }
 
+            // Load teaching data
             try
             {
-                Console.WriteLine($"📡 Fetching teaching data for employee {SelectedTA.employeeId}");
-
+                Console.WriteLine($"📡 Fetching teaching data");
                 var response = await Http.GetAsync(
                     $"api/evaluation/teachingdata/{SelectedTA.employeeId}?startDate=2025-01-01&endDate=2025-12-31");
 
                 if (response.IsSuccessStatusCode)
                 {
-                    semesterTeachingLoads = await response.Content.ReadFromJsonAsync<List<TeachingDataDto>>();
-
-                    if (semesterTeachingLoads != null && semesterTeachingLoads.Any())
-                    {
-                        Console.WriteLine($"✅ Loaded {semesterTeachingLoads.Count} semesters teaching data");
-                        Console.WriteLine($"   Average Score: {AverageTeachingLoadGrade()}");
-                    }
-                    else
-                    {
-                        Console.WriteLine("⚠️ No teaching data found");
-                        semesterTeachingLoads = new List<TeachingDataDto>();
-                    }
-                }
-                else
-                {
-                    Console.WriteLine($"⚠️ Failed to load teaching data: {response.StatusCode}");
+                    semesterTeachingLoads = await response.Content.ReadFromJsonAsync<List<TeachingDataDto>>()
+                        ?? new List<TeachingDataDto>();
+                    Console.WriteLine($"✅ Loaded {semesterTeachingLoads.Count} semesters");
                 }
             }
             catch (Exception ex)
@@ -859,7 +837,7 @@
                 Console.WriteLine($"❌ Error loading teaching data: {ex.Message}");
             }
 
-            // ✅ Load professor evaluations (no change needed - already using backend)
+            // Load professor evaluations
             try
             {
                 var profEvaluations = await Http.GetFromJsonAsync<List<ProfessorEvaluationResponseDto>>(
@@ -876,15 +854,13 @@
                 Console.WriteLine($"❌ Error loading professor evaluations: {ex.Message}");
             }
 
-            // ✅ Load existing HOD evaluation (no change needed - already using backend)
+            // Load HOD evaluation
             try
             {
                 var response = await Http.GetAsync($"api/HodEvaluation/HodEvaluationByEvaluationId/{SelectedTA.EvaluationId}");
-
                 if (response.IsSuccessStatusCode)
                 {
                     hodEvaluationData = await response.Content.ReadFromJsonAsync<HodEvaluationResponseDto>();
-
                     if (hodEvaluationData != null && hodEvaluationData.Evaluations?.Any() == true)
                     {
                         hodStrengths = hodEvaluationData.HodStrengths ?? string.Empty;
@@ -905,8 +881,7 @@
                             else if (eval.CriterionType == "PersonalTraits")
                                 personalTraitsRatings[eval.CriterionId] = eval.RatingId;
                         }
-
-                        Console.WriteLine($"✅ Loaded ratings from existing HOD evaluation");
+                        Console.WriteLine($"✅ Loaded HOD evaluation");
                     }
                 }
             }
@@ -915,24 +890,8 @@
                 Console.WriteLine($"❌ Error loading HOD evaluation: {ex.Message}");
             }
 
-            Console.WriteLine("✅ LoadData completed successfully");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"❌ Critical error in LoadData: {ex.Message}");
-            await JS.InvokeVoidAsync("alert", $"حدث خطأ: {ex.Message}");
-        }
-        finally
-        {
-            isLoadingModal = false;
-            StateHasChanged();
-        }
-        try
-        {
-            // ... existing code for loading teaching data, professor evaluations, etc ...
-
-            // ✅ ADD THIS AT THE END after loading everything
-            if (SelectedTA != null && semesterTeachingLoads.Any() && profdto != null)
+            // ✅ CRITICAL: Load professors needing reminder
+            if (SelectedTA != null && semesterTeachingLoads.Any())
             {
                 await LoadProfessorsNeedingReminder();
             }

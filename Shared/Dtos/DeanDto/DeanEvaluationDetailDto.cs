@@ -47,5 +47,8 @@ namespace Shared.Dtos.DeanDto
         public string? HodWeaknesses { get; set; }
         public string? HodReturnComment { get; set; }
         public string? DeanReturnComment { get; set; }
+        
+        // Flag to track if Dean has edited this evaluation
+        public bool HasDeanEdited { get; set; }
     }
 }

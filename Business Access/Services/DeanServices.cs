@@ -52,6 +52,9 @@ namespace Business_Access.Services
                 .Where(x => x.IsActive)  // ← ADD THIS FILTER
                 .ToList() ?? new List<Hodevaluation>();
 
+            // ✅ Check if Dean has edited this evaluation
+            bool hasDeanEdited = hodEvaluations.Any(h => h.SourceRole == "Dean");
+
             // Aggregate Section Totals - ensure decimal type
             var teachingActivities = hodEvaluations
                 .Where(x => x.Criterion?.CriterionType == "DirectTeaching")
@@ -111,7 +114,7 @@ namespace Business_Access.Services
             var academicAdvisingCount = evaluation.Tasubmission?.AdvisedStudentCount ?? 0;
             var academicAdvising = (decimal)Math.Min(academicAdvisingCount, 5);
 
-            // ✅ Use the stored TotalScore from the Evaluation table
+            // Use the stored TotalScore from the Evaluation table
             var totalscore = evaluation.TotalScore;
 
             // Grade simple mapping
@@ -152,7 +155,9 @@ namespace Business_Access.Services
                 HodStrengths = evaluation.HodStrengths,
                 HodWeaknesses = evaluation.HodWeaknesses,
                 HodReturnComment = evaluation.HodReturnComment,
-                DeanReturnComment = evaluation.DeanReturnComment
+                DeanReturnComment = evaluation.DeanReturnComment,
+                //dean flag for edits
+                HasDeanEdited = hasDeanEdited
             };
         }
         public async Task<DeanActionResponseDto> UpdateEvaluationCriteriaAsync(UpdateDeanEvaluationDto dto)
@@ -253,11 +258,6 @@ namespace Business_Access.Services
                     {
                         evaluation.DeanReturnComment = dto.DeanComments;
                     }
-
-                    // ✅ 9. Keep status as 5 (still pending Dean approval until final accept)
-                    // Dean can make multiple edits before final acceptance
-
-                    // ✅ 10. Send notification to TA
                     SendNotificationDto notificationdto = new SendNotificationDto
                     {
                         recipientId = evaluation.TaEmployeeId,

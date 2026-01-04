@@ -83,6 +83,7 @@ namespace Business_Access.Services
                     _db.Hodevaluations.Add(hodEval);
                 }
                 evaluation.TotalScore = dto.FinalScore;
+                evaluation.DateSubmitted = DateTime.UtcNow;
                 // Update evaluation status and comments
                 evaluation.StatusId = 5; // Completed HOD evaluation
                 evaluation.HodStrengths = dto.HodStrengths;

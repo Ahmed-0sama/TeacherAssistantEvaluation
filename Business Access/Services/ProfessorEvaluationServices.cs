@@ -135,9 +135,24 @@ namespace Business_Access.Services
                 if (profEvaluation.StatusId > 6) // After HOD review
                     throw new InvalidOperationException("Cannot update evaluation after HOD review stage");
 
-                var evaluation= await _db.Evaluations.FirstOrDefaultAsync(p=>p.EvaluationId == evaluationDto.EvalId);
-                if (evaluation != null)
-                    evaluation.StatusId = 2;
+                var mainEvaluation = await _db.Evaluations.FirstOrDefaultAsync(e =>
+                    e.TaEmployeeId == profEvaluation.TaEmployeeId &&
+                    e.PeriodId == profEvaluation.EvaluationPeriodId);
+
+                if (mainEvaluation != null)
+                {
+                    mainEvaluation.StatusId = 2;
+
+                    profEvaluation.IsReturned = false;
+                    profEvaluation.HodReturnComment = null;
+
+                    _db.Evaluations.Update(mainEvaluation);
+
+                }
+                else
+                {
+                    Console.WriteLine($"⚠️ Warning: Main evaluation not found for TA {profEvaluation.TaEmployeeId}");
+                }
                 // Update fields
                 profEvaluation.StatusId = 2; // Reset status to Submitted upon update
                 profEvaluation.CourseCode = evaluationDto.CourseCode.Trim();

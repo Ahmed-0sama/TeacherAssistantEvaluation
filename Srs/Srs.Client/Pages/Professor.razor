@@ -11,7 +11,14 @@
 </HeadContent>
 
 <h3 class="text-center mb-4">تقييم استاذ المقرر</h3>
-
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-warning alert-dismissible fade show" role="alert" dir="rtl">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <strong>تنبيه:</strong> @errorMessage
+        <button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
+    </div>
+}
 <div class="d-flex flex-column justify-content-center align-items-center vh-80">
     <div class="w-75 mb-4 shadow-sm">
         @if (isLoading)
@@ -324,7 +331,7 @@
     private Dictionary<string, string> validationErrors = new();
 
     // TODO: Replace with actual logged-in professor ID from authentication
-    private int currentProfessorId = 1251;
+    private int currentProfessorId = 7150;
 
     private int evaluationperiodid;
 
@@ -349,26 +356,67 @@
             if (response.IsSuccessStatusCode)
             {
                 var result = await response.Content.ReadFromJsonAsync<GetEvaluationPeriodDto>();
-                evaluationperiodid = result.PeriodId;
-                Console.WriteLine($"✅ evaluationPeriod retrieved: {evaluationperiodid}");
+
+                if (result != null && result.PeriodId > 0)
+                {
+                    evaluationperiodid = result.PeriodId;
+                    Console.WriteLine($"✅ evaluationPeriod retrieved: {evaluationperiodid}");
+                    errorMessage = null; // Clear any previous error
+                }
+                else
+                {
+                    errorMessage = "لا توجد فترة تقييم نشطة حالياً";
+                    Console.WriteLine("⚠️ No active evaluation period found");
+                }
+            }
+            else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                errorMessage = "لا توجد فترة تقييم نشطة حالياً";
+                Console.WriteLine("⚠️ No active evaluation period (404)");
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+
+                if (errorContent.Contains("No active evaluation period", StringComparison.OrdinalIgnoreCase))
+                {
+                    errorMessage = "لا توجد فترة تقييم نشطة حالياً";
+                }
+                else
+                {
+                    errorMessage = $"خطأ في تحميل فترة التقييم: {errorContent}";
+                }
+
+                Console.WriteLine($"❌ Error getting evaluation period: {errorContent}");
             }
         }
         catch (Exception ex)
         {
-            errorMessage = $"لا توجد فترة تقييم حاليا: {ex.Message}";
-            Console.WriteLine($"No Active EvaluationPeriod: {ex.Message}");
+            errorMessage = "لا توجد فترة تقييم نشطة حالياً";
+            Console.WriteLine($"❌ Exception getting evaluation period: {ex.Message}");
         }
     }
 
     private async Task LoadData()
     {
         isLoading = true;
-        errorMessage = null;
         evaluationsList.Clear();
 
         try
         {
             Console.WriteLine("=== Starting LoadData ===");
+
+            // ✅ Check if there's an active evaluation period before loading data
+            if (evaluationperiodid <= 0)
+            {
+                Console.WriteLine("⚠️ No active evaluation period, skipping data load");
+                // Don't clear errorMessage - keep the message from GetEvaluationPeriod
+                return;
+            }
+
+            // Clear any previous errors if we have a valid period
+            errorMessage = null;
+
             await LoadDataFromApi();
             Console.WriteLine($"=== LoadData completed. Found {evaluationsList.Count} evaluations ===");
         }
@@ -499,8 +547,8 @@
                 EvaluationPeriodId = eval.EvaluationPeriodId,
                 TaEmployeeId = eval.TAEmployeeId,
                 ProfessorEmployeeId = currentProfessorId,
-                CourseCode = eval.CourseCode,      // Use actual course code
-                CourseName = eval.CourseName,      // Use actual course name
+                CourseCode = eval.CourseCode,      
+                CourseName = eval.CourseName,    
                 SemesterName = eval.SemesterName,
                 OfficeHoursScore = 0,
                 AttendanceScore = 0,

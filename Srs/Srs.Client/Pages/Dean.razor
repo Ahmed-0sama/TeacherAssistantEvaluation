@@ -187,6 +187,18 @@
                 }
                 else
                 {
+                    @if (HasDeanEdited)
+                    {
+                        <div class="alert alert-warning border-warning shadow-sm mb-3" role="alert">
+                            <div class="d-flex align-items-start">
+                                <i class="bi bi-exclamation-triangle-fill fs-4 me-3 text-warning"></i>
+                                <div class="flex-grow-1">
+                                    <h6 class="alert-heading fw-bold mb-2">تنبيه: تم التعديل</h6>
+                                    <p class="mb-0">لقد قمت بتعديل هذا التقييم. لا يمكن إرجاعه إلى رئيس القسم بعد التعديل. يجب عليك اعتماده أو تعديله مرة أخرى.</p>
+                                </div>
+                            </div>
+                        </div>
+                    }
                     <div class="info-section mb-4">
                         <div class="row g-3">
                             <div class="col-md-6">
@@ -395,23 +407,24 @@
                             disabled="@IsDetailLoading">
                         <i class="bi bi-pencil-square me-2"></i>تعديل التقييم
                     </button>
-
-                    <button type="button"
-                            class="btn btn-danger px-4"
-                            @onclick="ReturnEvaluation"
-                            disabled="@(!Permissions.CanReturnFinalReport || IsReturning || IsDetailLoading)">
-                        @if (IsReturning)
-                        {
-                            <span class="spinner-border spinner-border-sm me-2"></span>
-                            <span>جارٍ الإرجاع...</span>
-                        }
-                        else
-                        {
-                            <i class="bi bi-x-circle me-2"></i>
-                            <span>إرجاع / رفض</span>
-                        }
-                    </button>
-
+                    @if (!SelectedData.HasDeanEdited)
+                    {
+                        <button type="button"
+                                class="btn btn-danger px-4"
+                                @onclick="ReturnEvaluation"
+                                disabled="@(!Permissions.CanReturnFinalReport || IsReturning || IsDetailLoading)">
+                            @if (IsReturning)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2"></span>
+                                <span>جارٍ الإرجاع...</span>
+                            }
+                            else
+                            {
+                                <i class="bi bi-x-circle me-2"></i>
+                                <span>إرجاع / رفض</span>
+                            }
+                        </button>
+                    }
                     <button type="button"
                             class="btn btn-success px-4"
                             @onclick="ApproveEvaluation"
@@ -466,6 +479,10 @@
     private const int SUPERVISOR_ID = 7150; // Example supervisor ID
     private string SelectedDepartment { get; set; } = string.Empty;
     private string SelectedPeriod { get; set; } = string.Empty;
+    
+    // ✅ Computed property that uses backend flag
+    private bool HasDeanEdited => SelectedData?.HasDeanEdited ?? false;
+
     private IEnumerable<EvaluationApiResponseDto> FilteredEvaluations
     {
         get
@@ -651,13 +668,13 @@
         Console.WriteLine($"   - TaName: {SelectedData.TaName}");
         var userDatadto = await FetchEmployeeInfo(userData.employeeId);
 
-        if (userData != null)
+        if (userDatadto != null)
         {
             // ✅ Update SelectedTA with full info
             userData.employeeName = userDatadto.employeeName;
-            userData.Department = userDatadto.Department ?? userDatadto.Department;
+            userData.Department = userDatadto.Department;
             userData.college = userDatadto.college;
-            userData.jobTitle = userDatadto.jobTitle;
+            userDatadto.jobTitle = userDatadto.jobTitle;
 
             Console.WriteLine($"✅ Employee info updated:");
             Console.WriteLine($"   - Name: {userDatadto.employeeName}");
@@ -930,7 +947,13 @@
     {
         if (SelectedData is null || !Permissions.CanReturnFinalReport || IsReturning)
             return;
-
+        
+        if (SelectedData.HasDeanEdited)
+        {
+            ShowToast("لا يمكن إرجاع التقييم بعد تعديله. يجب عليك اعتماده أو تعديله مرة أخرى.", "error");
+            return;
+        }
+        
         var comment = await JS.InvokeAsync<string?>(
             "prompt",
             "يرجى إدخال سبب الإرجاع/الرفض إلى رئيس القسم:");
@@ -958,7 +981,7 @@
 
                 var eval = Evaluations.FirstOrDefault(e => e.evaluationId == SelectedData.EvaluationId);
                 if (eval != null)
-                    OpenModal(eval);
+                    await OpenModal(eval);
                 else
                     HideModal();
             }
@@ -995,13 +1018,12 @@
             {
                 // Close HOD modal
                 IsHodModalVisible = false;
-
                 // Reload the Dean modal with fresh data
                 IsModalVisible = false; // Close first
                 StateHasChanged();
-                await Task.Delay(100); // Small delay to ensure clean state
+                //await Task.Delay(100); // Small delay to ensure clean state
 
-                OpenModal(eval); // Reopen with fresh data
+                await OpenModal(eval); // Reopen with fresh data - will fetch HasDeanEdited from backend
 
                 Console.WriteLine("✅ Evaluation data reloaded successfully");
             }
@@ -1124,4 +1146,4 @@
         public bool CanApproveFinalReport { get; set; }
         public bool CanReturnFinalReport { get; set; }
     }
-}
+}}}
