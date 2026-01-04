@@ -115,7 +115,7 @@ else{
                                 <tr>
                                     <td>@evaluation.employeeName</td>
                                     <td>@evaluation.Department</td>
-                                    <td>@(evaluation.statusid)</td>
+                                    <td>@(evaluationPeriodDisplay)</td>
                                     <td>
                                         @if (evaluation.TotalScore > 0)
                                         {
@@ -129,8 +129,8 @@ else{
                                         }
                                     </td>
                                     <td>
-                                        <span class="badge @GetGradeBadgeClass(evaluation.statusid)">
-                                            @GetGradeText(evaluation.statusid)
+                                            <span class="badge @GetStatusBadgeClass(evaluation.statusid)">
+                                                @GetCurrentState(evaluation.statusid)
                                         </span>
                                     </td>
                                     <td class="no-print">
@@ -186,7 +186,7 @@ else{
     private bool isLoading = false;
     private string SearchTerm { get; set; } = string.Empty;
     private const int HR_DEPARTMENT_ID = 5379;
-
+    private string evaluationPeriodDisplay{ get; set; }
     private List<UserDataDto> FilteredTAList
     {
         get
@@ -254,6 +254,8 @@ else{
             {
                 var result = await response.Content.ReadFromJsonAsync<GetEvaluationPeriodDto>();
                 EvaluationPeriodId = result.PeriodId;
+                evaluationPeriodDisplay = $"{result.StartDate.ToString("yyyy-MM-dd")} إلى {result.EndDate.ToString("yyyy-MM-dd")}";
+
                 Console.WriteLine($"✅ evaluationPeriod retrieved {EvaluationPeriodId}");
             }
         }
@@ -359,7 +361,34 @@ else{
             StateHasChanged();
         }
     }
-
+    private string GetCurrentState(int statusId)
+    {
+        return statusId switch
+        {
+            0 => "بانتظار إنشاء التقييم",
+            1 => "بانتظار الاستكمال",
+            2 => "بانتظار موافقة رئيس القسم",
+            3 => "بانتظار موافقة العميد",
+            4 => "بانتظار المراجعة من الموارد البشرية",
+            5 => "مراجعة الموارد البشرية",
+            6 => "معتمد",
+            _ => "حالة غير معروفة"
+        };
+    }
+    private string GetStatusBadgeClass(int statusId)
+    {
+        return statusId switch
+        {
+            0 => "bg-secondary",
+            1 => "bg-warning",
+            2 => "bg-info",
+            3 => "bg-primary",
+            4 => "bg-warning",
+            5 => "bg-danger",
+            6 => "bg-success",
+            _ => "bg-dark"
+        };
+    }
     private string GetGradeBadgeClass(decimal totalScore)
     {
         return totalScore switch
@@ -380,7 +409,7 @@ else{
             >= 80 => "جيد جداً",
             >= 70 => "جيد",
             >= 60 => "مقبول",
-            _ => "ضعيف"
+            _ => "لم يتم التقييم"
         };
     }
     private async Task PrintReport()

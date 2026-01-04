@@ -36,9 +36,9 @@ namespace Business_Access.Services
 
             var evaluation = await _db.Evaluations
                 .Include(e => e.Status)
-                .Include(e => e.Hodevaluations.Where(h => h.IsActive)) // ✅ FILTER FOR ACTIVE ONLY
+                .Include(e => e.Hodevaluations.Where(h => h.IsActive)) 
                     .ThenInclude(h => h.Criterion)
-                .Include(e => e.Hodevaluations.Where(h => h.IsActive)) // ✅ FILTER FOR ACTIVE ONLY
+                .Include(e => e.Hodevaluations.Where(h => h.IsActive)) 
                     .ThenInclude(h => h.Rating)
                 .Include(e => e.Tasubmission)
                 .Include(e => e.Period)

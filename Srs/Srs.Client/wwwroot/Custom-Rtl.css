@@ -76,13 +76,14 @@ h3.text-center {
     min-height: 40px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start;
     padding-right: 0;
     direction: rtl;
+    gap: 0.5rem;
 }
 
     .form-check-rtl .form-check-label {
-        order: 1;
+        order: 2;
         margin-left: 0;
         margin-right: 0;
         text-align: right;
@@ -90,7 +91,7 @@ h3.text-center {
     }
 
     .form-check-rtl .form-check-input {
-        order: 2;
+        order: 1;
         margin-right: 0;
         margin-left: 0;
         float: none;
@@ -532,8 +533,8 @@ hr {
 
         /* Remove ALL default page margins for modals */
         body:has(.modal-overlay) @page {
-            margin: 0;
-            size: auto;
+            margin: 1cm;
+            size: A4 portrait;
         }
 
         /* Hide everything except the modal ONLY when modal is present */
@@ -601,6 +602,8 @@ hr {
         height: auto !important;
         padding: 1rem !important;
         margin: 0 !important;
+        direction: rtl !important;
+        text-align: right !important;
     }
 
     /* Hide buttons, close button, and footer when printing */
@@ -635,6 +638,9 @@ hr {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
         color-adjust: exact !important;
+        display: inline-block !important;
+        padding: 0.25rem 0.5rem !important;
+        font-size: 0.75rem !important;
     }
 
         .badge.bg-success {
@@ -677,6 +683,15 @@ hr {
             color-adjust: exact !important;
         }
 
+        .badge.bg-light {
+            background-color: #f8f9fa !important;
+            color: #212529 !important;
+            border: 1px solid #dee2e6 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
+        }
+
     /* Card styling for print */
     .card {
         border: 1px solid #dee2e6 !important;
@@ -685,31 +700,38 @@ hr {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
         color-adjust: exact !important;
+        page-break-inside: avoid !important;
     }
 
     .card-body {
         padding: 0.75rem !important;
     }
 
-    .card.border-primary,
-    .bg-primary {
+    .card.border-primary {
         border-color: #0d6efd !important;
-        background-color: #e7f3ff !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
         color-adjust: exact !important;
     }
 
-        .bg-primary.bg-opacity-10 {
-            background-color: #e7f3ff !important;
+    .card.border-success,
+    .bg-success {
+        border-color: #198754 !important;
+        background-color: #d1e7dd !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
+
+        .bg-success.bg-opacity-10 {
+            background-color: #d1e7dd !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
             color-adjust: exact !important;
         }
 
-    .card.border-success {
-        border-color: #198754 !important;
-        border-width: 2px !important;
+    .bg-primary.bg-opacity-10 {
+        background-color: #e7f3ff !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
         color-adjust: exact !important;
@@ -720,6 +742,77 @@ hr {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
         color-adjust: exact !important;
+    }
+
+    /* ==================== FIX FOR GRADES TOTAL SECTION ==================== */
+    
+    /* Ensure row layout stays intact */
+    .row {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        margin-right: 0 !important;
+        margin-left: 0 !important;
+    }
+
+    .row.g-3 {
+        gap: 0.5rem !important;
+    }
+
+    /* Column sizing for print */
+    .col-md-2,
+    .col-auto {
+        flex: 0 0 auto !important;
+        width: auto !important;
+        padding-right: 0.5rem !important;
+        padding-left: 0.5rem !important;
+    }
+
+    /* Center text alignment */
+    .text-center {
+        text-align: center !important;
+    }
+
+    /* RTL for Arabic content */
+    [dir="rtl"],
+    .modal-body,
+    h3, h4, h5, h6,
+    label,
+    small {
+        direction: rtl !important;
+        text-align: right !important;
+    }
+
+    /* Ensure justify-content works in print */
+    .justify-content-center {
+        justify-content: center !important;
+        display: flex !important;
+    }
+
+    /* Fix for the grades detail section */
+    .row.text-center.g-3 {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+        justify-content: space-around !important;
+    }
+
+    .row.text-center.g-3 > div {
+        flex: 1 1 16% !important;
+        min-width: 120px !important;
+        margin-bottom: 0.5rem !important;
+    }
+
+    /* Small text inside cards */
+    small {
+        font-size: 0.7rem !important;
+        display: block !important;
+        margin-top: 0.25rem !important;
+    }
+
+    .text-muted {
+        color: #6c757d !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
     }
 
     /* Text colors for cards */
@@ -744,18 +837,15 @@ hr {
         color-adjust: exact !important;
     }
 
-    .text-muted {
+    .text-secondary {
         color: #6c757d !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
         color-adjust: exact !important;
     }
 
-    .text-secondary {
-        color: #6c757d !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        color-adjust: exact !important;
+    .text-dark {
+        color: #212529 !important;
     }
 
     /* Alert styling for print */
@@ -766,6 +856,7 @@ hr {
         padding: 0.75rem 1rem !important;
         margin-bottom: 1rem !important;
         border-radius: 6px !important;
+        page-break-inside: avoid !important;
     }
 
     .alert-info {
@@ -795,16 +886,95 @@ hr {
         color-adjust: exact !important;
     }
 
-    /* Ensure table content is visible */
-    .table {
-        border-collapse: collapse !important;
+    .alert-danger {
+        background-color: #f8d7da !important;
+        border-color: #f5c2c7 !important;
+        color: #842029 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
     }
 
-        .table th,
-        .table td {
-            border: 1px solid #dee2e6 !important;
+    /* ==================== FIXED TABLE PRINTING STYLES ==================== */
+    
+    /* Fix for table-responsive wrapper */
+    .table-responsive {
+        overflow: visible !important;
+        display: block !important;
+        width: 100% !important;
+        max-height: none !important;
+        height: auto !important;
+    }
+
+    /* Ensure table content is visible and properly sized */
+    .table {
+        border-collapse: collapse !important;
+        width: 100% !important;
+        table-layout: fixed !important;
+        page-break-inside: auto !important;
+        display: table !important;
+    }
+
+        /* Table header - repeat on each page */
+        .table thead {
+            display: table-header-group !important;
         }
 
+        .table thead th {
+            padding: 0.5rem !important;
+            text-align: right !important;
+            border: 1px solid #dee2e6 !important;
+            background-color: #e2e3e5 !important;
+            font-weight: 600 !important;
+            word-wrap: break-word !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        /* Table body cells */
+        .table tbody {
+            display: table-row-group !important;
+        }
+
+        .table tbody tr {
+            page-break-inside: avoid !important;
+            page-break-after: auto !important;
+            display: table-row !important;
+        }
+
+        .table tbody td {
+            padding: 0.5rem !important;
+            text-align: right !important;
+            border: 1px solid #dee2e6 !important;
+            word-wrap: break-word !important;
+            word-break: break-word !important;
+            display: table-cell !important;
+            vertical-align: middle !important;
+        }
+
+        /* Table footer */
+        .table tfoot {
+            display: table-footer-group !important;
+        }
+
+        .table tfoot th,
+        .table tfoot td {
+            padding: 0.5rem !important;
+            border: 1px solid #dee2e6 !important;
+            background-color: #f8f9fa !important;
+            font-weight: 600 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        /* Ensure all table cells are visible */
+        .table th,
+        .table td {
+            display: table-cell !important;
+            visibility: visible !important;
+        }
+
+        /* Table header styling */
         .table-secondary,
         .table thead.table-secondary {
             background-color: #e2e3e5 !important;
@@ -826,6 +996,11 @@ hr {
         page-break-after: avoid !important;
         color: #333 !important;
         font-weight: 600 !important;
+    }
+
+    h4 {
+        page-break-after: avoid !important;
+        font-weight: 700 !important;
     }
 
     /* Ensure proper spacing */
@@ -853,6 +1028,103 @@ hr {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
         color-adjust: exact !important;
+    }
+
+    /* Rounded corners */
+    .rounded-3 {
+        border-radius: 0.375rem !important;
+    }
+
+    .shadow-sm {
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075) !important;
+    }
+
+    /* Padding utilities */
+    .p-3 {
+        padding: 1rem !important;
+    }
+
+    .p-4 {
+        padding: 1.5rem !important;
+    }
+
+    .py-3 {
+        padding-top: 1rem !important;
+        padding-bottom: 1rem !important;
+    }
+
+    .py-4 {
+        padding-top: 1.5rem !important;
+        padding-bottom: 1.5rem !important;
+    }
+
+    .py-5 {
+        padding-top: 3rem !important;
+        padding-bottom: 3rem !important;
+    }
+
+    /* Margin utilities */
+    .mb-0 {
+        margin-bottom: 0 !important;
+    }
+
+    .mb-2 {
+        margin-bottom: 0.5rem !important;
+    }
+
+    .mb-3 {
+        margin-bottom: 1rem !important;
+    }
+
+    .mb-4 {
+        margin-bottom: 1.5rem !important;
+    }
+
+    .mt-2 {
+        margin-top: 0.5rem !important;
+    }
+
+    .mt-3 {
+        margin-top: 1rem !important;
+    }
+
+    .mt-4 {
+        margin-top: 1.5rem !important;
+    }
+
+    /* Font size utilities */
+    .fs-1 {
+        font-size: calc(1.375rem + 1.5vw) !important;
+    }
+
+    .fs-4 {
+        font-size: 1.5rem !important;
+    }
+
+    .fs-5 {
+        font-size: 1.25rem !important;
+    }
+
+    .fs-6 {
+        font-size: 1rem !important;
+    }
+
+    /* Font weight */
+    .fw-bold {
+        font-weight: 700 !important;
+    }
+
+    .fw-semibold {
+        font-weight: 600 !important;
+    }
+
+    /* Display utilities */
+    .d-block {
+        display: block !important;
+    }
+
+    .d-flex {
+        display: flex !important;
     }
 
     /* Force colors on all elements */

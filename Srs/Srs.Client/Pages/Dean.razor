@@ -489,13 +489,12 @@
         {
             var filtered = Evaluations.AsEnumerable();
 
-            // Apply search filter
             if (!string.IsNullOrWhiteSpace(SearchTerm))
             {
                 filtered = filtered.Where(e =>
                     e.taEmployeeId.ToString().Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
-                    (e.periodName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)) ||
-                    (e.periodName?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false));
+                    (e.taName?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||  
+                    (e.periodName?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false));  
             }
 
             // Apply department filter
@@ -854,7 +853,7 @@
             Console.WriteLine($"📡 Fetching employee info for ID: {employeeId}");
 
             var response = await Http.GetAsync(
-                $"https://corsproxy.io/?https://aastmtic.aast.edu/TAEvaluation_api/api/hr/get-employee-info/{employeeId}");
+                $"/api/evaluation/info/{employeeId}");
 
             if (response.IsSuccessStatusCode)
             {
