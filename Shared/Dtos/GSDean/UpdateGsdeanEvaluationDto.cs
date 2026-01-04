@@ -22,7 +22,7 @@ namespace Shared.Dtos.GSDean
 
         [StringLength(1000)]
         public string? EvaluationComments { get; set; }
-        public decimal? ProgressScore { get; set; }
+        public int? ProgressScore { get; set; }
 
         public bool TopicChosen { get; set; }
         public bool LiteratureReview { get; set; }

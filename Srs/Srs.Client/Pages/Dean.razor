@@ -79,7 +79,7 @@
         else
         {
             <div class="table-responsive">
-                <table class="table table-hover table-striped align-middle">
+                <table class="table table-hover table-striped align-middle" style="table-layout: auto;">
                     <thead class="table-primary">
                         <tr>
                             <th>اسم مساعد التدريس</th>
@@ -94,9 +94,9 @@
                         @foreach (var eval in FilteredEvaluations)
                         {
                             <tr>
-                                <td>@($"TA #{eval.taEmployeeId}")</td>
+                                <td>@(eval.taName)</td>
                                 <td>@eval.taEmployeeId</td>
-                                <td>@(eval.statusName ?? "غير محدد")</td>
+                                <td>@(eval.department ?? "غير محدد")</td>
                                 <td>@(eval.periodName ?? "غير محدد")</td>
                                 <td>
                                     <span class="@GetStatusBadgeClass(eval.statusId)">
@@ -104,11 +104,51 @@
                                     </span>
                                 </td>
                                 <td class="text-center">
-                                    <button type="button"
-                                            class="btn btn-sm btn-primary"
-                                            @onclick="() => OpenModal(eval)">
-                                        عرض التفاصيل
-                                    </button>
+                                <td>
+                                    @if (eval.statusId == 0 || eval.statusId == 1)
+                                    {
+                                        <button class="btn btn-sm btn-secondary" disabled>
+                                            <i class="bi bi-hourglass-split me-1"></i>
+                                            انتظار
+
+                                        </button>
+                                        <Srs.Client.Compontets.ReminderComponent EmployeeId="SUPERVISOR_ID"
+                                                                                 RecieverId="eval.taEmployeeId"
+                                                                                 RenderAsButton="true" />
+                                    }
+                                    else if (eval.statusId == 2)
+                                    {
+                                        <!-- View button for completed or returned evaluations -->
+                                        <button class="btn btn-sm btn-info" @onclick="() => OpenModal(eval)">
+                                            <i class="bi bi-eye me-1"></i>
+                                            عرض التقييم
+                                        </button>
+                                    }
+                                    else if (eval.statusId == 6 )
+                                    {
+                                        <!-- View button for completed or returned evaluations -->
+                                        <button class="btn btn-sm btn-info" @onclick="() => OpenModal(eval)">
+                                            <i class="bi bi-eye me-1"></i>
+                                            عرض التقييم
+                                        </button>
+                                    }
+                                    else if (eval.statusId == 7)
+                                    {
+                                        <!-- Edit button for Dean-returned evaluations -->
+                                        <button class="btn btn-sm btn-warning" @onclick="() => OpenModal(eval)">
+                                            <i class="bi bi-pencil-square me-1"></i>
+                                            اعادة التقييم
+                                        </button>
+                                    }
+                                    else if (eval.statusId == 5)
+                                    {
+                                        <!-- Evaluate button for submitted evaluations -->
+                                        <button class="btn btn-sm btn-primary" @onclick="() => OpenModal(eval)">
+                                            <i class="bi bi-pencil-square me-1"></i>
+                                            تقييم
+                                        </button>
+                                    }
+                                </td>
                                 </td>
                             </tr>
                         }
@@ -158,7 +198,7 @@
                             <div class="col-md-6">
                                 <p class="mb-1">
                                     <strong>القسم:</strong>
-                                    @(SelectedData.StatusName ?? "غير محدد")  
+                                    @(userData.Department)
                                 </p>
                             </div>
                             <div class="col-md-6">
@@ -183,9 +223,8 @@
                                     </p>
                                 </div>
                             }
-                </div>
-            </div>
-
+                       </div>
+                   </div>
                     <hr />
                     <div class="mb-4">
                         <h6 class="fw-bold mb-3">ملخص الدرجات</h6>
@@ -199,13 +238,17 @@
                                         <div class="d-flex justify-content-between align-items-center">
                                             <span class="text-muted">الأنشطة التعليمية (العبء التدريسي)</span>
                                             <span class="fw-bold text-primary">
-                                                @(SelectedData.TeachingActivitiesTotal + SelectedData.ProfessorAverageCourseScore+8 ) / 50
+                                                @(SelectedData.ProfessorAverageCourseScore + SelectedData.TeachingLoadCompletionScore + SelectedData.TeachingActivitiesTotal) / 50
                                             </span>
+                                        </div>
+                                        <div class="mt-2" style="font-size: 0.85rem;">
+                                            <small class="text-muted d-block">• تقييم الأساتذة: @SelectedData.ProfessorAverageCourseScore / 30</small>
+                                            <small class="text-muted d-block">• اكتمال النصاب: @SelectedData.TeachingLoadCompletionScore / 10</small>
+                                            <small class="text-muted d-block">• الأنشطة التعليمية: @SelectedData.TeachingActivitiesTotal / 10</small>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-
                             <!-- الأنشطة الطلابية -->
                             <div class="col-md-12">
                                 <div class="card border-primary">
@@ -302,7 +345,7 @@
 
                                         <div class="bg-white rounded-3 p-3 shadow-sm d-inline-block">
                                             <span class="fw-bold text-success" style="font-size: 2.5rem; direction: ltr;">
-                                                @CalculateTotalScoreDetailed()/ 100
+                                                @CalculateTotalScore()/ 100
                                             </span>
                                         </div>
 
@@ -311,7 +354,7 @@
                                             <div class="mt-3">
                                                 <span class="badge @GetGradeBadgeClass(SelectedData.FinalGrade)"
                                                       style="font-size: 1.1rem; padding: 0.5rem 1rem;">
-                                                    التقدير: @CalculateTotalScoreDetailed()
+                                                    التقدير: @CalculateTotalScore()
                                                 </span>
                                             </div>
                                         }
@@ -338,13 +381,21 @@
                 </button>
 
                 <button type="button"
-                        class="btn btn-primary px-4"
+                        class="btn btn-info px-4"
                         @onclick="ShowDetailsModal"
                         disabled="@IsDetailLoading">
                     <i class="bi bi-eye me-2"></i>عرض تقييم رئيس القسم
                 </button>
+
                 @if (IsPendingApproval())
                 {
+                    <button type="button"
+                            class="btn btn-warning px-4"
+                            @onclick="ShowEditModal"
+                            disabled="@IsDetailLoading">
+                        <i class="bi bi-pencil-square me-2"></i>تعديل التقييم
+                    </button>
+
                     <button type="button"
                             class="btn btn-danger px-4"
                             @onclick="ReturnEvaluation"
@@ -384,10 +435,13 @@
 @if (IsHodModalVisible && SelectedData != null)
 {
     <Srs.Client.Compontets.HODComponent SelectedTA="@userData"
-                                            EvaluationPeriodId="@EvaluationPeriodId"
-                                            IsViewMode="@isViewMode"
-                                            OnClose="@HideHodModal"
-                                            OnSaveSuccess="@HandleSaveSuccess" />
+                                        EvaluationPeriodId="@EvaluationPeriodId"
+                                        IsViewMode="@isViewMode"
+                                        IsDeanUser="true"
+                                        OnClose="@HideHodModal"
+                                        OnSaveSuccess="@HandleSaveSuccess"
+                                        DeanEmployeeId="121"
+                                        />
 }
 @code {
     private List<EvaluationApiResponseDto> Evaluations { get; set; } = new();
@@ -409,6 +463,7 @@
     private UserDataDto userData = new UserDataDto();
     private int EvaluationPeriodId ;
     private bool isViewMode = true;
+    private const int SUPERVISOR_ID = 7150; // Example supervisor ID
     private string SelectedDepartment { get; set; } = string.Empty;
     private string SelectedPeriod { get; set; } = string.Empty;
     private IEnumerable<EvaluationApiResponseDto> FilteredEvaluations
@@ -422,14 +477,14 @@
             {
                 filtered = filtered.Where(e =>
                     e.taEmployeeId.ToString().Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
-                    (e.statusName?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                    (e.periodName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)) ||
                     (e.periodName?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false));
             }
 
             // Apply department filter
             if (!string.IsNullOrWhiteSpace(SelectedDepartment))
             {
-                filtered = filtered.Where(e => e.statusName == SelectedDepartment);
+                filtered = filtered.Where(e => e.department == SelectedDepartment);
             }
 
             // Apply period filter
@@ -444,9 +499,19 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await GetEvaluationPeriod();
-        Console.WriteLine("?? Dean page initializing...");
-        await FetchEvaluationsAsync();
+        try
+        {
+            await GetEvaluationPeriod();
+            await LoadGTAList(); // ✅ Use this instead of the old method
+        }
+        catch (Exception ex)
+        {
+            ToastMessage = $"حدث خطأ أثناء تحميل البيانات: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
     private async Task GetEvaluationPeriod()
     {
@@ -467,26 +532,50 @@
             Console.WriteLine($"No Active EvaluationPeriod  {ex.Message}");
         }
     }
-    private async Task FetchEvaluationsAsync()
+    private async Task LoadGTAList()
     {
-        Console.WriteLine("?? Starting FetchEvaluationsAsync...");
         IsLoading = true;
         LoadError = null;
-        StateHasChanged();
 
         try
         {
-            var url = $"/api/evaluation/period/{EvaluationPeriodId}";
-            Console.WriteLine($"?? Making API call to: {url}");
-            var evaluations = await Http.GetFromJsonAsync<List<EvaluationApiResponseDto>>(url) ?? new List<EvaluationApiResponseDto>();
-            Console.WriteLine($"? Received {evaluations.Count} evaluations");
-            Evaluations = evaluations;
+            Console.WriteLine("📡 Loading Dean page data...");
+
+            if (EvaluationPeriodId == 0)
+            {
+                LoadError = "لا توجد فترة تقييم نشطة حالياً";
+                return;
+            }
+
+            var startDate = "2025-01-01"; // TODO: Get from evaluation period
+
+            // ✅ Single API call to get enriched TA list
+            var url = $"/api/Dean/GetTAsForDean?periodId={EvaluationPeriodId}&deanDepartmentId={SUPERVISOR_ID}&startDate={startDate}";
+
+            Console.WriteLine($"📡 Calling: {url}");
+
+            var response = await Http.GetAsync(url);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                throw new Exception($"Failed to load TAs: {error}");
+            }
+
+            Evaluations = await response.Content.ReadFromJsonAsync<List<EvaluationApiResponseDto>>()
+                ?? new List<EvaluationApiResponseDto>();
+
+            Console.WriteLine($"✅ Loaded {Evaluations.Count} TAs for Dean");
+
+            if (!Evaluations.Any())
+            {
+                LoadError = "لا يوجد تقييمات جاهزة للمراجعة";
+            }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"? Exception in FetchEvaluationsAsync: {ex.Message}");
-            LoadError = $"خطأ في تحميل البيانات: {ex.Message}";
-            ShowToast(LoadError, "error");
+            LoadError = $"خطأ في تحميل قائمة مساعدي التدريس: {ex.Message}";
+            Console.WriteLine($"❌ Error: {ex}");
         }
         finally
         {
@@ -494,8 +583,62 @@
             StateHasChanged();
         }
     }
+    private async Task LoadEvaluationDetailsForGTAs()
+    {
+        try
+        {
+            Console.WriteLine($"📡 Fetching evaluation details for {Evaluations.Count} GTAs");
 
-    private async void ShowDetailsModal()
+            var updatedEvaluations = new List<EvaluationApiResponseDto>();
+
+            foreach (var eval in Evaluations)
+            {
+                try
+                {
+                    var response = await Http.GetAsync(
+                        $"/api/evaluation/ta/{eval.taEmployeeId}/current");
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var evaluationDetail = await response.Content.ReadFromJsonAsync<EvaluationApiResponseDto>();
+
+                        if (evaluationDetail != null)
+                        {
+                            // ✅ FIX: Preserve the TA name from original data
+                            evaluationDetail.taName = eval.taName;
+                            evaluationDetail.taEmployeeId = eval.taEmployeeId;
+
+                            updatedEvaluations.Add(evaluationDetail);
+                            Console.WriteLine($"✅ Found evaluation for TA {eval.taEmployeeId} - {eval.taName}");
+                        }
+                        else
+                        {
+                            updatedEvaluations.Add(eval);
+                        }
+                    }
+                    else
+                    {
+                        // Keep the original data with the name
+                        updatedEvaluations.Add(eval);
+                        Console.WriteLine($"⚠️ No evaluation found for TA {eval.taEmployeeId} - keeping original data");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"⚠️ Error fetching evaluation for TA {eval.taEmployeeId}: {ex.Message}");
+                    updatedEvaluations.Add(eval);
+                }
+            }
+
+            Evaluations = updatedEvaluations;
+            Console.WriteLine($"✅ Loaded evaluation details for {Evaluations.Count} GTAs");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error loading evaluation details: {ex.Message}");
+        }
+    }
+    private async Task ShowDetailsModal()
     {
         if (SelectedData == null)
         {
@@ -506,31 +649,76 @@
         Console.WriteLine($"🔵 ShowDetailsModal called for evaluation: {SelectedData.EvaluationId}");
         Console.WriteLine($"   - TaEmployeeId: {SelectedData.TaEmployeeId}");
         Console.WriteLine($"   - TaName: {SelectedData.TaName}");
+        var userDatadto = await FetchEmployeeInfo(userData.employeeId);
+
+        if (userData != null)
+        {
+            // ✅ Update SelectedTA with full info
+            userData.employeeName = userDatadto.employeeName;
+            userData.Department = userDatadto.Department ?? userDatadto.Department;
+            userData.college = userDatadto.college;
+            userData.jobTitle = userDatadto.jobTitle;
+
+            Console.WriteLine($"✅ Employee info updated:");
+            Console.WriteLine($"   - Name: {userDatadto.employeeName}");
+            Console.WriteLine($"   - Department: {userDatadto.Department}");
+            Console.WriteLine($"   - College: {userDatadto.college}");
+            Console.WriteLine($"   - Job Title: {userDatadto.jobTitle}");
+        }
 
         // Create a fresh userData object with all required fields
-        userData = new UserDataDto
-        {
-     Id = SelectedData.TaEmployeeId,
-            Name = SelectedData.TaName ?? $"TA #{SelectedData.TaEmployeeId}",
-            EmployeeNumber = SelectedData.TaEmployeeId,
-            Department = SelectedData.TaEmail ?? "غير محدد",
-            EvaluationId = SelectedData.EvaluationId,
-    College = "" // Set if available from SelectedData
- };
 
         Console.WriteLine($"✅ User Data populated:");
-        Console.WriteLine($"   - ID: {userData.Id}");
-        Console.WriteLine($"   - Name: {userData.Name}");
+        Console.WriteLine($"   - ID: {userData.employeeId}");
+        Console.WriteLine($"   - Name: {userData.employeeName}");
         Console.WriteLine($"   - EvaluationId: {userData.EvaluationId}");
         Console.WriteLine($"   - EmployeeNumber: {userData.EmployeeNumber}");
 
-        // Close Dean modal and open HOD modal
+        // Close Dean modal and open HOD modal in VIEW mode
         IsModalVisible = false;
+        isViewMode = true;
         IsHodModalVisible = true;
 
         Console.WriteLine($"✅ Modal state changed:");
         Console.WriteLine($"   - IsModalVisible: {IsModalVisible}");
         Console.WriteLine($"   - IsHodModalVisible: {IsHodModalVisible}");
+        Console.WriteLine($"   - IsViewMode: {isViewMode}");
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task ShowEditModal()
+    {
+        if (SelectedData == null)
+        {
+            Console.WriteLine("⚠️ SelectedData is null, cannot show HOD modal");
+            return;
+        }
+
+        Console.WriteLine($"🔵 ShowEditModal called for evaluation: {SelectedData.EvaluationId}");
+
+        // Create a fresh userData object with all required fields
+        userData = new UserDataDto
+        {
+            employeeId = SelectedData.TaEmployeeId,
+            employeeName = SelectedData.TaName ?? $"TA #{SelectedData.TaEmployeeId}",
+            EmployeeNumber = SelectedData.TaEmployeeId,
+            Department = SelectedData.TaEmail ?? "غير محدد",
+            EvaluationId = SelectedData.EvaluationId,
+            college = "" // Set if available from SelectedData
+        };
+
+        Console.WriteLine($"✅ Opening HOD Component in EDIT mode for Dean");
+
+        // Close Dean modal and open HOD modal in EDIT mode
+        IsModalVisible = false;
+        isViewMode = false; // Allow editing
+        IsHodModalVisible = true;
+
+        Console.WriteLine($"✅ Modal state changed:");
+        Console.WriteLine($"   - IsModalVisible: {IsModalVisible}");
+        Console.WriteLine($"   - IsHodModalVisible: {IsHodModalVisible}");
+        Console.WriteLine($"   - IsViewMode: {isViewMode}");
 
         StateHasChanged();
     }
@@ -545,58 +733,130 @@
         StateHasChanged();
     }
 
-    private async void OpenModal(EvaluationApiResponseDto eval)
+    private async Task OpenModal(EvaluationApiResponseDto eval)
     {
-        Console.WriteLine($"?? Opening modal for evaluation: {eval.evaluationId}");
+        Console.WriteLine($"🔵 Opening modal for evaluation: {eval.evaluationId}");
+
+        // ✅ CHECK: Validate evaluation ID
+        if (eval.evaluationId == 0)
+        {
+            Console.WriteLine("⚠️ Cannot open modal: evaluationId is 0");
+            ShowToast("لا يوجد تقييم متاح لهذا المساعد", "error");
+            return;
+        }
+
         SelectedData = null;
         DetailError = null;
         IsDetailLoading = true;
         IsModalVisible = true;
         IsHodModalVisible = false;
 
-        StateHasChanged();
+        await InvokeAsync(StateHasChanged);
 
         try
         {
+            // ✅ STEP 1: Fetch employee info using eval.taEmployeeId (not userData.employeeId!)
+            Console.WriteLine($"📡 Fetching employee info for TA {eval.taEmployeeId}");
+            var employeeInfo = await FetchEmployeeInfo(eval.taEmployeeId);
+
+            // ✅ STEP 2: Fetch evaluation details
             var url = $"/api/Dean/evaluationDetail/{eval.evaluationId}";
+            Console.WriteLine($"📡 Fetching: {url}");
+
             var response = await Http.GetAsync(url);
 
             if (response.IsSuccessStatusCode)
             {
                 SelectedData = await response.Content.ReadFromJsonAsync<DeanEvaluationDetailDto>();
-                UpdatePermissions();
-                Console.WriteLine($"API StudentSurveyScore: {SelectedData?.StudentSurveyScore}");
-                Console.WriteLine($"API AcademicAdvisingScore: {SelectedData?.AcademicAdvisingScore}");
 
+                if (SelectedData == null)
+                {
+                    Console.WriteLine("⚠️ SelectedData is null after deserialization");
+                    DetailError = "فشل تحميل بيانات التقييم";
+                    ShowToast(DetailError, "error");
+                    return;
+                }
+
+                UpdatePermissions();
+
+                // Set hardcoded values if needed
                 SelectedData.StudentSurveyScore = 4;
                 SelectedData.AcademicAdvisingScore = 4;
+                SelectedData.TeachingLoadCompletionScore = 10;
 
-                Console.WriteLine($"After setting - StudentSurveyScore: {SelectedData?.StudentSurveyScore}");
-                Console.WriteLine($"After setting - AcademicAdvisingScore: {SelectedData?.AcademicAdvisingScore}");
-                userData.Id = SelectedData.TaEmployeeId;
-                userData.Name = $"TA #{SelectedData?.TaName}";
-                userData.EmployeeNumber = SelectedData.TaEmployeeId;
-                userData.Department = SelectedData.TaEmail;
+                // ✅ STEP 3: Populate userData with employee info from API
+                userData.employeeId = eval.taEmployeeId;
+                userData.employeeName = employeeInfo?.employeeName ?? SelectedData.TaName ?? $"TA #{eval.taEmployeeId}";
+                userData.EmployeeNumber = eval.taEmployeeId;
+                userData.Department = employeeInfo?.Department;
                 userData.EvaluationId = SelectedData.EvaluationId;
+                userData.college = employeeInfo?.college ?? "";
+                //userData.qualification = employeeInfo?.qualification ?? "";
+                userData.jobTitle = employeeInfo?.jobTitle ?? "";
+
+                // ✅ STEP 4: Also update SelectedData for display in Dean modal
+                if (employeeInfo != null)
+                {
+                    SelectedData.TaName = employeeInfo.employeeName;
+                    // You might want to add a Department property to DeanEvaluationDetailDto
+                    Console.WriteLine($"✅ Employee info loaded:");
+                    Console.WriteLine($"   - Name: {employeeInfo.employeeName}");
+                    Console.WriteLine($"   - Department: {employeeInfo.Department}");
+                    Console.WriteLine($"   - College: {employeeInfo.college}");
+                    //Console.WriteLine($"   - Qualification: {employeeInfo.qualification}");
+                    Console.WriteLine($"   - Job Title: {employeeInfo.jobTitle}");
+                }
+
+                Console.WriteLine("✅ Modal data loaded successfully");
             }
             else
             {
-                DetailError = "فشل تحميل تفاصيل التقييم";
+                var errorContent = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"❌ API Error: {response.StatusCode} - {errorContent}");
+                DetailError = $"فشل تحميل تفاصيل التقييم: {response.StatusCode}";
                 ShowToast(DetailError, "error");
             }
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"❌ Exception in OpenModal: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
             DetailError = $"خطأ: {ex.Message}";
             ShowToast(DetailError, "error");
         }
         finally
         {
             IsDetailLoading = false;
-            StateHasChanged();
+            await InvokeAsync(StateHasChanged);
         }
     }
+    private async Task<UserDataDto?> FetchEmployeeInfo(int employeeId)
+    {
+        try
+        {
+            Console.WriteLine($"📡 Fetching employee info for ID: {employeeId}");
 
+            var response = await Http.GetAsync(
+                $"https://corsproxy.io/?https://aastmtic.aast.edu/TAEvaluation_api/api/hr/get-employee-info/{employeeId}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var employeeInfo = await response.Content.ReadFromJsonAsync<UserDataDto>();
+                Console.WriteLine($"✅ Employee info loaded: {employeeInfo?.employeeName}");
+                return employeeInfo;
+            }
+            else
+            {
+                Console.WriteLine($"⚠️ Failed to load employee info: {response.StatusCode}");
+                return null;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error fetching employee info: {ex.Message}");
+            return null;
+        }
+    }
     private void HideModal()
     {
         IsModalVisible = false;
@@ -642,7 +902,7 @@
             {
                 var result = await response.Content.ReadFromJsonAsync<DeanActionResponseDto>();
                 ShowToast(result?.Message ?? "تم اعتماد التقييم النهائي بنجاح.", "success");
-                await FetchEvaluationsAsync();
+                await LoadGTAList();
 
                 var eval = Evaluations.FirstOrDefault(e => e.evaluationId == SelectedData.EvaluationId);
                 if (eval != null)
@@ -694,7 +954,7 @@
             {
                 var result = await response.Content.ReadFromJsonAsync<DeanActionResponseDto>();
                 ShowToast(result?.Message ?? "تم إرجاع التقييم إلى رئيس القسم بنجاح.", "success");
-                await FetchEvaluationsAsync();
+                await LoadGTAList();
 
                 var eval = Evaluations.FirstOrDefault(e => e.evaluationId == SelectedData.EvaluationId);
                 if (eval != null)
@@ -716,6 +976,96 @@
             IsReturning = false;
             StateHasChanged();
         }
+    }
+
+    private async Task HandleSaveSuccess()
+    {
+        Console.WriteLine("🔵 HandleSaveSuccess called - reloading evaluation data");
+
+        // Reload the evaluation data after save
+        if (SelectedData != null)
+        {
+            // First, refresh the evaluations list
+            await LoadGTAList();
+
+            // Find the updated evaluation
+            var eval = Evaluations.FirstOrDefault(e => e.evaluationId == SelectedData.EvaluationId);
+
+            if (eval != null)
+            {
+                // Close HOD modal
+                IsHodModalVisible = false;
+
+                // Reload the Dean modal with fresh data
+                IsModalVisible = false; // Close first
+                StateHasChanged();
+                await Task.Delay(100); // Small delay to ensure clean state
+
+                OpenModal(eval); // Reopen with fresh data
+
+                Console.WriteLine("✅ Evaluation data reloaded successfully");
+            }
+        }
+    }
+    private string GetStatusDisplayName(int statusId)
+    {
+        return statusId switch
+        {
+            0 => "بانتظار إنشاء التقييم",           // No evaluation
+            1 => "مسودة - بانتظار التقديم",         // Draft
+            2 => "مقدم - بانتظار الأستاذ",         // Submitted, waiting for professor
+            3 => "مرتجع من رئيس القسم للمساعد",    // Returned to TA by HOD
+            4 => "مرتجع من رئيس القسم للأستاذ",    // Returned to Professor by HOD
+            5 => "جاهز للمراجعة",                  // Ready for Dean review
+            6 => "معتمد من العميد",                // Approved by Dean
+            7 => "مرتجع من العميد",                // Returned by Dean
+            _ => "غير محدد"
+        };
+    }
+
+    // Fixed status badge class based on statusId
+    private string GetStatusBadgeClass(int statusId)
+    {
+        return statusId switch
+        {
+            0 => "badge bg-secondary",              // No evaluation - gray
+            1 => "badge bg-secondary",              // Draft - gray
+            2 => "badge bg-info",                   // Submitted - blue
+            3 => "badge bg-warning text-dark",      // Returned to TA - yellow
+            4 => "badge bg-warning text-dark",      // Returned to Professor - yellow
+            5 => "badge bg-primary",                // Ready for Dean - blue
+            6 => "badge bg-success",                // Approved - green
+            7 => "badge bg-danger",                 // Returned by Dean - red
+            _ => "badge bg-secondary"               // Unknown - gray
+        };
+    }
+    private decimal CalculateTotalScore()
+    {
+        if (SelectedData == null)
+            return 0;
+
+        return SelectedData.TotalScore;
+    }
+    
+    // ✅ FIXED: Match HOD component calculation exactly
+    private decimal CalculateTotalScoreDetailed()
+    {
+        if (SelectedData == null)
+            return 0;
+
+        // Teaching Load Score = Professor Average + Teaching Load Completion + Teaching Activities
+        decimal teachingLoadScore = 
+            SelectedData.ProfessorAverageCourseScore +    // Average of professor evaluations (max 30)
+            SelectedData.TeachingLoadCompletionScore +     // Teaching load completion (0 or 10)
+            SelectedData.TeachingActivitiesTotal;          // Teaching activities criteria (max 10)
+
+        return teachingLoadScore +                         // 50 points
+               SelectedData.ScientificActivityScore +      // 10 points
+               SelectedData.AdministrativeTotal +          // 10 points
+               SelectedData.StudentActivitiesTotal +       // 10 points
+               SelectedData.StudentSurveyScore +           // Student survey (max 5)
+               SelectedData.AcademicAdvisingScore +        // Academic advising (max 5)
+               SelectedData.PersonalTraitsTotal;           // 10 points
     }
 
     private void ShowToast(string message, string type = "success")
@@ -766,80 +1116,12 @@
     }
 
     private string GetGradeBadgeClass(string? grade) =>
-        grade == "ããÊÇÒ" ? "badge bg-success" : "badge bg-warning text-dark";
+        grade == "ممتاز" ? "badge bg-success" : "badge bg-warning text-dark";
 
     private class DeanPermissions
     {
         public bool CanPrintReports { get; set; } = true;
         public bool CanApproveFinalReport { get; set; }
         public bool CanReturnFinalReport { get; set; }
-    }
-
-    private async Task HandleSaveSuccess()
-    {
-        // Reload the evaluation data after save
-        if (SelectedData != null)
-        {
-            var eval = Evaluations.FirstOrDefault(e => e.evaluationId == SelectedData.EvaluationId);
-            if (eval != null)
-            {
-                IsHodModalVisible = false;
-                IsModalVisible = false;
-                OpenModal(eval);
-            }
-        }
-    }
-    private string GetStatusDisplayName(int statusId)
-    {
-        return statusId switch
-        {
-            1 => "مسودة",
-            2 => "مقدم",
-            5 => "تمت المراجعة من رئيس القسم",
-            4 => "مرتجع من رئيس القسم",
-            //5 => "تمت المراجعة من العميد",
-            6 => "معتمد",
-            7 => "مرتجع من العميد",
-            _ => "غير محدد"
-        };
-    }
-
-    // Fixed status badge class based on statusId
-    private string GetStatusBadgeClass(int statusId)
-    {
-        return statusId switch
-        {
-            1 => "badge bg-secondary",      // Draft
-            2 => "badge bg-info",           // Submitted
-            5 => "badge bg-primary",        // ReviewedByHOD
-            4 => "badge bg-warning text-dark", // ReturnedByHOD
-            //5 => "badge bg-primary",        // ReviewedByDean (pending approval)
-            7 => "badge bg-danger",         // ReturnedByDean
-            6 => "badge bg-success",        // Approved
-            _ => "badge bg-secondary"
-        };
-    }
-    private int CalculateTotalScore()
-    {
-        if (SelectedData == null)
-            return 0;
-
-        return SelectedData.TotalScore;
-    }
-    // Or if you want to calculate it from individual scores:
-    private decimal CalculateTotalScoreDetailed()
-    {
-        if (SelectedData == null)
-            return 0;
-
-        return SelectedData.TeachingActivitiesTotal +
-               SelectedData.StudentActivitiesTotal +
-               SelectedData.PersonalTraitsTotal +
-               SelectedData.AdministrativeTotal +
-               SelectedData.ScientificActivityScore +
-               SelectedData.StudentSurveyScore +
-               SelectedData.AcademicAdvisingScore +
-               +8+
-               SelectedData.ProfessorAverageCourseScore;
     }
 }

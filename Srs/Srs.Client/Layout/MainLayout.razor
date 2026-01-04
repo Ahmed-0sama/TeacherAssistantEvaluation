@@ -1,0 +1,92 @@
+﻿@inherits LayoutComponentBase
+
+<div id="wrapper">
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark" dir="rtl">
+        <div class="container-fluid">
+            <!-- Logo and Brand -->
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                <!-- Lazy load logo image with placeholder -->
+                <img src="Template/img/aast_white.png" 
+                     alt="AAST Logo" 
+                     height="50" 
+                     class="me-3" 
+                     loading="lazy"
+                     decoding="async" />
+                <div class="sidebar-brand-text">
+                    <h3 class="mb-0">
+                        الأكاديمية العربية
+                        <small>AASTMT</small>
+                    </h3>
+                    <h4 class="mb-0">نظام تقييم مساعدي التدريس</h4>
+                </div>
+            </a>
+            
+            <!-- Toggler for mobile -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <!-- Navbar items -->
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">
+                            <i class="fas fa-home me-2"></i>
+                            الرئيسية
+                        </a>
+                    </li>
+                    @* <li class="nav-item">
+                        <a class="nav-link" href="/dean">
+                            <i class="fas fa-user-tie me-2"></i>
+                            العميد
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/hod">
+                            <i class="fas fa-user-graduate me-2"></i>
+                            رئيس القسم
+                        </a>
+                    </li> *@
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" 
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-user-circle me-2"></i>
+                            الحساب
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" href="/profile">
+                                <i class="fas fa-user me-2"></i>
+                                الملف الشخصي
+                            </a></li>
+                            <li><a class="dropdown-item" href="/settings">
+                                <i class="fas fa-cog me-2"></i>
+                                الإعدادات
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/logout">
+                                <i class="fas fa-sign-out-alt me-2"></i>
+                                تسجيل الخروج
+                            </a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div id="content-wrapper" class="d-flex flex-column">
+        <div id="content">
+            @Body
+        </div>
+        
+        <footer class="sticky-footer bg-white">
+            <div class="container my-auto">
+                <div class="copyright text-center my-auto">
+                    <span>نظام تقييم مساعدي التدريس © @DateTime.Now.Year - الأكاديمية العربية للعلوم والتكنولوجيا والنقل البحري</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+</div>

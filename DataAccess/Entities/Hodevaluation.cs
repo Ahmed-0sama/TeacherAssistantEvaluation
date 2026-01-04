@@ -8,7 +8,10 @@ public partial class Hodevaluation
     public int HodevalId { get; set; }
 
     public int EvaluationId { get; set; }
-
+    public string SourceRole { get; set; }
+    public bool IsActive { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public int CreatedByUserId { get; set; }
     public int CriterionId { get; set; }
 
     public int RatingId { get; set; }

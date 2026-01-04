@@ -13,9 +13,11 @@ namespace Business_Access.Services
     public class ProfessorEvaluationServices : IProfessorEvaluation
     {
         private readonly SrsDbContext _db;
-        public ProfessorEvaluationServices(SrsDbContext db)
+        private readonly IExternalApiService _externalApiService;
+        public ProfessorEvaluationServices(SrsDbContext db, IExternalApiService externalApiService)
         {
             _db = db;
+            _externalApiService = externalApiService;
         }
 
         public async Task<int> CreateProfessorEvaluationAsync(CreateProfessorEvaluationDto evaluationDto)
@@ -160,6 +162,53 @@ namespace Business_Access.Services
                 throw;
             }
         }
+        public async Task<ProfessorDataResponseDto> GetProfessorCoursesWithEvaluationsAsync(
+        int professorId,int evaluationPeriodId, DateOnly StartDate,DateOnly EndDate
+        )
+        {
+            // Step 1: Get data from external API
+            var externalApiData = await _externalApiService.GetProfessorCoursesAsync(professorId, StartDate,EndDate);
+
+            if (externalApiData == null)
+                throw new Exception("Failed to fetch data from external API");
+
+            // Step 2: Get all evaluations for this professor in this period
+            var evaluations = await _db.ProfessorCourseEvaluations
+                .Where(e => e.ProfessorEmployeeId == professorId
+                         && e.EvaluationPeriodId == evaluationPeriodId)
+                .Include(e => e.Status)
+                .Include(e => e.EvaluationPeriod)
+                .ToListAsync();
+
+            // Step 3: Enrich the GTAs with evaluation data
+            foreach (var course in externalApiData.Courses)
+            {
+                foreach (var ta in course.GTAs)
+                {
+                    // Find matching evaluation
+                    var evaluation = evaluations.FirstOrDefault(e =>
+                        e.TaEmployeeId == ta.employeeId &&
+                        e.CourseCode.Trim() == course.CourseCode.Trim()
+                    );
+
+                    // Set evaluation properties
+                    if (evaluation != null)
+                    {
+                        ta.Evaluation = MapToResponseDto(evaluation);
+                        ta.IsEvaluated = true;
+                        ta.EvaluationStatus = DetermineEvaluationStatus(evaluation);
+                    }
+                    else
+                    {
+                        ta.Evaluation = null;
+                        ta.IsEvaluated = false;
+                        ta.EvaluationStatus = "Not Graded";
+                    }
+                }
+            }
+
+            return externalApiData;
+        }
         public async Task<List<ProfessorCourseEvaluation>> GetByEvaluationIdAsync(int evaluationPeriodId)
         {
             // Validate input
@@ -234,5 +283,20 @@ namespace Business_Access.Services
                 SubmittedDate = DateTime.Now.Date
             };
         }
+        private string DetermineEvaluationStatus(ProfessorCourseEvaluation? evaluation)
+        {
+            if (evaluation == null)
+                return "Not Graded";
+
+            if (evaluation.IsReturned)
+                return "Returned";
+
+            return evaluation.StatusId switch
+            {
+                2 => "Graded",
+                _ => "Draft"
+            };
+        }
     }
+
 }

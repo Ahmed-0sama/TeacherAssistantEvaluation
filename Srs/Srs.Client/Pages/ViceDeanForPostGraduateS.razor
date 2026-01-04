@@ -43,16 +43,16 @@
                                 @foreach (var ta in taList)
                                 {
                                     <tr>
-                                        <td>@ta.Name</td>
+                                        <td>@ta.employeeName</td>
                                         <td>@ta.Department</td>
                                         <td>
                                             @if (ta.statusid == 2)
                                             {
-                                                <span class="result-pill"> "عرض"</span>
+                                                <span class="result-pill">تم التقييم</span>
                                             }
                                             else if (ta.statusid == 1)
                                             {
-                                                <span class="result-pill" style="background-color: antiquewhite; color: black;">"تقييم"</span>
+                                                <span class="result-pill" style="background-color: antiquewhite; color: black;">تقييم</span>
                                             }
                                         </td>
                                         <td>
@@ -99,7 +99,7 @@
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label fw-bold">اسم مساعد التدريس</label>
-                                    <input type="text" class="form-control" disabled value="@selectedTA?.Name" />
+                                    <input type="text" class="form-control" disabled value="@selectedTA?.employeeName" />
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label fw-bold">الرقم الوظيفي:</label>
@@ -200,10 +200,14 @@
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label fw-bold">درجة تقييم التقدم (من 5)</label>
                                     <input type="number"
-                                           class="form-control"
                                            @bind="mastersDto.GradeGivenbySupervisor"
-                                           readonly="@IsReadOnly"
-                                           min="0" max="5" step="0.1" />
+                                           class="form-control text-center fs-2 fw-bold"
+                                           style="max-width: 100px;"
+                                           min="0"
+                                           max="5"
+                                           step="1"
+                                           onkeypress="return (event.charCode >= 48 && event.charCode <= 53) || event.charCode === 8"
+                                           oninput="this.value = Math.floor(Math.abs(this.value)); if(this.value > 5) this.value = 5;" />
                                 </div>
 
                                 @if (IsReadOnly && mastersDto.GradeGivenbySupervisor.HasValue)
@@ -257,6 +261,7 @@
     private MastersDto mastersDto = new MastersDto();
     private bool ModalVisable = false;
     private bool IsReadOnly = false;
+    private const int SUPERVISOR_ID = 9614; // Replace with actual logged-in supervisor ID
 
     protected override async Task OnInitializedAsync()
     {
@@ -264,159 +269,7 @@
         {
             await GetEvaluationPeriod();
             var evaluations = await Http.GetFromJsonAsync<List<GetEvaluationDto>>("/api/evaluation/period/1");
-
-            // Map GetEvaluationDto to UserDataDto
-            taList = evaluations.Select(e => new UserDataDto
-            {
-                Name = $"TA #{e.TaEmployeeId}",
-                Department = e.PeriodName,
-                EmployeeNumber = e.TaEmployeeId,
-                statusid = 1,
-                EvaluationId = e.EvaluationId
-            }
-            ).ToList(); var mockData = new List<UserDataDto>
-            {//to be removed when api is ready 
-            new UserDataDto
-            {
-                Name = "TA #1011",
-                Department = "Fall 2025",
-                EmployeeNumber = 1011,
-                statusid = 1,
-                EvaluationId = 5001
-            },
-            new UserDataDto
-            {
-                Name = "TA #1022",
-                Department = "Fall 2025",
-                EmployeeNumber = 1022,
-                statusid = 1,
-                EvaluationId = 5002
-            },
-            new UserDataDto
-            {
-                Name = "TA #1033",
-                Department = "Spring 2025",
-                EmployeeNumber = 1033,
-                statusid = 1,
-                EvaluationId = 5003
-            },
-            new UserDataDto
-            {
-                Name = "TA #1044",
-                Department = "Spring 2025",
-                EmployeeNumber = 1044,
-                statusid = 1,
-                EvaluationId = 5004
-            },
-            new UserDataDto
-            {
-                Name = "TA #1055",
-                Department = "Spring 2025",
-                EmployeeNumber = 7,
-                statusid = 1,
-                EvaluationId = 5005
-            },
-            new UserDataDto
-            {
-                Name = "TA #10",
-                Department = "Spring 2025",
-                EmployeeNumber = 10,
-                statusid = 1,
-                EvaluationId = 10
-            },
-            new UserDataDto
-            {
-                Name = "TA #11",
-                Department = "Spring 2025",
-                EmployeeNumber = 11,
-                statusid = 1,
-                EvaluationId = 10
-            },
-            new UserDataDto
-            {
-                Name = "TA #20",
-                Department = "Spring 2025",
-                EmployeeNumber = 20,
-                statusid = 1,
-                EvaluationId = 10
-            },
-            new UserDataDto
-            {
-                Name = "TA #1811",
-                Department = "Spring 2025",
-                EmployeeNumber = 1811,
-                statusid = 1,
-                EvaluationId = 5
-            },
-            new UserDataDto
-            {
-                Name = "TA #888",
-                Department = "Spring 2025",
-                EmployeeNumber = 888,
-                statusid = 1,
-                EvaluationId = 5
-            },
-            new UserDataDto
-            {
-                Name = "TA #777",
-                Department = "Spring 2025",
-                EmployeeNumber = 777,
-                statusid = 1,
-                EvaluationId = 5
-            },
-            new UserDataDto
-            {
-                Name = "TA #999",
-                Department = "Spring 2025",
-                EmployeeNumber = 999,
-                statusid = 1,
-                EvaluationId = 5
-            },
-            new UserDataDto
-            {
-                Name = "TA #7474",
-                Department = "Spring 2025",
-                EmployeeNumber = 7474,
-                statusid = 1,
-                EvaluationId = 5
-            },
-            new UserDataDto
-            {
-                Name = "TA #120",
-                Department = "Spring 2025",
-                EmployeeNumber = 120,
-                statusid = 1,
-                EvaluationId = 5
-            },
-            new UserDataDto
-            {
-                Name = "TA #22",
-                Department = "Spring 2025",
-                EmployeeNumber = 22,
-                statusid = 1,
-                EvaluationId = 5
-            },
-            new UserDataDto
-            {
-                Name = "TA #1000",
-                Department = "Spring 2025",
-                EmployeeNumber = 1000,
-                statusid = 1,
-                EvaluationId = 5
-            },
-            new UserDataDto
-            {
-                Name = "TA #1100",
-                Department = "Spring 2025",
-                EmployeeNumber = 1100,
-                statusid = 1,
-                EvaluationId = 5
-            }
-        };
-
-            // Append mock data to the list
-            taList.AddRange(mockData);
-
+            await LoadGTAList();
         }
         catch (Exception ex)
         {
@@ -446,10 +299,38 @@
             Console.WriteLine($"No Active EvaluationPeriod  {ex.Message}");
         }
     }
+    private async Task LoadGTAList()
+    {
+        try
+        {
+            Console.WriteLine($"📡 Fetching GTA list for supervisor {SUPERVISOR_ID}");
+
+            // ✅ Single API call to get enriched data
+            var response = await Http.GetAsync(
+                $"api/GSDean/GetGTAListWithEvaluations?supervisorId={SUPERVISOR_ID}&evaluationPeriodId={EvaluationPeriodId}&startDate=2025-01-01");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                throw new Exception($"Failed to load GTA list: {error}");
+            }
+
+            taList = await response.Content.ReadFromJsonAsync<List<UserDataDto>>()
+                ?? new List<UserDataDto>();
+
+            Console.WriteLine($"✅ Loaded {taList.Count} GTAs with evaluation statuses");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error loading GTA list: {ex.Message}");
+            errorMessage = $"خطأ في تحميل قائمة مساعدي التدريس: {ex.Message}";
+        }
+    }
     private async Task OpenModal(UserDataDto ta)
     {
         selectedTA = ta;
-        selectedTA.Id = ta.EmployeeNumber;
+        selectedTA.employeeId = ta.employeeId;
+        selectedTA.EmployeeNumber = ta.employeeId;
         ModalVisable = true;
         isLoadingModalData = true;
 
@@ -462,7 +343,7 @@
         try
         {
             // Try to fetch existing GSDean evaluation data
-            var response = await Http.GetAsync($"/api/GSdean/GetByEvaluationForGSDeanPeriodAndTAAsync/{EvaluationPeriodId}/{ta.Id}");
+            var response = await Http.GetAsync($"/api/GSdean/GetByEvaluationForGSDeanPeriodAndTAAsync/{EvaluationPeriodId}/{ta.employeeId}");
 
             if (response.IsSuccessStatusCode)
             {
@@ -520,7 +401,7 @@
             {
                 
                 GsSupervisorId = 1, // Should get from logged in user context
-                TaEmployeeId = selectedTA.Id,
+                TaEmployeeId = selectedTA.employeeId,
                 EvaluationPeriodId = EvaluationPeriodId,
                 ProgramName = dto.Major,
                 CompletedHours = dto.HoursGained,

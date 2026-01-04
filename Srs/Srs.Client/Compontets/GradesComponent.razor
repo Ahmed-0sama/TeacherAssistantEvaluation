@@ -2,15 +2,19 @@
     <div class="card-body p-4">
         <h5 class="text-end text-dark mb-4">رابعاً: الأنشطة الطلابية</h5>
 
-        <div class="row mb-3 align-items-center">
+        <div class="row mb-3 align-items-center @GetDeanModifiedClass(12)">
             <div class="col-md-8 text-end">
                 <label class="form-label mb-0">نشاط رياضي</label>
+                @if (IsDeanModified(12))
+                {
+                    <span class="badge bg-warning text-dark ms-2">تم التعديل من قبل العميد</span>
+                }
             </div>
             <div class="col-md-4">
                 <select class="form-select"
                         value="@GetRatingValue(12, isStudentActivity: true)"
                         @onchange="e => UpdateRating(12, e.Value?.ToString(), isStudentActivity: true)"
-                        disabled="@IsViewMode">
+                        disabled="@(IsViewMode || IsDeanModified(12))">
                     <option value="">اختر</option>
                     @foreach (var option in studentActivitiesGradeOptions)
                     {
@@ -20,15 +24,19 @@
             </div>
         </div>
 
-        <div class="row mb-3 align-items-center">
+        <div class="row mb-3 align-items-center @GetDeanModifiedClass(13)">
             <div class="col-md-8 text-end">
                 <label class="form-label mb-0">نشاط اجتماعي</label>
+                @if (IsDeanModified(13))
+                {
+                    <span class="badge bg-warning text-dark ms-2">تم التعديل من قبل العميد</span>
+                }
             </div>
             <div class="col-md-4">
                 <select class="form-select"
                         value="@GetRatingValue(13, isStudentActivity: true)"
                         @onchange="e => UpdateRating(13, e.Value?.ToString(), isStudentActivity: true)"
-                        disabled="@IsViewMode">
+                        disabled="@(IsViewMode || IsDeanModified(13))">
                     <option value="">اختر</option>
                     @foreach (var option in studentActivitiesGradeOptions)
                     {
@@ -38,15 +46,19 @@
             </div>
         </div>
 
-        <div class="row mb-3 align-items-center">
+        <div class="row mb-3 align-items-center @GetDeanModifiedClass(14)">
             <div class="col-md-8 text-end">
                 <label class="form-label mb-0">نشاط ثقافي</label>
+                @if (IsDeanModified(14))
+                {
+                    <span class="badge bg-warning text-dark ms-2">تم التعديل من قبل العميد</span>
+                }
             </div>
             <div class="col-md-4">
                 <select class="form-select"
                         value="@GetRatingValue(14, isStudentActivity: true)"
                         @onchange="e => UpdateRating(14, e.Value?.ToString(), isStudentActivity: true)"
-                        disabled="@IsViewMode">
+                        disabled="@(IsViewMode || IsDeanModified(14))">
                     <option value="">اختر</option>
                     @foreach (var option in studentActivitiesGradeOptions)
                     {
@@ -97,15 +109,19 @@
     <div class="card-body p-4">
         <h5 class="text-end text-dark mb-4">السمات الشخصية</h5>
 
-        <div class="row mb-3 align-items-center">
+        <div class="row mb-3 align-items-center @GetDeanModifiedClass(15)">
             <div class="col-md-8 text-end">
                 <label class="form-label mb-0">التعاون والعمل الجماعي</label>
+                @if (IsDeanModified(15))
+                {
+                    <span class="badge bg-warning text-dark ms-2">تم التعديل من قبل العميد</span>
+                }
             </div>
             <div class="col-md-4">
                 <select class="form-select"
                         value="@GetRatingValue(15, isStudentActivity: false)"
                         @onchange="e => UpdateRating(15, e.Value?.ToString(), isStudentActivity: false)"
-                        disabled="@IsViewMode">
+                        disabled="@(IsViewMode || IsDeanModified(15))">
                     <option value="">اختر</option>
                     @foreach (var option in personalTraitsGradeOptions)
                     {
@@ -115,15 +131,19 @@
             </div>
         </div>
 
-        <div class="row mb-3 align-items-center">
+        <div class="row mb-3 align-items-center @GetDeanModifiedClass(16)">
             <div class="col-md-8 text-end">
                 <label class="form-label mb-0">الالتزام بالمواعيد</label>
+                @if (IsDeanModified(16))
+                {
+                    <span class="badge bg-warning text-dark ms-2">تم التعديل من قبل العميد</span>
+                }
             </div>
             <div class="col-md-4">
                 <select class="form-select"
                         value="@GetRatingValue(16, isStudentActivity: false)"
                         @onchange="e => UpdateRating(16, e.Value?.ToString(), isStudentActivity: false)"
-                        disabled="@IsViewMode">
+                        disabled="@(IsViewMode || IsDeanModified(16))">
                     <option value="">اختر</option>
                     @foreach (var option in personalTraitsGradeOptions)
                     {
@@ -133,15 +153,19 @@
             </div>
         </div>
 
-        <div class="row mb-3 align-items-center">
+        <div class="row mb-3 align-items-center @GetDeanModifiedClass(17)">
             <div class="col-md-8 text-end">
                 <label class="form-label mb-0">المظهر العام</label>
+                @if (IsDeanModified(17))
+                {
+                    <span class="badge bg-warning text-dark ms-2">تم التعديل من قبل العميد</span>
+                }
             </div>
             <div class="col-md-4">
                 <select class="form-select"
                         value="@GetRatingValue(17, isStudentActivity: false)"
                         @onchange="e => UpdateRating(17, e.Value?.ToString(), isStudentActivity: false)"
-                        disabled="@IsViewMode">
+                        disabled="@(IsViewMode || IsDeanModified(17))">
                     <option value="">اختر</option>
                     @foreach (var option in personalTraitsGradeOptions)
                     {
@@ -151,15 +175,19 @@
             </div>
         </div>
 
-        <div class="row mb-3 align-items-center">
+        <div class="row mb-3 align-items-center @GetDeanModifiedClass(18)">
             <div class="col-md-8 text-end">
                 <label class="form-label mb-0">المبادرة و تحمل المسؤولية</label>
+                @if (IsDeanModified(18))
+                {
+                    <span class="badge bg-warning text-dark ms-2">تم التعديل من قبل العميد</span>
+                }
             </div>
             <div class="col-md-4">
                 <select class="form-select"
                         value="@GetRatingValue(18, isStudentActivity: false)"
                         @onchange="e => UpdateRating(18, e.Value?.ToString(), isStudentActivity: false)"
-                        disabled="@IsViewMode">
+                        disabled="@(IsViewMode || IsDeanModified(18))">
                     <option value="">اختر</option>
                     @foreach (var option in personalTraitsGradeOptions)
                     {
@@ -169,15 +197,19 @@
             </div>
         </div>
 
-        <div class="row mb-3 align-items-center">
+        <div class="row mb-3 align-items-center @GetDeanModifiedClass(19)">
             <div class="col-md-8 text-end">
                 <label class="form-label mb-0">إدارة الوقت</label>
+                @if (IsDeanModified(19))
+                {
+                    <span class="badge bg-warning text-dark ms-2">تم التعديل من قبل العميد</span>
+                }
             </div>
             <div class="col-md-4">
                 <select class="form-select"
                         value="@GetRatingValue(19, isStudentActivity: false)"
                         @onchange="e => UpdateRating(19, e.Value?.ToString(), isStudentActivity: false)"
-                        disabled="@IsViewMode">
+                        disabled="@(IsViewMode || IsDeanModified(19))">
                     <option value="">اختر</option>
                     @foreach (var option in personalTraitsGradeOptions)
                     {
@@ -195,12 +227,25 @@
         </div>
     </div>
 </div>
+
+<style>
+    .dean-modified-row {
+        background-color: #fff3cd;
+        border-left: 4px solid #ffc107;
+        padding: 10px;
+        border-radius: 4px;
+    }
+</style>
+
 @code {
     [Parameter] public EventCallback<Dictionary<int, int>> OnPersonalTraitsChanged { get; set; }
     [Parameter] public EventCallback<Dictionary<int, int>> OnStudentActivitiesChanged { get; set; }
     [Parameter] public bool IsViewMode { get; set; }
     [Parameter] public Dictionary<int, int>? ExistingPersonalTraits { get; set; }
     [Parameter] public Dictionary<int, int>? ExistingStudentActivities { get; set; }
+    [Parameter] public Dictionary<int, string>? PersonalTraitsSources { get; set; }
+    [Parameter] public Dictionary<int, string>? StudentActivitiesSources { get; set; }
+    [Parameter] public bool IsDeanUser { get; set; } = false;
 
     private Dictionary<int, int> personalTraitsRatings = new();
     private Dictionary<int, int> studentActivitiesRatings = new();
@@ -228,6 +273,30 @@
         new GradeOption { Value = 3, Label = "جيد جداً (3)" },
         new GradeOption { Value = 4, Label = "ممتاز (3.33)" }
     };
+
+    private bool IsDeanModified(int criterionId)
+    {
+        bool isModifiedByDean = false;
+
+        // Check student activities (12-14)
+        if (criterionId >= 12 && criterionId <= 14)
+        {
+            isModifiedByDean = StudentActivitiesSources?.TryGetValue(criterionId, out var source) == true && source == "Dean";
+        }
+        // Check personal traits (15-19)
+        else if (criterionId >= 15 && criterionId <= 19)
+        {
+            isModifiedByDean = PersonalTraitsSources?.TryGetValue(criterionId, out var source) == true && source == "Dean";
+        }
+
+        // ✅ Dean can edit their own modifications, HOD cannot
+        return isModifiedByDean && !IsDeanUser;
+    }
+
+    private string GetDeanModifiedClass(int criterionId)
+    {
+        return IsDeanModified(criterionId) ? "dean-modified-row" : "";
+    }
 
     protected override void OnParametersSet()
     {
@@ -290,6 +359,13 @@
 
     private void UpdateRating(int criterionId, string? value, bool isStudentActivity)
     {
+        // ✅ Don't allow updates to Dean-modified criteria
+        if (IsDeanModified(criterionId))
+        {
+            Console.WriteLine($"🚫 Cannot update Dean-modified criterion {criterionId}");
+            return;
+        }
+
         var targetDictionary = isStudentActivity ? studentActivitiesRatings : personalTraitsRatings;
 
         if (int.TryParse(value, out int scoreValue) && scoreValue >= 0)

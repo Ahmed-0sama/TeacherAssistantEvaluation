@@ -1,6 +1,7 @@
 ﻿using Business_Access.Interfaces;
 using DataAccess.Entities;
 using Microsoft.EntityFrameworkCore;
+using Shared.Dtos;
 using Shared.Dtos.HODEvaluation;
 using Shared.Dtos.Notifications;
 using System;
@@ -14,11 +15,13 @@ namespace Business_Access.Services
     public class HODEvaluationService : IHODEvaluation
     {
         private readonly SrsDbContext _db;
+        private readonly IExternalApiService _externalApiService;
         private readonly INotification _notificationService;
-        public HODEvaluationService(SrsDbContext db, INotification notificationService)
+        public HODEvaluationService(SrsDbContext db, INotification notificationService, IExternalApiService externalApiService)
         {
             _db = db;
             _notificationService = notificationService;
+            _externalApiService = externalApiService;
         }
         public async Task<int> CreateHodEvaluationAsync(CreateHodEvaluationDto dto)
         {
@@ -32,10 +35,29 @@ namespace Business_Access.Services
 
                 // Check if HOD evaluation already exists
                 var existingEval = await _db.Hodevaluations
-                    .AnyAsync(h => h.EvaluationId == dto.EvaluationId);
+                    .AnyAsync(h => h.EvaluationId == dto.EvaluationId && h.IsActive);
                 if (existingEval)
                     throw new Exception("HOD evaluation already exists for this evaluation");
+                if (dto.TeachingLoadScore.HasValue)
+                {
+                    var scoreExists = await _db.AutoCalculatedScores
+                        .FirstOrDefaultAsync(x => x.EvaluationId == dto.EvaluationId);
 
+                    if (scoreExists != null)
+                    {
+                        // Update existing score
+                        scoreExists.TechingLoadCompletionScore = dto.TeachingLoadScore.Value;
+                    }
+                    else
+                    {
+                        // Create new score
+                        await _db.AutoCalculatedScores.AddAsync(new AutoCalculatedScore
+                        {
+                            EvaluationId = dto.EvaluationId,
+                            TechingLoadCompletionScore = dto.TeachingLoadScore.Value
+                        });
+                    }
+                }
                 // Create HOD evaluations for each criterion
                 foreach (var criterionRating in dto.CriterionRatings)
                 {
@@ -50,12 +72,17 @@ namespace Business_Access.Services
                     {
                         EvaluationId = dto.EvaluationId,
                         CriterionId = criterionRating.CriterionId,
-                        RatingId = criterionRating.RatingId
+                        RatingId = criterionRating.RatingId,
+
+                        SourceRole = "HOD",
+                        IsActive = true,
+                        CreatedAt = DateTime.UtcNow,
+                        CreatedByUserId =dto.CreatedByUserId
                     };
 
                     _db.Hodevaluations.Add(hodEval);
                 }
-
+                evaluation.TotalScore = dto.FinalScore;
                 // Update evaluation status and comments
                 evaluation.StatusId = 5; // Completed HOD evaluation
                 evaluation.HodStrengths = dto.HodStrengths;
@@ -81,7 +108,7 @@ namespace Business_Access.Services
         public async Task<HodEvaluationResponseDto> GetHodEvaluationAsync(int evaluationId)
         {
             var evaluations = await _db.Hodevaluations
-                .Where(h => h.EvaluationId == evaluationId)
+                .Where(h => h.EvaluationId == evaluationId && h.IsActive)
                 .Include(h => h.Criterion)
                 .Include(h => h.Rating)
                 .ToListAsync();
@@ -123,7 +150,8 @@ namespace Business_Access.Services
                 RatingId = e.RatingId,
                 RatingName = e.Rating.RatingName,
                 ScoreValue = e.Rating.ScoreValue,
-                ActualPoints = MapScoreToPoints(e.Rating.ScoreValue, e.Criterion.CriterionType)
+                ActualPoints = MapScoreToPoints(e.Rating.ScoreValue, e.Criterion.CriterionType),
+                SourceRole = e.SourceRole ?? "HOD" // Include SourceRole
             }).ToList();
 
             var response = new HodEvaluationResponseDto
@@ -137,8 +165,7 @@ namespace Business_Access.Services
                 StudentActivitiesTotal = studentActivitiesTotal,
                 PersonalTraitsTotal = personalTraitsTotal,
                 AdministrativeTotal = administrativeTotal,
-                TotalScore = teachingActivitiesTotal + studentActivitiesTotal +
-                            personalTraitsTotal + administrativeTotal,
+                TotalScore=evaluation.TotalScore??0,
                 MaxScore = 40, // 10 + 10 + 10 + 10
                 HodStrengths = evaluation.HodStrengths,
                 HodWeaknesses = evaluation.HodWeaknesses,
@@ -163,7 +190,7 @@ namespace Business_Access.Services
             var result = evaluations.Select(evaluation =>
             {
                 // Map each HOD evaluation row to the SAME DTO structure you use in GetHodEvaluationAsync
-                var hodEvaluationItems = evaluation.Hodevaluations.Select(h => new HodEvaluationItemDto
+                var hodEvaluationItems = evaluation.Hodevaluations.Where(h=>h.IsActive).Select(h => new HodEvaluationItemDto
                 {
                     CriterionId = h.CriterionId,
                     CriterionName = h.Criterion.CriterionName,
@@ -171,7 +198,8 @@ namespace Business_Access.Services
                     RatingId = h.RatingId,
                     RatingName = h.Rating.RatingName,
                     ScoreValue = h.Rating.ScoreValue,
-                    ActualPoints = MapScoreToPoints(h.Rating.ScoreValue, h.Criterion.CriterionType)
+                    ActualPoints = MapScoreToPoints(h.Rating.ScoreValue, h.Criterion.CriterionType),
+                    SourceRole = h.SourceRole ?? "HOD" // Include SourceRole
                 }).ToList();
 
                 // Section totals using ActualPoints (NOT raw ScoreValue)
@@ -192,10 +220,6 @@ namespace Business_Access.Services
                              || x.CriterionType == "AdministrativeTotal")
                     .Sum(x => x.ActualPoints);
 
-                var totalScore = teachingActivitiesTotal
-                               + studentActivitiesTotal
-                               + personalTraitsTotal
-                               + administrativeTotal;
 
                 // Full HOD part = 40 (10 + 10 + 10 + 10)
                 const decimal maxScore = 40m;
@@ -206,12 +230,12 @@ namespace Business_Access.Services
                     TaName = $"TA #{evaluation.TaEmployeeId}",
                     TaEmployeeId = evaluation.TaEmployeeId,
                     StatusId = evaluation.StatusId,
-                    Evaluations = hodEvaluationItems,   // <-- THIS is the fix
+                    Evaluations = hodEvaluationItems,   
                     TeachingActivitiesTotal = teachingActivitiesTotal,
                     StudentActivitiesTotal = studentActivitiesTotal,
                     PersonalTraitsTotal = personalTraitsTotal,
                     AdministrativeTotal = administrativeTotal,
-                    TotalScore = totalScore,
+                    TotalScore = evaluation.TotalScore??0,
                     MaxScore = maxScore,
                     HodStrengths = evaluation.HodStrengths,
                     HodWeaknesses = evaluation.HodWeaknesses
@@ -233,50 +257,34 @@ namespace Business_Access.Services
                     throw new Exception("Evaluation not found");
 
                 // ✅ 2. Validate that HOD evaluation exists (should exist for update)
-                var existingEvaluations = await _db.Hodevaluations
-                    .Where(h => h.EvaluationId == evaluationId)
-                    .ToListAsync();
-
-                if (!existingEvaluations.Any())
-                    throw new Exception("HOD evaluation not found. Cannot update non-existent evaluation.");
-
-                // ✅ 3. Remove existing evaluations
-                _db.Hodevaluations.RemoveRange(existingEvaluations);
-                await _db.SaveChangesAsync(); // Save deletion before adding new ones
-
-                // ✅ 4. Validate all criteria and ratings exist before adding
-                foreach (var criterionRating in dto.CriterionRatings)
+                var activeRows = await _db.Hodevaluations
+                 .Where(h => h.EvaluationId == evaluationId && h.IsActive)
+                 .ToListAsync();
+                if (activeRows.Any(x => x.SourceRole == "Dean"))
                 {
-                    // Validate criterion exists
-                    var criterion = await _db.HodevaluationCriteria
-                        .FindAsync(criterionRating.CriterionId);
-
-                    if (criterion == null)
-                        throw new Exception($"Criterion {criterionRating.CriterionId} not found");
-
-                    // Validate rating exists
-                    var rating = await _db.Ratings
-                        .FindAsync(criterionRating.RatingId);
-
-                    if (rating == null)
-                        throw new Exception($"Rating {criterionRating.RatingId} not found");
-
-                    // Add new evaluation
-                    var hodEval = new Hodevaluation
-                    {
-                        EvaluationId = evaluationId,
-                        CriterionId = criterionRating.CriterionId,
-                        RatingId = criterionRating.RatingId
-                    };
-
-                    _db.Hodevaluations.Add(hodEval);
+                    throw new Exception("Cannot edit evaluation - Dean has already reviewed and modified this evaluation");
                 }
 
-                // ✅ 5. Update evaluation status and comments
+                // If we reach here, all rows are from HOD, so HOD can edit
+                foreach (var item in dto.CriterionRatings)
+                {
+                    var activeRow = activeRows
+                        .FirstOrDefault(x => x.CriterionId == item.CriterionId);
+
+                    if (activeRow == null)
+                        continue;
+
+                    // Update (we already know SourceRole is "HOD")
+                    activeRow.RatingId = item.RatingId;
+                    activeRow.CreatedAt = DateTime.UtcNow;
+                    activeRow.CreatedByUserId = dto.CreatedByUserId;
+                }
+                evaluation.TotalScore = dto.FinalScore;
+
                 evaluation.HodStrengths = dto.HodStrengths;
                 evaluation.HodWeaknesses = dto.HodWeaknesses;
 
-                // ✅ 6. Handle status logic properly
+
                 // If evaluation was returned (status 7), update it back to completed (status 5)
                 // Otherwise, keep status 5 if it was already completed
                 //2 maybe returned from ta
@@ -375,11 +383,86 @@ namespace Business_Access.Services
             }
 
         }
+        public async Task<List<UserDataDto>> GetTAsForHODAsync(int periodId, int hodDepartmentId, DateOnly startDate)
+        {
+            try
+            {
+                Console.WriteLine($"📡 Loading TAs for HOD - Period: {periodId}, Department: {hodDepartmentId}");
 
+                // Step 1: Get TA list from external API
+                var taList = await _externalApiService.GetGTAListAsync(hodDepartmentId, startDate);
+
+                if (taList == null || !taList.Any())
+                {
+                    Console.WriteLine("⚠️ No TAs found from external API");
+                    return new List<UserDataDto>();
+                }
+
+                Console.WriteLine($"✅ Loaded {taList.Count} TAs from external API");
+
+                // Step 2: Get all evaluations for this period
+                var evaluations = await _db.Evaluations
+                    .Include(e => e.Period)
+                    .Include(e => e.Status)
+                    .Include(e => e.Tasubmission)
+                    .Where(e => e.PeriodId == periodId)
+                    .ToListAsync();
+
+                var evaluationMap = evaluations.ToDictionary(e => e.TaEmployeeId);
+
+                Console.WriteLine($"✅ Found {evaluations.Count} evaluations in database");
+
+                // Step 3: Get HOD evaluations for this period
+                var hodEvaluations = await _db.Hodevaluations
+                    .Where(h => evaluations.Select(e => e.EvaluationId).Contains(h.EvaluationId) && h.IsActive)
+                    .ToListAsync();
+
+                var hodEvaluationMap = hodEvaluations
+                    .GroupBy(h => h.EvaluationId)
+                    .ToDictionary(g => g.Key, g => g.ToList());
+
+                Console.WriteLine($"✅ Found {hodEvaluationMap.Count} HOD evaluations");
+
+                // Step 4: Enrich TA list with evaluation and HOD data
+                foreach (var ta in taList)
+                {
+                    if (evaluationMap.TryGetValue(ta.employeeId, out var evaluation))
+                    {
+                        // TA has an evaluation
+                        ta.EvaluationId = evaluation.EvaluationId;
+                        ta.statusid = evaluation.StatusId;
+                        ta.HasHodEvaluation = hodEvaluationMap.ContainsKey(evaluation.EvaluationId);
+
+                        Console.WriteLine($"✅ Enriched TA: {ta.employeeName} - StatusId: {evaluation.StatusId} - HasHOD: {ta.HasHodEvaluation}");
+                    }
+                    else
+                    {
+                        // ✅ TA doesn't have an evaluation yet - show as waiting
+                        ta.EvaluationId = 0;
+                        ta.statusid = 0; // No evaluation - will show "انتظار"
+                        ta.HasHodEvaluation = false;
+
+                        Console.WriteLine($"ℹ️ TA {ta.employeeName} has no evaluation yet - will show as waiting");
+                    }
+
+                    ta.EmployeeNumber = ta.employeeId;
+                }
+
+                // ✅ CHANGED: Return ALL TAs, not just submitted ones
+                Console.WriteLine($"✅ Total GTAs returned: {taList.Count}");
+
+                return taList; // Return all GTAs
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error in GetTAsForHODAsync: {ex.Message}");
+                throw new Exception($"Failed to get TAs for HOD: {ex.Message}", ex);
+            }
+        }
         public async Task<bool> HasHodEvaluationAsync(int evaluationId)
         {
             return await _db.Hodevaluations
-                .AnyAsync(h => h.EvaluationId == evaluationId);
+                .AnyAsync(h => h.EvaluationId == evaluationId && h.IsActive);
         }
         private decimal MapScoreToPoints(int scoreValue, string criterionType)
         {

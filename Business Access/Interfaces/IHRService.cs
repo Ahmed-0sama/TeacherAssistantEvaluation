@@ -1,4 +1,5 @@
-﻿using Shared.Dtos.Hr;
+﻿using Shared.Dtos;
+using Shared.Dtos.Hr;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,6 +10,8 @@ namespace Business_Access.Interfaces
 {
     public interface IHRService
     {
-        Task<EvaluationStatisticsDto> GetEvaluationStatisticsAsync(int evaluationPeriod);
+        Task<EvaluationStatisticsDto> GetEvaluationStatisticsAsync(int evaluationPeriod, int hrDepartmentId, DateOnly startDate);
+        Task<List<UserDataDto>> GetAllTAsForHRAsync(int periodId, int hrDepartmentId, DateOnly startDate);
+
     }
 }

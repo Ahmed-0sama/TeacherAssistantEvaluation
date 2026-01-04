@@ -1,6 +1,7 @@
 ﻿using Business_Access.Interfaces;
 using DataAccess.Entities;
 using Microsoft.EntityFrameworkCore;
+using Shared.Dtos;
 using Shared.Dtos.GSDean;
 using System;
 using System.Collections.Generic;
@@ -13,9 +14,12 @@ namespace Business_Access.Services
     public class GSDeanService:IGSDean
     {
         private readonly SrsDbContext _context;
-        public GSDeanService(SrsDbContext context)
+        private readonly IExternalApiService _externalApiService;
+
+        public GSDeanService(SrsDbContext context, IExternalApiService externalApiService)
         {
             _context = context;
+            _externalApiService = externalApiService;
         }
         private static GsdeanEvaluationDto MapToDto(GsdeanEvaluation entity)
         {
@@ -251,6 +255,56 @@ namespace Business_Access.Services
             catch (Exception ex)
             {
                 throw new Exception("Error fetching GS dean evaluations by TA employee Id", ex);
+            }
+        }
+        public async Task<List<UserDataDto>> GetGTAListWithEvaluationsAsync(
+        int supervisorId,
+        int evaluationPeriodId,
+         DateOnly startDate)
+        {
+            try
+            {
+                // Step 1: Get GTA list from external API
+                var gtaList = await _externalApiService.GetGTAListAsync(supervisorId, startDate);
+
+                if (gtaList == null || !gtaList.Any())
+                {
+                    Console.WriteLine("⚠️ No GTAs found");
+                    return new List<UserDataDto>();
+                }
+
+                Console.WriteLine($"✅ Loaded {gtaList.Count} GTAs from external API");
+
+                // Step 2: Get all evaluations for this period
+                var evaluations = await _context.GsdeanEvaluations
+                    .Where(e => e.EvaluationPeriodId == evaluationPeriodId)
+                    .Include(e => e.Status)
+                    .Include(e => e.EvaluationPeriod)
+                    .ToListAsync();
+
+                // Step 3: Enrich GTA data with evaluation status
+                foreach (var gta in gtaList)
+                {
+                    var evaluation = evaluations.FirstOrDefault(e => e.TaEmployeeId == gta.employeeId);
+
+                    if (evaluation != null)
+                    {
+                        gta.statusid = 2; // Has evaluation - read only
+                        gta.EvaluationId = evaluation.GsevalId;
+                    }
+                    else
+                    {
+                        gta.statusid = 1; // No evaluation yet - can evaluate
+                        gta.EvaluationId = 0;
+                    }
+                }
+
+                return gtaList;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error in GetGTAListWithEvaluationsAsync: {ex.Message}");
+                throw new Exception($"Failed to get GTA list with evaluations: {ex.Message}", ex);
             }
         }
     }

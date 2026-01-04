@@ -28,13 +28,13 @@ namespace DataAccess.SeedData
                 new EvaluationStatus
                 {
                     StatusId = 3,
-                    StatusName = "ReturnedByHOD",
+                    StatusName = "ReturnedByHOD_ToTA",
                     StatusDescription = "HOD has Returned and provided comments"
                 },
                 new EvaluationStatus
                 {
                     StatusId = 4,
-                    StatusName = "ReturnedByHOD",
+                    StatusName = "ReturnedByHOD_ToProfessor",
                     StatusDescription = "HOD returned the evaluation to the Professor for corrections"
                 },
                 new EvaluationStatus

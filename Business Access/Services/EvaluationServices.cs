@@ -1,6 +1,7 @@
 ﻿using Business_Access.Interfaces;
 using DataAccess.Entities;
 using Microsoft.EntityFrameworkCore;
+using Shared.Dtos;
 using Shared.Dtos.TASubmissions;
 using System;
 using System.Collections.Generic;
@@ -13,9 +14,11 @@ namespace Business_Access.Services
     public class EvaluationServices:IEvaluation
     {
         private readonly SrsDbContext db;
-        public EvaluationServices(SrsDbContext db)
+        private readonly IExternalApiService _externalApiService;
+        public EvaluationServices(SrsDbContext db, IExternalApiService externalApiService)
         {
             this.db = db;
+            _externalApiService = externalApiService;
         }
         public async Task<GetEvaluationDto> GetOrCreateEvaluationAsync(int taEmployeeId, int periodId)
         {
@@ -386,7 +389,33 @@ namespace Business_Access.Services
                 throw new Exception($"Error getting evaluation with ID {evaluationId}", ex);
             }
         }
+        public async Task<List<TeachingDataDto>> GetActivityDataAsync(int evaluationid,int professorId,DateOnly startDate, DateOnly endDate)
+        {
+            var professorData = await _externalApiService
+                .GetTeachingDataForGtaAsync(professorId, startDate, endDate);
+            Console.WriteLine($"Requesting data from {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}");
 
+            if (professorData == null || !professorData.Any())
+                return new List<TeachingDataDto>();
+
+            foreach (var semesterData in professorData)
+            {
+                semesterData.score =
+                    semesterData.ActualTeachingLoad >= semesterData.ExpectedTeachingLoad
+                        ? 10
+                        : 0;
+            }
+
+            var avgScore = (int)professorData.Average(x => x.score);
+
+            var evalExists = await db.Evaluations
+                .AnyAsync(e => e.EvaluationId == evaluationid);
+
+            if (!evalExists)
+                return professorData;
+
+            return professorData;
+        }
         public async Task<GetEvaluationDto?> GetTAEvaluationForCurrentPeriodAsync(int taEmployeeId)
         {
             try
@@ -472,28 +501,75 @@ namespace Business_Access.Services
                 throw new Exception($"Error getting evaluations for period {periodId}", ex);
             }
         }
-        //i will use the getOrCreate instead of this method
-        //public async Task<int?> CanTAEditEvaluationAsync(int taEmployeeId)
-        //{
-        //    try
-        //    {
-        //        var evaluation = await db.Evaluations
-        //            .FirstOrDefaultAsync(e => e.TaEmployeeId == taEmployeeId);
+        public async Task<UserDataDto> GetGTAInfoWithEvaluationAsync(int taEmployeeId, int periodId)
+        {
+            try
+            {
+                var employeeInfo = await _externalApiService.GetEmployeeInfoAsync(taEmployeeId);
 
-        //        if (evaluation == null)
-        //            return null;
-        //        if (evaluation.StatusId == 1)
-        //        {
-        //            return evaluation.EvaluationId;
-        //        }
-        //        return null;
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        throw new Exception($"Error checking if TA can edit evaluation {taEmployeeId}", ex);
-        //    }
-        //}
+                if (employeeInfo == null)
+                {
+                    throw new Exception($"Employee with ID {taEmployeeId} not found");
+                }
 
+                Console.WriteLine($"✅ Loaded employee info: {employeeInfo.employeeName}");
+
+                var evaluation = await GetOrCreateEvaluationAsync(taEmployeeId, periodId);
+
+                employeeInfo.EvaluationId = evaluation.EvaluationId;
+                employeeInfo.statusid = evaluation.StatusId;
+
+                var submission = await db.Tasubmissions
+                    .FirstOrDefaultAsync(s => s.EvaluationId == evaluation.EvaluationId);
+
+                employeeInfo.HasSubmitted = submission != null;
+
+                Console.WriteLine($"✅ Enriched employee data - EvaluationId: {employeeInfo.EvaluationId}, Status: {employeeInfo.statusid}");
+
+                return employeeInfo;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error in GetGTAInfoWithEvaluationAsync: {ex.Message}");
+                throw new Exception($"Failed to get GTA info with evaluation: {ex.Message}", ex);
+            }
+        }
+        public async Task<UserDataDto?> GetEmployeeInfoAsync(int employeeId)
+        {
+            try
+            {
+                return await _externalApiService.GetEmployeeInfoAsync(employeeId);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error fetching employee info: {ex.Message}");
+                throw new Exception($"Failed to get employee info: {ex.Message}", ex);
+            }
+        }
+
+        public async Task<List<TeachingDataDto>> GetTeachingDataAsync(int employeeId, DateOnly startDate, DateOnly endDate)
+        {
+            try
+            {
+                var teachingDataList = await _externalApiService.GetTeachingDataForGtaAsync(employeeId, startDate, endDate);
+
+                if (teachingDataList != null && teachingDataList.Any())
+                {
+                    // Calculate scores for each semester
+                    foreach (var semester in teachingDataList)
+                    {
+                        semester.score = semester.ActualTeachingLoad >= semester.ExpectedTeachingLoad ? 10 : 0;
+                    }
+                }
+
+                return teachingDataList ?? new List<TeachingDataDto>();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error fetching teaching data: {ex.Message}");
+                throw new Exception($"Failed to get teaching data: {ex.Message}", ex);
+            }
+        }
         private static GetEvaluationDto MapToGetEvaluationDto(Evaluation evaluation)
         {
             return new GetEvaluationDto

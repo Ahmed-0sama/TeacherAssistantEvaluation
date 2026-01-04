@@ -15,6 +15,23 @@ namespace Srs.Controllers
         {
             _vpgsService = vpgsService;
         }
+        [HttpGet("GetGTAsForVPGS")]
+        public async Task<IActionResult> GetGTAsForVPGS([FromQuery] int periodId, [FromQuery] int SupervisorId, [FromQuery] DateOnly StartDate)
+        {
+            try
+            {
+                Console.WriteLine($"📡 GetGTAsForVPGS called with periodId: {periodId}");
+                var result = await _vpgsService.GetGTAsForVPGSAsync(periodId,SupervisorId,StartDate);
+                Console.WriteLine($"✅ Returning {result.Count} GTAs");
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error in GetGTAsForVPGS: {ex.Message}");
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
         [HttpPost("create")]
         public async Task<IActionResult> CreateVpgsEvaluation([FromBody] CreateVpgsEvaluationDto dto)
         {
@@ -31,20 +48,8 @@ namespace Srs.Controllers
                 return StatusCode(500, new { message = "An error occurred while creating the VPGS evaluation", details = ex.Message });
             }
         }
-        [HttpGet("GetVpgsById{vpgsevalId}")]
-        public async Task<IActionResult> GetVpgsEvaluationById(int vpgsevalId)
-        {
-            try
-            {
-                var result = await _vpgsService.GetVpgsEvaluationByIdAsync(vpgsevalId);
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "An error occurred while retrieving the VPGS evaluation", details = ex.Message });
-            }
-        }
-        [HttpGet("evaluation/{evaluationId}")]
+
+        [HttpGet("evaluation/{evaluationId:int}")]  // ✅ Added :int constraint
         public async Task<IActionResult> GetVpgsEvaluationByEvaluationId(int evaluationId)
         {
             try
@@ -61,7 +66,8 @@ namespace Srs.Controllers
                 return StatusCode(500, new { message = "An error occurred while retrieving the VPGS evaluation", details = ex.Message });
             }
         }
-        [HttpGet("period/{periodId}")]
+
+        [HttpGet("period/{periodId:int}")]  // ✅ Added :int constraint - THIS WAS CATCHING YOUR ROUTE!
         public async Task<IActionResult> GetVpgsEvaluationsByPeriod(int periodId)
         {
             try
@@ -74,7 +80,28 @@ namespace Srs.Controllers
                 return StatusCode(500, new { message = "An error occurred while retrieving VPGS evaluations", details = ex.Message });
             }
         }
-        [HttpPut("evaluation/{evaluationId}")]
+
+        [HttpGet("period/{periodId:int}/existenceMap")]  // ✅ Added :int constraint
+        public async Task<IActionResult> GetVpgsExistenceMap(int periodId)
+        {
+            try
+            {
+                var results = await _vpgsService.GetVpgsEvaluationsByPeriodAsync(periodId);
+
+                var existenceMap = results.ToDictionary(
+                    r => r.EvaluationId,
+                    r => true
+                );
+
+                return Ok(existenceMap);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred", details = ex.Message });
+            }
+        }
+
+        [HttpPut("evaluation/{evaluationId:int}")]  // ✅ Added :int constraint
         public async Task<IActionResult> UpdateVpgsEvaluation(int evaluationId, [FromBody] UpdateVpgsEvaluationDto dto)
         {
             if (!ModelState.IsValid)
@@ -88,26 +115,6 @@ namespace Srs.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, new { message = "An error occurred while updating the VPGS evaluation", details = ex.Message });
-            }
-        }
-        [HttpGet("period/{periodId}/existenceMap")]
-        public async Task<IActionResult> GetVpgsExistenceMap(int periodId)
-        {
-            try
-            {
-                var results = await _vpgsService.GetVpgsEvaluationsByPeriodAsync(periodId);
-
-                // Return a dictionary of evaluationId -> true (exists)
-                var existenceMap = results.ToDictionary(
-                    r => r.EvaluationId,
-                    r => true
-                );
-
-                return Ok(existenceMap);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "An error occurred", details = ex.Message });
             }
         }
     }

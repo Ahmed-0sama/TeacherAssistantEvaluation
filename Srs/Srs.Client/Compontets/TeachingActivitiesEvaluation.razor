@@ -3,15 +3,19 @@
     <div class="card-body p-4">
         <h5 class="text-end text-dark mb-4">1-2 الأنشطة التعليمية المباشرة والمعادلة (10%)</h5>
 
-        <div class="row mb-3 align-items-center">
+        <div class="row mb-3 align-items-center @GetDeanModifiedClass(1)">
             <div class="col-md-8 text-end">
                 <label class="form-label mb-0">إعداد مذكرات للجزء العملي /تدريبات</label>
+                @if (IsDeanModified(1))
+                {
+                    <span class="badge bg-warning text-dark ms-2">تم التعديل من قبل العميد</span>
+                }
             </div>
             <div class="col-md-4">
                 <select class="form-select"
                         value="@GetRatingValue(1)"
                         @onchange="e => UpdateRating(1, e.Value?.ToString())"
-                        disabled="@IsViewMode">
+                        disabled="@(IsViewMode || IsDeanModified(1))">
                     <option value="">اختر</option>
                     @foreach (var option in gradeOptions)
                     {
@@ -21,15 +25,19 @@
             </div>
         </div>
 
-        <div class="row mb-3 align-items-center">
+        <div class="row mb-3 align-items-center @GetDeanModifiedClass(2)">
             <div class="col-md-8 text-end">
                 <label class="form-label mb-0">إعداد مساعدات تعليمية وتدريسية جديدة</label>
+                @if (IsDeanModified(2))
+                {
+                    <span class="badge bg-warning text-dark ms-2">تم التعديل من قبل العميد</span>
+                }
             </div>
             <div class="col-md-4">
                 <select class="form-select"
                         value="@GetRatingValue(2)"
                         @onchange="e => UpdateRating(2, e.Value?.ToString())"
-                        disabled="@IsViewMode">
+                        disabled="@(IsViewMode || IsDeanModified(2))">
                     <option value="">اختر</option>
                     @foreach (var option in gradeOptions)
                     {
@@ -39,15 +47,19 @@
             </div>
         </div>
 
-        <div class="row mb-3 align-items-center">
+        <div class="row mb-3 align-items-center @GetDeanModifiedClass(3)">
             <div class="col-md-8 text-end">
                 <label class="form-label mb-0">المساعدة في إعداد التجارب العملية / التمارين</label>
+                @if (IsDeanModified(3))
+                {
+                    <span class="badge bg-warning text-dark ms-2">تم التعديل من قبل العميد</span>
+                }
             </div>
             <div class="col-md-4">
                 <select class="form-select"
                         value="@GetRatingValue(3)"
                         @onchange="e => UpdateRating(3, e.Value?.ToString())"
-                        disabled="@IsViewMode">
+                        disabled="@(IsViewMode || IsDeanModified(3))">
                     <option value="">اختر</option>
                     @foreach (var option in gradeOptions)
                     {
@@ -57,15 +69,19 @@
             </div>
         </div>
 
-        <div class="row mb-3 align-items-center">
+        <div class="row mb-3 align-items-center @GetDeanModifiedClass(4)">
             <div class="col-md-8 text-end">
                 <label class="form-label mb-0">المشاركة في تنظيم وإدارة دورات تدريسية/ مؤتمرات</label>
+                @if (IsDeanModified(4))
+                {
+                    <span class="badge bg-warning text-dark ms-2">تم التعديل من قبل العميد</span>
+                }
             </div>
             <div class="col-md-4">
                 <select class="form-select"
                         value="@GetRatingValue(4)"
                         @onchange="e => UpdateRating(4, e.Value?.ToString())"
-                        disabled="@IsViewMode">
+                        disabled="@(IsViewMode || IsDeanModified(4))">
                     <option value="">اختر</option>
                     @foreach (var option in gradeOptions)
                     {
@@ -75,15 +91,19 @@
             </div>
         </div>
 
-        <div class="row mb-4 align-items-center">
+        <div class="row mb-4 align-items-center @GetDeanModifiedClass(5)">
             <div class="col-md-8 text-end">
                 <label class="form-label mb-0">أي نشاط تعليمي آخر مكلف به</label>
+                @if (IsDeanModified(5))
+                {
+                    <span class="badge bg-warning text-dark ms-2">تم التعديل من قبل العميد</span>
+                }
             </div>
             <div class="col-md-4">
                 <select class="form-select"
                         value="@GetRatingValue(5)"
                         @onchange="e => UpdateRating(5, e.Value?.ToString())"
-                        disabled="@IsViewMode">
+                        disabled="@(IsViewMode || IsDeanModified(5))">
                     <option value="">اختر</option>
                     @foreach (var option in gradeOptions)
                     {
@@ -111,11 +131,22 @@
     </div>
 </div>
 
+<style>
+    .dean-modified-row {
+        background-color: #fff3cd;
+        border-left: 4px solid #ffc107;
+        padding: 10px;
+        border-radius: 4px;
+    }
+</style>
+
 @code {
+    [Parameter] public bool IsDeanUser { get; set; } = false;
     [Parameter] public double TeachingLoadScore { get; set; }
     [Parameter] public EventCallback<(Dictionary<int, int> Ratings, decimal Total)> OnRatingsChanged { get; set; }
     [Parameter] public bool IsViewMode { get; set; }
     [Parameter] public Dictionary<int, int>? ExistingRatings { get; set; }
+    [Parameter] public Dictionary<int, string>? CriterionSources { get; set; }
 
     private Dictionary<int, int> ratings = new();
     private Dictionary<int, int>? previousExistingRatings = null;
@@ -128,6 +159,19 @@
         new GradeOption { Value = 3, Label = "جيد جداً (1.5)" },
         new GradeOption { Value = 4, Label = "ممتاز (2)" }
     };
+
+    private bool IsDeanModified(int criterionId)
+    {
+        bool isModifiedByDean = CriterionSources?.TryGetValue(criterionId, out var source) == true && source == "Dean";
+
+        // ✅ Dean can edit their own modifications, HOD cannot
+        return isModifiedByDean && !IsDeanUser;
+    }
+
+    private string GetDeanModifiedClass(int criterionId)
+    {
+        return IsDeanModified(criterionId) ? "dean-modified-row" : "";
+    }
 
     protected override void OnParametersSet()
     {
@@ -170,6 +214,13 @@
 
     private void UpdateRating(int criterionId, string? value)
     {
+        // ✅ Don't allow updates to Dean-modified criteria
+        if (IsDeanModified(criterionId))
+        {
+            Console.WriteLine($"🚫 Cannot update Dean-modified criterion {criterionId}");
+            return;
+        }
+
         if (int.TryParse(value, out int scoreValue) && scoreValue >= 0)
         {
             ratings[criterionId] = scoreValue;

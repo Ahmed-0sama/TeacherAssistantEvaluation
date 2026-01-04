@@ -21,7 +21,7 @@ namespace Business_Access.Interfaces
         Task<List<ProfessorCourseEvaluation>> GetByEvaluationIdAsync(int evaluationId);
         Task<List<ProfessorEvaluationResponseDto>> GetByPeriodAndTAAsync(int evaluationPeriodId, int taEmployeeId);
         Task<List<ProfessorCourseEvaluation>> GetByTAEmployeeIdAsync(int taEmployeeId);
-
+        Task<ProfessorDataResponseDto> GetProfessorCoursesWithEvaluationsAsync(int professorId, int evaluationPeriodId,DateOnly StartDate,DateOnly EndDate);
 
     }
 }

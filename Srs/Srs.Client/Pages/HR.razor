@@ -9,6 +9,16 @@
 <HeadContent>
     <link href="./Custom-Rtl.css" rel="stylesheet" />
 </HeadContent>
+@if (isLoading)
+{
+    <div class="loading-container">
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status"></div>
+            <div class="mt-2 fw-bold">جاري تحميل البيانات...</div>
+        </div>
+    </div>
+}
+else{
 <div class="container-fluid">
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-center py-3 border-bottom">
@@ -103,23 +113,50 @@
                             @foreach (var evaluation in FilteredTAList)
                             {
                                 <tr>
-                                    <td>@evaluation.Name</td>
+                                    <td>@evaluation.employeeName</td>
                                     <td>@evaluation.Department</td>
-                                    <td>@evaluation.Department</td>
+                                    <td>@(evaluation.statusid)</td>
                                     <td>
-                                        <span class="badge @GetStatusBadgeClass(evaluation.statusid)">
-                                            @evaluation.statusid
+                                        @if (evaluation.TotalScore > 0)
+                                        {
+                                            <span class="badge @GetGradeBadgeClass(evaluation.TotalScore)">
+                                                @GetGradeText(evaluation.TotalScore)
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">لم يتم التقييم</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <span class="badge @GetGradeBadgeClass(evaluation.statusid)">
+                                            @GetGradeText(evaluation.statusid)
                                         </span>
                                     </td>
-                                    <td>@GetStatusText(evaluation.statusid)</td>
-                                    <td>
+                                    <td class="no-print">
                                         @if (evaluation.statusid == 6 || evaluation.statusid == 5)
                                         {
-                                            <button class="btn btn-sm btn-primary ms-2 " @onclick="() => OpenModal(evaluation)">عرض التقرير</button>
+                                            <button class="btn btn-sm btn-primary ms-2"
+                                                    @onclick="() => OpenModal(evaluation)">
+                                                عرض التقرير
+                                            </button>
                                         }
-                                       @if(evaluation.statusid!=6){
-                                        <button class="btn btn-sm btn-warning text-white">إرسال تذكير</button>
-                                       }
+                                        else if (evaluation.statusid == 0||evaluation.statusid==1)
+                                        {
+                                            <button class="btn btn-sm btn-secondary" disabled>
+                                                بانتظار إنشاء التقييم
+                                            </button>
+                                            <Srs.Client.Compontets.ReminderComponent Name="@evaluation.employeeName"
+                                                                                 EmployeeId="HR_DEPARTMENT_ID"
+                                                                                 RecieverId="@evaluation.employeeId"
+                                                                                 RenderAsButton="true" />
+                                        }
+                                        else
+                                        {
+                                            <button class="btn btn-sm btn-secondary" disabled>
+                                                بانتظار الاستكمال
+                                            </button>
+                                        }
                                     </td>
                                 </tr>
                             }
@@ -130,6 +167,7 @@
         </div>
     </div>
 </div>
+}
 @if (showHodModal && selectedTA != null)
 {
     <Srs.Client.Compontets.HODComponent SelectedTA="@selectedTA"
@@ -137,6 +175,7 @@
                                         IsViewMode="true"
                                         OnClose="@CloseModal"/>
 }
+
 @code {
     private int EvaluationPeriodId;
     private string errorMessage = string.Empty;
@@ -146,6 +185,7 @@
     private EvaluationStatisticsDto evstat = new();
     private bool isLoading = false;
     private string SearchTerm { get; set; } = string.Empty;
+    private const int HR_DEPARTMENT_ID = 5379;
 
     private List<UserDataDto> FilteredTAList
     {
@@ -159,24 +199,39 @@
             var searchLower = SearchTerm.ToLower().Trim();
 
             return taList.Where(ta =>
-                (ta.Name?.ToLower().Contains(searchLower) ?? false) ||
+                (ta.employeeName?.ToLower().Contains(searchLower) ?? false) ||
                 (ta.EmployeeNumber.ToString().Contains(searchLower)) ||
                 (ta.Department?.ToLower().Contains(searchLower) ?? false) ||
-                (GetStatusText(ta.statusid).ToLower().Contains(searchLower))
+                (GetGradeBadgeClass(ta.statusid).ToLower().Contains(searchLower))
             ).ToList();
         }
     }
 
     protected override async Task OnInitializedAsync()
     {
-        await GetEvaluationPeriod();
-        await GetEvaluationStatistics();
-        await LoadTAList();
+        isLoading = true;
+
+        try
+        {
+            await GetEvaluationPeriod();
+            await GetEvaluationStatistics();
+            await LoadTAList();
+        }
+        finally
+        {
+            isLoading = false;
+        }
     }
 
     private void OpenModal(UserDataDto ta)
     {
-        Console.WriteLine($"Opening modal for: {ta.Name}, EvaluationId: {ta.EvaluationId}");
+        if (ta.EvaluationId == 0 || ta.statusid < 5)
+        {
+            JS.InvokeVoidAsync("alert", "لا يوجد تقييم متاح للعرض");
+            return;
+        }
+
+        Console.WriteLine($"Opening modal for: {ta.employeeName}, EvaluationId: {ta.EvaluationId}");
         selectedTA = ta;
         showHodModal = true;
         StateHasChanged();
@@ -213,7 +268,20 @@
     {
         try
         {
-            var response = await Http.GetAsync($"/api/Statistics/EvaluationStatistics/{EvaluationPeriodId}");
+            if (EvaluationPeriodId == 0)
+            {
+                Console.WriteLine("⚠️ Cannot load statistics: No active evaluation period");
+                return;
+            }
+
+            var startDate = "2025-01-01"; 
+
+            var url = $"/api/Statistics/EvaluationStatistics?evaluationPeriod={EvaluationPeriodId}&hrDepartmentId={HR_DEPARTMENT_ID}&startDate={startDate}";
+
+            Console.WriteLine($"📡 Calling: {url}");
+
+            var response = await Http.GetAsync(url);
+
             if (response.IsSuccessStatusCode)
             {
                 var result = await response.Content.ReadFromJsonAsync<EvaluationStatisticsDto>();
@@ -221,7 +289,17 @@
                 {
                     evstat = result;
                     Console.WriteLine($"✅ Evaluation statistics retrieved successfully.");
+                    Console.WriteLine($"   - Total: {evstat.TotalEvaluations}");
+                    Console.WriteLine($"   - TA Pending: {evstat.TAPending}");
+                    Console.WriteLine($"   - HOD Pending: {evstat.HodPending}");
+                    Console.WriteLine($"   - Dean Pending: {evstat.DeanPending}");
+                    Console.WriteLine($"   - Accepted: {evstat.accepted}");
                 }
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"❌ Failed to load statistics: {error}");
             }
         }
         catch (Exception ex)
@@ -231,63 +309,78 @@
         }
     }
 
+
     private async Task LoadTAList()
     {
-        isLoading = true;
+        errorMessage = string.Empty;
 
         try
         {
-            var hodEvaluations = await Http.GetFromJsonAsync<List<HodEvaluationResponseDto>>(
-                $"/api/HodEvaluation/GetHodEvaluationByPeriod/{EvaluationPeriodId}"
-            ) ?? new List<HodEvaluationResponseDto>();
+            Console.WriteLine("📡 Loading HR page data...");
 
-            taList = hodEvaluations.Select(h => new UserDataDto
+            if (EvaluationPeriodId == 0)
             {
-                Name = h.TaName ?? $"TA #{h.TaEmployeeId}",
-                Department = h.TaName,
-                EmployeeNumber = h.TaEmployeeId,
-                EvaluationId = h.EvaluationId,
-                Id = h.TaEmployeeId,
-                statusid = h.StatusId,
-                HasHodEvaluation = true,
-                HodEvaluationData = h
-            })
-            .ToList();
+                errorMessage = "لا توجد فترة تقييم نشطة حالياً";
+                return;
+            }
 
-            Console.WriteLine($"Loaded {taList.Count} TAs from HOD evaluations only.");
+            var startDate = "2025-01-01"; 
+
+            // ✅ Single API call to get ALL TAs with enriched data
+            var url = $"/api/Statistics/GetAllTAsForHR?periodId={EvaluationPeriodId}&hrDepartmentId={HR_DEPARTMENT_ID}&startDate={startDate}";
+
+            Console.WriteLine($"📡 Calling: {url}");
+
+            var response = await Http.GetAsync(url);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                throw new Exception($"Failed to load TAs: {error}");
+            }
+
+            taList = await response.Content.ReadFromJsonAsync<List<UserDataDto>>()
+                ?? new List<UserDataDto>();
+
+            Console.WriteLine($"✅ Loaded {taList.Count} TAs for HR");
+
+            if (!taList.Any())
+            {
+                errorMessage = "لا يوجد مساعدي تدريس";
+            }
         }
         catch (Exception ex)
         {
             errorMessage = $"حدث خطأ أثناء تحميل البيانات: {ex.Message}";
-            Console.WriteLine($"Error: {ex}");
+            Console.WriteLine($"❌ Error: {ex}");
         }
         finally
         {
-            isLoading = false;
+            StateHasChanged();
         }
     }
 
-    private string GetStatusBadgeClass(int evaluationstatus)
+    private string GetGradeBadgeClass(decimal totalScore)
     {
-        return evaluationstatus switch
+        return totalScore switch
         {
-            6 => "bg-success",
-            5 => "bg-primary",
-            2 or 4 or 7 => "bg-warning text-dark",
-            1 => "bg-secondary",
-            _ => "bg-secondary"
+            >= 90 => "bg-success",      // ممتاز
+            >= 80 => "bg-primary",      // جيد جداً
+            >= 70 => "bg-info",         // جيد
+            >= 60 => "bg-warning",      // مقبول
+            _ => "bg-danger"            // ضعيف
         };
     }
 
-    private string GetStatusText(int evaluationstatus)
+    private string GetGradeText(decimal totalScore)
     {
-        return evaluationstatus switch
+        return totalScore switch
         {
-            6 => "معتمد",
-            5 => "بانتظار العميد",
-            2 or 4 or 7 => "بانتظار رئيس القسم",
-            1 => "بانتظار المدخلات",
-            _ => "غير معروف"
+            >= 90 => "ممتاز",
+            >= 80 => "جيد جداً",
+            >= 70 => "جيد",
+            >= 60 => "مقبول",
+            _ => "ضعيف"
         };
     }
     private async Task PrintReport()

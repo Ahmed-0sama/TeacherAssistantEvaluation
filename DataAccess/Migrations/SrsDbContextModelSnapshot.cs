@@ -217,32 +217,32 @@ namespace DataAccess.Migrations
                         new
                         {
                             StatusId = 3,
-                            StatusDescription = "HOD has reviewed and provided comments",
-                            StatusName = "ReviewedByHOD"
+                            StatusDescription = "HOD has Returned and provided comments",
+                            StatusName = "ReturnedByHOD_ToTA"
                         },
                         new
                         {
                             StatusId = 4,
-                            StatusDescription = "HOD returned the evaluation to the TA for corrections",
-                            StatusName = "ReturnedByHOD"
+                            StatusDescription = "HOD returned the evaluation to the Professor for corrections",
+                            StatusName = "ReturnedByHOD_ToProfessor"
                         },
                         new
                         {
                             StatusId = 5,
-                            StatusDescription = "Dean has reviewed the evaluation",
-                            StatusName = "ReviewedByDean"
+                            StatusDescription = "HOD has reviewed the evaluation And Accept it",
+                            StatusName = "AcceptedByHOD"
                         },
                         new
                         {
                             StatusId = 6,
-                            StatusDescription = "Dean returned the evaluation for corrections",
-                            StatusName = "ReturnedByDean"
+                            StatusDescription = "Evaluation fully approved and completed",
+                            StatusName = "Approved"
                         },
                         new
                         {
                             StatusId = 7,
-                            StatusDescription = "Evaluation fully approved and completed",
-                            StatusName = "Approved"
+                            StatusDescription = "Dean returned the evaluation for corrections",
+                            StatusName = "ReturnedByDean"
                         });
                 });
 
@@ -284,8 +284,8 @@ namespace DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<decimal?>("ProgressScore")
-                        .HasColumnType("decimal(18,2)");
+                    b.Property<int?>("ProgressScore")
+                        .HasColumnType("int");
 
                     b.Property<bool>("ResearchPlan")
                         .HasColumnType("bit");
@@ -328,6 +328,14 @@ namespace DataAccess.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("HodevalId"));
 
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<int>("CreatedByUserId")
+                        .HasColumnType("int");
+
                     b.Property<int>("CriterionId")
                         .HasColumnType("int")
                         .HasColumnName("CriterionID");
@@ -336,19 +344,30 @@ namespace DataAccess.Migrations
                         .HasColumnType("int")
                         .HasColumnName("EvaluationID");
 
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
                     b.Property<int>("RatingId")
                         .HasColumnType("int")
                         .HasColumnName("RatingID");
+
+                    b.Property<string>("SourceRole")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasDefaultValue("HOD");
 
                     b.HasKey("HodevalId")
                         .HasName("PK__HODEvalu__6A4AF4FA7D98075F");
 
                     b.HasIndex("CriterionId");
 
-                    b.HasIndex("RatingId");
+                    b.HasIndex("EvaluationId");
 
-                    b.HasIndex(new[] { "EvaluationId", "CriterionId" }, "UQ_HODEval")
-                        .IsUnique();
+                    b.HasIndex("RatingId");
 
                     b.ToTable("HODEvaluations", "taEvaluation");
                 });
@@ -803,6 +822,9 @@ namespace DataAccess.Migrations
                     b.Property<int>("EvaluationId")
                         .HasColumnType("int")
                         .HasColumnName("EvaluationID");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("bit");
 
                     b.Property<int>("RecievedByEmployeeId")
                         .HasColumnType("int")

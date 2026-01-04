@@ -13,7 +13,7 @@ namespace Shared.Dtos.VPGSEvaluation
         public int EvaluationId { get; set; }
 
         [Required(ErrorMessage = "Scientific score is required")]
-        [Range(0, 100, ErrorMessage = "Scientific score must be between 0 and 100")]
-        public decimal ScientificScore { get; set; }
+        [Range(0, 5, ErrorMessage = "Scientific score must be between 0 and 5")]
+        public int ScientificScore { get; set; }
     }
 }

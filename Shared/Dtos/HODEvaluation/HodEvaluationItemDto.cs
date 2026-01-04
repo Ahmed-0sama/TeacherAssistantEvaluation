@@ -14,6 +14,7 @@ namespace Shared.Dtos.HODEvaluation
         public int RatingId { get; set; }
         public string RatingName { get; set; }
         public int ScoreValue { get; set; }
-        public decimal ActualPoints { get; set; } //
+        public decimal ActualPoints { get; set; }
+        public string SourceRole { get; set; } // "HOD" or "Dean"
     }
 }

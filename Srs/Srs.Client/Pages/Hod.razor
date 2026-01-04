@@ -41,7 +41,6 @@
                                 <tr>
                                     <th>اسم مساعد التدريس</th>
                                     <th>الفترة</th>
-                                    <th>الحالة</th>
                                     <th>حالة التقييم</th>
                                     <th>إجراء</th>
                                 </tr>
@@ -50,48 +49,79 @@
                                 @foreach (var ta in taList)
                                 {
                                     <tr>
-                                        <td>@ta.Name</td>
+                                        <td>@ta.employeeName</td>
                                         <td>@ta.Department</td>
-                                        <td>@ta.statusid</td>
                                         <td>
-                                            @if (ta.statusid == 5)
+                                            @if (ta.statusid == 0)
                                             {
+                                                <span class="badge bg-secondary">انتظار تقديم التقييم</span>
+
+                                            }
+                                            else if (ta.statusid == 1)
+                                            {
+                                                <!-- TA created evaluation but hasn't submitted -->
+                                                <span class="badge bg-secondary">انتظار المدخلات</span>
+                                            }
+                                            else if (ta.statusid == 2)
+                                            {
+                                                <!-- TA submitted, waiting for HOD -->
+                                                <span class="badge bg-warning text-dark">بانتظار التقييم</span>
+                                            }
+                                            else if (ta.statusid == 3 || ta.statusid == 4)
+                                            {
+                                                <!-- Returned to TA or Professor -->
+                                                <span class="badge bg-danger">تم الارجاع</span>
+                                            }
+                                            else if (ta.statusid == 5)
+                                            {
+                                                <!-- HOD completed evaluation -->
                                                 <span class="badge bg-success">تم التقييم</span>
                                             }
                                             else if (ta.statusid == 6)
                                             {
+                                                <!-- Dean approved -->
                                                 <span class="badge bg-success">تم قبول التقييم من العميد</span>
                                             }
                                             else if (ta.statusid == 7)
                                             {
-                                                <span class="badge bg-danger">مرتجع من العمييد</span>
+                                                <!-- Returned by Dean -->
+                                                <span class="badge bg-danger">مرتجع من العميد</span>
                                             }
-                                            else if (ta.statusid == 3||ta.statusid==4)
-                                            {
-                                                <span class="badge bg-danger">تم الارجاع</span>
-                                            }
-                                            else 
-                                            {
-                                                <span class="badge bg-warning text-dark">بانتظار التقييم</span>
-                                            }
-
                                         </td>
                                         <td>
-                                            @if (ta.statusid == 5||ta.statusid==6||ta.statusid==3||ta.statusid==4)
+                                            @if (ta.statusid == 0 || ta.statusid == 1)
                                             {
-                                                <button class="btn btn-sm btn-primary" @onclick="() => OpenModal(ta)">
+                                                <!-- ✅ Disabled button if TA hasn't submitted -->
+                                                <button class="btn btn-sm btn-secondary" disabled>
+                                                    <i class="bi bi-hourglass-split me-1"></i>
+                                                    انتظار
+
+                                                </button>
+                                               <Srs.Client.Compontets.ReminderComponent EmployeeId="professorEmployeeId"
+                                                                                         RecieverId="ta.employeeId"
+                                                                                         RenderAsButton="true"/>
+                                            }
+                                            else if (ta.statusid == 5 || ta.statusid == 6 || ta.statusid == 3 || ta.statusid == 4)
+                                            {
+                                                <!-- View button for completed or returned evaluations -->
+                                                <button class="btn btn-sm btn-info" @onclick="() => OpenModal(ta)">
+                                                    <i class="bi bi-eye me-1"></i>
                                                     عرض التقييم
                                                 </button>
                                             }
                                             else if (ta.statusid == 7)
                                             {
-                                                <button class="btn btn-sm btn-primary" @onclick="() => OpenModal(ta)">
+                                                <!-- Edit button for Dean-returned evaluations -->
+                                                <button class="btn btn-sm btn-warning" @onclick="() => OpenModal(ta)">
+                                                    <i class="bi bi-pencil-square me-1"></i>
                                                     اعادة التقييم
                                                 </button>
                                             }
-                                            else
+                                            else if (ta.statusid == 2)
                                             {
+                                                <!-- Evaluate button for submitted evaluations -->
                                                 <button class="btn btn-sm btn-primary" @onclick="() => OpenModal(ta)">
+                                                    <i class="bi bi-pencil-square me-1"></i>
                                                     تقييم
                                                 </button>
                                             }
@@ -116,7 +146,6 @@
         OnClose="@CloseModal"
         OnSaveSuccess="@HandleSaveSuccess" />
 }
-
 @code {
     private List<UserDataDto> taList = new();
     private bool isLoading = true;
@@ -124,7 +153,8 @@
     private bool showModal = false;
     private UserDataDto? selectedTA;
     private bool isViewMode = false;
-    private int EvaluationPeriodId; // Example period ID
+    private int EvaluationPeriodId;
+    private int professorEmployeeId = 1251;
     
     protected override async Task OnInitializedAsync()
     {
@@ -154,49 +184,58 @@
     private async Task LoadTAList()
     {
         isLoading = true;
+        errorMessage = string.Empty;
 
         try
         {
-            // Load ONLY the HOD evaluations (your DTO contains everything needed)
-            var hodEvaluations = await Http.GetFromJsonAsync<List<HodEvaluationResponseDto>>(
-                $"/api/HodEvaluation/GetHodEvaluationByPeriod/{EvaluationPeriodId}"
-            ) ?? new List<HodEvaluationResponseDto>();
+            Console.WriteLine("📡 Loading HOD page data...");
 
-
-            // Now build the TA list from the HOD data
-            taList = hodEvaluations.Select(h => new UserDataDto
+            if (EvaluationPeriodId == 0)
             {
-                Name = h.TaName ?? $"TA #{h.TaEmployeeId}",
-                Department = h.TaName,
-                EmployeeNumber = h.TaEmployeeId,
-                EvaluationId = h.EvaluationId,
-                Id = h.TaEmployeeId,
-                statusid = h.StatusId,
-                
-                // There IS a HOD evaluation because this DTO exists
-                HasHodEvaluation = true,
+                errorMessage = "لا توجد فترة تقييم نشطة حالياً";
+                return;
+            }
 
-                // Full HOD evaluation object if needed later
-                HodEvaluationData = h
-            })
-            .ToList();
+            var startDate = "2025-01-01"; // TODO: Get from evaluation period
 
-            Console.WriteLine($"Loaded {taList.Count} TAs from HOD evaluations only.");
+            // ✅ Single API call to get enriched TA list
+            var url = $"/api/HodEvaluation/GetTAsForHOD?periodId={EvaluationPeriodId}&hodDepartmentId={professorEmployeeId}&startDate={startDate}";
+
+            Console.WriteLine($"📡 Calling: {url}");
+
+            var response = await Http.GetAsync(url);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                throw new Exception($"Failed to load TAs: {error}");
+            }
+
+            taList = await response.Content.ReadFromJsonAsync<List<UserDataDto>>()
+                ?? new List<UserDataDto>();
+
+            Console.WriteLine($"✅ Loaded {taList.Count} TAs for HOD");
+
+            if (!taList.Any())
+            {
+                errorMessage = "لا يوجد مساعدي تدريس قدموا تقييماتهم بعد";
+            }
         }
         catch (Exception ex)
         {
             errorMessage = $"حدث خطأ أثناء تحميل البيانات: {ex.Message}";
-            Console.WriteLine($"Error: {ex}");
+            Console.WriteLine($"❌ Error: {ex}");
         }
         finally
         {
             isLoading = false;
+            StateHasChanged();
         }
     }
     private void OpenModal(UserDataDto ta)
     {
         selectedTA = ta;
-        isViewMode = ta.statusid==5||ta.statusid==6||ta.statusid==3||ta.statusid==4;
+        isViewMode = ta.statusid==5||ta.statusid==6||ta.statusid==3||ta.statusid==4||ta.statusid==1;
         showModal = true;
     }
 

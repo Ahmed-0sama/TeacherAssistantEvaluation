@@ -30,8 +30,8 @@
                     <div class="col-md-4">
                         <div class="mb-3">
                             <label for="name" class="form-label">الاسم</label>
-                            <InputText id="name" class="form-control" @bind-Value="userData.Name" readonly />
-                            <ValidationMessage For="@(() => userData.Name)" />
+                            <InputText id="name" class="form-control" @bind-Value="userData.employeeName" readonly />
+                            <ValidationMessage For="@(() => userData.employeeName)" />
                         </div>
                     </div>
 
@@ -48,8 +48,8 @@
                     <div class="col-md-4">
                         <div class="mb-3">
                             <label for="qualification" class="form-label">المؤهل</label>
-                            <InputText id="qualification" class="form-control" @bind-Value="userData.Qualification" readonly />
-                            <ValidationMessage For="@(() => userData.Qualification)" />
+                            <InputText id="qualification" class="form-control" @bind-Value="userData.jobTitle" readonly />
+                            <ValidationMessage For="@(() => userData.jobTitle)" />
                         </div>
                     </div>
 
@@ -65,8 +65,8 @@
                     <div class="col-md-4">
                         <div class="mb-3">
                             <label for="department" class="form-label">الكلية/الفرع </label>
-                            <InputText id="department" class="form-control" @bind-Value="userData.College" readonly/>
-                            <ValidationMessage For="@(() => userData.College)" />
+                            <InputText id="department" class="form-control" @bind-Value="userData.college" readonly/>
+                            <ValidationMessage For="@(() => userData.college)" />
                         </div>
                     </div>
                 </div>
@@ -97,11 +97,11 @@
             // Replace with your actual API endpoint
             userData = new Shared.Dtos.UserDataDto
             {
-                Name = "علياء احمد",
+                employeeName = "علياء احمد",
                 EmployeeNumber = 12323,
-                Qualification = "ماجستير في علوم الحاسب",
+                jobTitle = "ماجستير في علوم الحاسب",
                 Department = "قسم علوم الحاسب",
-                College="AASTMT"
+                college="AASTMT"
             };
 
             /* comment when use the real api 

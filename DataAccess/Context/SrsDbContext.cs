@@ -168,13 +168,24 @@ public partial class SrsDbContext : DbContext
 
             entity.ToTable("HODEvaluations", "taEvaluation");
 
-            entity.HasIndex(e => new { e.EvaluationId, e.CriterionId }, "UQ_HODEval").IsUnique();
-
+            // ✅ REMOVED: The old unique index will be replaced by a filtered unique index in migration
+            // entity.HasIndex(e => new { e.EvaluationId, e.CriterionId }, "UQ_HODEval").IsUnique();
 
             entity.Property(e => e.HodevalId).HasColumnName("HODEvalID");
             entity.Property(e => e.CriterionId).HasColumnName("CriterionID");
             entity.Property(e => e.EvaluationId).HasColumnName("EvaluationID");
             entity.Property(e => e.RatingId).HasColumnName("RatingID");
+
+            // ✅ ADD: Default values for audit tracking columns
+            entity.Property(e => e.SourceRole)
+                .HasMaxLength(50)
+                .HasDefaultValue("HOD");
+
+            entity.Property(e => e.IsActive)
+                .HasDefaultValue(true);
+
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("GETUTCDATE()");
 
             entity.HasOne(d => d.Criterion).WithMany(p => p.Hodevaluations)
                 .HasForeignKey(d => d.CriterionId)

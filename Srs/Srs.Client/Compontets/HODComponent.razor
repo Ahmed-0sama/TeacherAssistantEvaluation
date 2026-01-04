@@ -1,4 +1,6 @@
-﻿@using Shared.Dtos.HODEvaluation
+﻿@using Shared.Dtos.DeanDto
+@using Shared.Dtos.HODEvaluation
+@using Shared.Dtos.Notifications
 @using Shared.Dtos.ProfessorEvaluationDto
 @inject HttpClient Http
 @inject IJSRuntime JS
@@ -22,6 +24,18 @@
             }
             else
             {
+                    @if (hodEvaluationData?.Evaluations?.Any(e => e.SourceRole == "Dean") == true)
+                    {
+                        <div class="alert alert-warning" role="alert">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                <div>
+                                    <strong>تنبيه:</strong> تم تعديل بعض المعايير من قبل عميد الكلية.
+                                    المعايير المعدلة محددة باللون الأصفر ولا يمكن تعديلها.
+                                </div>
+                            </div>
+                        </div>
+                    }
                 <div class="border rounded p-3 bg-light mb-3">
 
                     <h5 class="mb-3 text-primary">البيانات الأساسية</h5>
@@ -29,7 +43,7 @@
                     <div class="row">
                         <div class="col-md-4 mb-3">
                             <label class="form-label fw-bold">اسم مساعد التدريس</label>
-                            <input type="text" class="form-control" disabled value="@SelectedTA?.Name" />
+                            <input type="text" class="form-control" disabled value="@SelectedTA?.employeeName" />
                         </div>
                         <div class="col-md-4 mb-3">
                             <label class="form-label fw-bold">الرقم الوظيفي:</label>
@@ -44,11 +58,11 @@
                     <div class="row">
                         <div class="col-md-4 mb-3">
                             <label class="form-label fw-bold">القسم</label>
-                            <input type="text" class="form-control" disabled value="@SelectedTA?.College" />
+                            <input type="text" class="form-control" disabled value="@SelectedTA?.college" />
                         </div>
                         <div class="col-md-4 mb-3">
                             <label class="form-label fw-bold">الكلية</label>
-                            <input type="text" class="form-control" disabled value="@SelectedTA?.College" />
+                            <input type="text" class="form-control" disabled value="@SelectedTA?.college" />
                         </div>
                         <div class="col-md-4 mb-3">
                             <label class="form-label fw-bold">العبئ الدراسي</label>
@@ -56,7 +70,14 @@
                         </div>
                     </div>
                 </div>
-                    @if (statusid == 7)
+                    @if (SelectedTA.statusid == 1)
+                    {
+                        <ReminderComponent Name="مساعد التدريس"
+                                           EvaluationId="SelectedTA.EvaluationId"
+                                           EmployeeId="selectedProfessorId"
+                                           RecieverId="SelectedTA.employeeId"                   />
+                    }
+                    @if (SelectedTA.statusid == 7)
                     {
                         <div class="alert alert-danger" role="alert">
                             <div class="mb-3">
@@ -165,66 +186,128 @@
                                     </tfoot>
                                 </table>
                             </div>
-
-                            <div class="mt-3 p-3 bg-light rounded shadow-sm">
-                                <h6 class="fw-bold mb-3 text-primary">
-                                    <i class="bi bi-book-half me-1"></i>اكتمال ساعات النصاب (10)
-                                </h6>
-
-                                <div class="row text-center">
-                                    <div class="col">
-                                        <div class="p-2 bg-white rounded border">
-                                            <i class="bi bi-clock-history fs-4 d-block text-secondary"></i>
-                                            <span class="fw-bold">التدريس المتوقع</span>
-                                            <div>@teachingdto.ExpectedTeachingLoad</div>
+                                @if (SelectedTA.statusid == 2 && professorsNeedingReminder.Any())
+                                {
+                                    <div class="alert alert-warning mt-3" role="alert">
+                                        <div class="d-flex align-items-center justify-content-between">
+                                            <div>
+                                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                                <strong>تنبيه:</strong> لم يقم بعض الأساتذة بتقديم تقييماتهم بعد
+                                            </div>
+                                            <button class="btn btn-sm btn-warning" @onclick="ShowProfessorsReminderModal">
+                                                <i class="bi bi-bell me-1"></i>
+                                                إرسال تذكير (@professorsNeedingReminder.Count)
+                                            </button>
                                         </div>
                                     </div>
-                                    <div class="col">
-                                        <div class="p-2 bg-white rounded border">
-                                            <i class="bi bi-check-circle fs-4 d-block text-success"></i>
-                                            <span class="fw-bold">التدريس الفعلي</span>
-                                            <div>@teachingdto.ActualTeachingLoad</div>
+                                }
+                                <div class="mt-3 p-3 bg-light rounded shadow-sm">
+                                    <h6 class="fw-bold mb-3 text-primary">
+                                        <i class="bi bi-book-half me-1"></i>اكتمال ساعات النصاب
+                                    </h6>
+
+                                    @if (semesterTeachingLoads.Any())
+                                    {
+                                        <div class="row g-3">
+                                            @foreach (var semester in semesterTeachingLoads)
+                                            {
+                                                <div class="col-md-6">
+                                                    <div class="card border-@(semester.score == 10 ? "success" : "danger")">
+                                                        <div class="card-header bg-@(semester.score == 10 ? "success" : "danger") bg-opacity-10">
+                                                            <h6 class="mb-0 fw-bold">@semester.semesterName</h6>
+                                                        </div>
+                                                        <div class="card-body">
+                                                            <div class="row text-center">
+                                                                <div class="col-4">
+                                                                    <div class="p-2">
+                                                                        <i class="bi bi-clock-history fs-4 d-block text-secondary"></i>
+                                                                        <span class="fw-bold d-block">المتوقع</span>
+                                                                        <span class="fs-5">@semester.ExpectedTeachingLoad</span>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-4">
+                                                                    <div class="p-2">
+                                                                        <i class="bi bi-check-circle fs-4 d-block text-@(semester.score == 10 ? "success" : "danger")"></i>
+                                                                        <span class="fw-bold d-block">الفعلي</span>
+                                                                        <span class="fs-5">@semester.ActualTeachingLoad</span>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-4">
+                                                                    <div class="p-2">
+                                                                        <i class="bi bi-star-fill fs-4 d-block text-warning"></i>
+                                                                        <span class="fw-bold d-block">الدرجة</span>
+                                                                        <span class="badge bg-@(semester.score == 10 ? "success" : "danger") fs-6">
+                                                                            @semester.score / 10
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            }
                                         </div>
-                                    </div>
-                                    <div class="col">
-                                        <div class="p-2 bg-white rounded border">
-                                            <i class="bi bi-star-fill fs-4 d-block text-warning"></i>
-                                            <span class="fw-bold">التقييم</span>
-                                                <div>@teachingLoadGrade(teachingdto.ActualTeachingLoad, teachingdto.ExpectedTeachingLoad)/10</div>
+
+                                        <!-- Average Score Display -->
+                                        <div class="card bg-primary bg-opacity-10 shadow-sm mt-3">
+                                            <div class="card-body text-center py-3">
+                                                <h6 class="text-primary fw-semibold mb-2">متوسط درجة اكتمال النصاب</h6>
+                                                <p class="text-primary fw-bold fs-4 mb-0">
+                                                    @AverageTeachingLoadGrade().ToString("F2") / 10
+                                                </p>
+                                            </div>
                                         </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="alert alert-warning mb-0">
+                                            <i class="bi bi-exclamation-triangle me-2"></i>
+                                            لا توجد بيانات عبء تدريسي متاحة
+                                        </div>
+                                    }
+                                </div>
+
+                                <div class="card bg-primary bg-opacity-10 shadow-sm mx-auto mt-4" style="max-width: 600px; border-radius: 12px;">
+                                    <div class="card-body text-center py-4">
+                                        <h3 class="text-primary fw-semibold mb-2" style="direction: rtl; font-size: 18px;">المجموع الكلي للعبء التدريسي</h3>
+                                        <p class="text-primary fw-bold fs-4 mb-0" style="direction: ltr;">
+                                            @(TotalTeachingLoad.ToString("F2")) / 40
+                                        </p>
+                                        <small class="text-muted d-block mt-2">
+                                            تقييم الأساتذة: @CalculateAverageScore() +
+                                            متوسط النصاب: @AverageTeachingLoadGrade().ToString("F2")
+                                        </small>
                                     </div>
                                 </div>
-                            </div>
-
-                            <div class="card bg-primary bg-opacity-10 shadow-sm mx-auto mt-4" style="max-width: 600px; border-radius: 12px;">
-                                <div class="card-body text-center py-4">
-                                    <h3 class="text-primary fw-semibold mb-2" style="direction: rtl; font-size: 18px;">المجموع الكلي للعبء التدريسي</h3>
-                                        <p class="text-primary fw-bold fs-4 mb-0" style="direction: ltr;">@(TotalTeachingLoad) / 40</p>
-                                </div>
-                            </div>
                         }
                     </div>
                 </div>
 
                 <!-- Child Components -->
                     <Srs.Client.Compontets.TeachingActivitiesEvaluation TeachingLoadScore="@TotalTeachingLoad"
-                                                                    OnRatingsChanged="OnTeachingActivitiesRatingsChanged"
-                                                                    IsViewMode="@IsViewMode"
-                                                                    ExistingRatings="@GetExistingRatings("DirectTeaching")" />
+                                                                        OnRatingsChanged="OnTeachingActivitiesRatingsChanged"
+                                                                        IsViewMode="@IsViewMode"
+                                                                        IsDeanUser="@IsDeanUser"
+                                                                        ExistingRatings="@GetExistingRatings("DirectTeaching")"
+                                                                        CriterionSources="@GetCriterionSources("DirectTeaching")" />
 
-                <Srs.Client.Compontets.ScientificActivityComponentForHod EvaluationId="@(SelectedTA?.EvaluationId ?? 0)"
-                                                                         EvaluationPeriodId="EvaluationPeriodId"
-                                                                         TaEmployeeId="SelectedTA.Id"
-                                                                         OnRatingsChanged="OnScientificActivityRatingsChanged"
-                                                                         OnScientificTotalChanged="OnScientificTotalReceived"
-                                                                         IsViewMode="@IsViewMode"
-                                                                         ExistingRatings="@GetAdministrativeRatings()" />
+                    <Srs.Client.Compontets.ScientificActivityComponentForHod EvaluationId="@(SelectedTA?.EvaluationId ?? 0)"
+                                                                             EvaluationPeriodId="EvaluationPeriodId"
+                                                                             TaEmployeeId="SelectedTA.employeeId"
+                                                                             OnRatingsChanged="OnScientificActivityRatingsChanged"
+                                                                             OnScientificTotalChanged="OnScientificTotalReceived"
+                                                                             IsViewMode="@IsViewMode"
+                                                                             ExistingRatings="@GetAdministrativeRatings()"
+                                                                             CriterionSources="@GetCriterionSources("Administrative")" />
 
-                <Srs.Client.Compontets.GradesComponent OnPersonalTraitsChanged="OnPersonalTraitsRatingsChanged"
-                                                       OnStudentActivitiesChanged="OnStudentActivitiesRatingsChanged"
-                                                       IsViewMode="@IsViewMode"
-                                                       ExistingPersonalTraits="@GetExistingRatings("PersonalTraits")"
-                                                       ExistingStudentActivities="@GetExistingRatings("StudentActivities")" />
+                    <Srs.Client.Compontets.GradesComponent OnPersonalTraitsChanged="OnPersonalTraitsRatingsChanged"
+                                                           OnStudentActivitiesChanged="OnStudentActivitiesRatingsChanged"
+                                                           IsViewMode="@IsViewMode"
+                                                           IsDeanUser="@IsDeanUser"
+                                                           ExistingPersonalTraits="@GetExistingRatings("PersonalTraits")"
+                                                           ExistingStudentActivities="@GetExistingRatings("StudentActivities")"
+                                                           PersonalTraitsSources="@GetCriterionSources("PersonalTraits")"
+                                                           StudentActivitiesSources="@GetCriterionSources("StudentActivities")" />
 
                 <div class="card bg-success bg-opacity-10 shadow-lg mx-auto mt-4 mb-4" style="max-width: 900px;">
                     <div class="card-body text-center py-5">
@@ -310,7 +393,6 @@
                         Export As PDF
                     </button>
 
-                    //here i want to add the print button 
                 <button type="button"
                         class="btn btn-outline-primary px-4"
                         @onclick="PrintModal"
@@ -370,7 +452,7 @@
                             <div>
                                 <i class="bi bi-person me-2"></i>
                                 <span>إرجاع إلى مساعد التدريس</span>
-                                <div class="small text-muted">@SelectedTA?.Name</div>
+                                <div class="small text-muted">@SelectedTA?.employeeName</div>
                             </div>
                         </div>
                     </button>
@@ -457,16 +539,94 @@
         </div>
     </div>
 }
+@if (showProfessorsReminderModal)
+{
+    <div class="modal-overlay" style="z-index: 10000;" @onclick="CloseProfessorsReminderModal">
+        <div class="modal-container" style="max-width: 600px;" @onclick:stopPropagation="true">
+            <div class="modal-header" dir="rtl">
+                <h5 class="modal-title">
+                    <i class="bi bi-bell me-2"></i>
+                    الأساتذة الذين لم يقدموا تقييماتهم
+                </h5>
+                <button type="button" class="btn-close btn-close-white ms-0 me-auto" @onclick="CloseProfessorsReminderModal"></button>
+            </div>
+
+            <div class="modal-body" dir="rtl">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    يمكنك إرسال تذكير لهؤلاء الأساتذة لتقديم تقييماتهم
+                </div>
+
+                @if (professorsNeedingReminder.Any())
+                {
+                    <div class="list-group mb-3">
+                        @foreach (var prof in professorsNeedingReminder)
+                        {
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1">@prof.ProfessorName</h6>
+                                        <small class="text-muted">@prof.CourseName</small>
+                                        <br />
+                                        <small class="text-muted">
+                                            <strong>رمز المقرر:</strong> @prof.CourseCode
+                                        </small>
+                                    </div>
+                                    <span class="badge bg-warning text-dark">
+                                        <i class="bi bi-clock me-1"></i>
+                                        لم يُقدم
+                                    </span>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <button type="button"
+                            class="btn btn-warning w-100"
+                            @onclick="SendRemindersToAllProfessors"
+                            disabled="@isSendingReminders">
+                        @if (isSendingReminders)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                            <span>جارٍ الإرسال...</span>
+                        }
+                        else
+                        {
+                            <i class="bi bi-send me-2"></i>
+                            <span>إرسال تذكير للجميع (@professorsNeedingReminder.Count)</span>
+                        }
+                    </button>
+                }
+                else
+                {
+                    <div class="alert alert-success mb-0">
+                        <i class="bi bi-check-circle me-2"></i>
+                        جميع الأساتذة قدموا تقييماتهم
+                    </div>
+                }
+            </div>
+
+            <div class="modal-footer">
+                <button type="button"
+                        class="btn btn-secondary"
+                        @onclick="CloseProfessorsReminderModal"
+                        disabled="@isSendingReminders">
+                    إغلاق
+                </button>
+            </div>
+        </div>
+    </div>
+}
 @code {
-    // Parameters passed from parent component
     [Parameter] public UserDataDto? SelectedTA { get; set; }
     [Parameter] public int EvaluationPeriodId { get; set; }
     [Parameter] public bool IsViewMode { get; set; } = false;
     [Parameter] public EventCallback OnClose { get; set; }
     [Parameter] public EventCallback OnSaveSuccess { get; set; }
+    [Parameter] public bool IsDeanUser { get; set; } = false;
+    [Parameter] public int DeanEmployeeId { get; set; } = 0;
     private decimal scientificTotal = 0;
     private int statusid = 0;
-    // Internal state
     private bool isLoadingModal = true;
     private bool isGeneratingPdf = false;
     private string HodReturnComment = "";
@@ -484,14 +644,25 @@
     private bool modal = false;
     private bool showProfessorModal = false;
     private int selectedProfessorId = 0;
-    // Comments
     private string hodStrengths = string.Empty;
     private string hodWeaknesses = string.Empty;
     private string DeanComments = string.Empty;
     private IJSObjectReference? pdfModule;
-
+    private UserDataDto? fullEmployeeInfo;
+    private List<ProfessorReminderInfo> professorsNeedingReminder = new();
+    private bool showProfessorsReminderModal = false;
+    private bool isSendingReminders = false;
     // Computed properties - العبء التدريسي = Professor evaluations (30) + Teaching load completion (10) + Teaching Activities (10)
     decimal teachingLoadScore => (CalculateAverageScore()) + teachingLoadGrade(teachingdto.ActualTeachingLoad,teachingdto.ExpectedTeachingLoad) + GetTeachingActivitiesTotal();
+    private List<TeachingDataDto> semesterTeachingLoads = new List<TeachingDataDto>();
+
+    private decimal AverageTeachingLoadGrade()
+    {
+        if (!semesterTeachingLoads.Any())
+            return 0;
+
+        return semesterTeachingLoads.Average(s => s.score);
+    }
 
     protected override async Task OnParametersSetAsync()
     {
@@ -500,15 +671,114 @@
             await LoadData();
         }
     }
+    private async Task LoadProfessorsNeedingReminder()
+    {
+        try
+        {
+            professorsNeedingReminder.Clear();
 
+            // Extract all unique professors from teaching data (semesterTeachingLoads)
+            var allProfessors = semesterTeachingLoads
+                .SelectMany(semester => semester.courses ?? new List<CourseDto>())
+                .Where(course => !string.IsNullOrEmpty(course.courseProfessorId))
+                .Select(course => new
+                {
+                    ProfessorId = int.Parse(course.courseProfessorId.Trim()),
+                    ProfessorName = course.courseProfessorName?.Trim(),
+                    CourseCode = course.courseCode?.Trim(),
+                    CourseName = course.courseName?.Trim()
+                })
+                .DistinctBy(p => p.ProfessorId)
+                .ToList();
+
+            Console.WriteLine($"✅ Found {allProfessors.Count} total professors from teaching data");
+
+            // Get professors who already submitted (from profdto)
+            var submittedProfessorIds = profdto
+                .Where(p => p.IsSubmitted)
+                .Select(p => p.ProfessorEmployeeId)
+                .Distinct()
+                .ToList();
+
+            Console.WriteLine($"✅ Found {submittedProfessorIds.Count} professors who submitted");
+
+            // Find professors who haven't submitted
+            professorsNeedingReminder = allProfessors
+                .Where(prof => !submittedProfessorIds.Contains(prof.ProfessorId))
+                .Select(prof => new ProfessorReminderInfo
+                {
+                    ProfessorId = prof.ProfessorId,
+                    ProfessorName = prof.ProfessorName,
+                    CourseCode = prof.CourseCode,
+                    CourseName = prof.CourseName
+                })
+                .ToList();
+
+            Console.WriteLine($"✅ Found {professorsNeedingReminder.Count} professors needing reminder");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error loading professors needing reminder: {ex.Message}");
+        }
+    }
+
+    private void ShowProfessorsReminderModal()
+    {
+        showProfessorsReminderModal = true;
+    }
+
+    private void CloseProfessorsReminderModal()
+    {
+        showProfessorsReminderModal = false;
+    }
+
+    private async Task SendRemindersToAllProfessors()
+    {
+        if (!professorsNeedingReminder.Any())
+            return;
+
+        isSendingReminders = true;
+        try
+        {
+            // Send notification to each professor
+            foreach (var prof in professorsNeedingReminder)
+            {
+                var notificationDto = new SendNotificationDto
+                {
+                    recipientId = prof.ProfessorId,
+                    message = $"تذكير: يرجى تقديم تقييمك لمساعد التدريس {SelectedTA.employeeName}. الموعد النهائي قريب."
+                };
+
+                var response = await Http.PostAsJsonAsync("api/Notification/send", notificationDto);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    Console.WriteLine($"❌ Failed to send reminder to professor {prof.ProfessorId}");
+                }
+            }
+
+            await JS.InvokeVoidAsync("alert", $"تم إرسال التذكير إلى {professorsNeedingReminder.Count} أستاذ بنجاح");
+            CloseProfessorsReminderModal();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error sending reminders: {ex.Message}");
+            await JS.InvokeVoidAsync("alert", $"حدث خطأ: {ex.Message}");
+        }
+        finally
+        {
+            isSendingReminders = false;
+        }
+    }
     private async Task LoadData()
     {
         isLoadingModal = true;
-        Console.WriteLine($"🔵 Starting LoadData - SelectedTA: {SelectedTA?.Name}, EvaluationId: {SelectedTA?.EvaluationId}, PeriodId: {EvaluationPeriodId}");
+        Console.WriteLine($"🔵 Starting LoadData - SelectedTA: {SelectedTA?.employeeName}");
 
         // Reset data
         profdto = new List<ProfessorEvaluationResponseDto>();
         hodEvaluationData = null;
+        semesterTeachingLoads.Clear();
         teachingActivitiesRatings.Clear();
         scientificActivityRatings.Clear();
         personalTraitsRatings.Clear();
@@ -518,46 +788,87 @@
 
         try
         {
-            // Validate that we have the required data
-            if (SelectedTA == null)
+            if (SelectedTA == null || SelectedTA.EvaluationId == 0 || EvaluationPeriodId == 0)
             {
-                Console.WriteLine("❌ SelectedTA is null");
-                await JS.InvokeVoidAsync("alert", "خطأ: بيانات المستخدم غير متوفرة");
+                await JS.InvokeVoidAsync("alert", "خطأ: بيانات التقييم غير متوفرة");
                 isLoadingModal = false;
                 return;
             }
 
-            if (SelectedTA.EvaluationId == 0)
-            {
-                Console.WriteLine("❌ EvaluationId is 0");
-                await JS.InvokeVoidAsync("alert", "خطأ: معرف التقييم غير متوفر");
-                isLoadingModal = false;
-                return;
-            }
-
-            if (EvaluationPeriodId == 0)
-            {
-                Console.WriteLine("❌ EvaluationPeriodId is 0");
-                await JS.InvokeVoidAsync("alert", "خطأ: معرف فترة التقييم غير متوفر");
-                isLoadingModal = false;
-                return;
-            }
-
-            // Load professor evaluations
             try
             {
-                Console.WriteLine($"📡 Fetching professor evaluations: /api/ProfessorEvaluation/GetByPeriodAndTA/{EvaluationPeriodId}/{SelectedTA.Id}");
+                var response = await Http.GetAsync($"api/evaluation/info/{SelectedTA.employeeId}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    fullEmployeeInfo = await response.Content.ReadFromJsonAsync<UserDataDto>();
+
+                    if (fullEmployeeInfo != null)
+                    {
+                        // Update SelectedTA with full info
+                        SelectedTA.employeeName = fullEmployeeInfo.employeeName;
+                        SelectedTA.Department = fullEmployeeInfo.Department ?? SelectedTA.Department;
+                        SelectedTA.college = fullEmployeeInfo.college ?? SelectedTA.college;
+                        SelectedTA.jobTitle = fullEmployeeInfo.jobTitle;
+
+                        Console.WriteLine($"✅ Employee info updated:");
+                        Console.WriteLine($"   - Name: {SelectedTA.employeeName}");
+                        Console.WriteLine($"   - Department: {SelectedTA.Department}");
+                        Console.WriteLine($"   - College: {SelectedTA.college}");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"⚠️ Failed to load employee info: {response.StatusCode}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error loading employee info: {ex.Message}");
+            }
+
+            try
+            {
+                Console.WriteLine($"📡 Fetching teaching data for employee {SelectedTA.employeeId}");
+
+                var response = await Http.GetAsync(
+                    $"api/evaluation/teachingdata/{SelectedTA.employeeId}?startDate=2025-01-01&endDate=2025-12-31");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    semesterTeachingLoads = await response.Content.ReadFromJsonAsync<List<TeachingDataDto>>();
+
+                    if (semesterTeachingLoads != null && semesterTeachingLoads.Any())
+                    {
+                        Console.WriteLine($"✅ Loaded {semesterTeachingLoads.Count} semesters teaching data");
+                        Console.WriteLine($"   Average Score: {AverageTeachingLoadGrade()}");
+                    }
+                    else
+                    {
+                        Console.WriteLine("⚠️ No teaching data found");
+                        semesterTeachingLoads = new List<TeachingDataDto>();
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"⚠️ Failed to load teaching data: {response.StatusCode}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error loading teaching data: {ex.Message}");
+            }
+
+            // ✅ Load professor evaluations (no change needed - already using backend)
+            try
+            {
                 var profEvaluations = await Http.GetFromJsonAsync<List<ProfessorEvaluationResponseDto>>(
-                    $"api/ProfessorEvaluation/GetByPeriodAndTA/{EvaluationPeriodId}/{SelectedTA.Id}");
+                    $"api/ProfessorEvaluation/GetByPeriodAndTA/{EvaluationPeriodId}/{SelectedTA.employeeId}");
 
                 if (profEvaluations != null && profEvaluations.Any())
                 {
                     profdto = profEvaluations;
                     Console.WriteLine($"✅ Loaded {profdto.Count} professor evaluations");
-                }
-                else
-                {
-                    Console.WriteLine("⚠️ No professor evaluations found");
                 }
             }
             catch (Exception ex)
@@ -565,88 +876,43 @@
                 Console.WriteLine($"❌ Error loading professor evaluations: {ex.Message}");
             }
 
-            // Load teaching data
-            if (SelectedTA.EvaluationId != 0)
-            {
-                teachingdto = new TeachingDataDto
-                {
-                    ActualTeachingLoad = 12,
-                    ExpectedTeachingLoad = 10,
-                    ClassCount = 3
-                };
-                Console.WriteLine("✅ Teaching data initialized");
-            }
-
-            // Try to load existing HOD evaluation
+            // ✅ Load existing HOD evaluation (no change needed - already using backend)
             try
             {
-                Console.WriteLine($"📡 Fetching HOD evaluation: /api/HodEvaluation/HodEvaluationByEvaluationId/{SelectedTA.EvaluationId}");
                 var response = await Http.GetAsync($"api/HodEvaluation/HodEvaluationByEvaluationId/{SelectedTA.EvaluationId}");
-
-                Console.WriteLine($"📥 HOD evaluation response status: {response.StatusCode}");
 
                 if (response.IsSuccessStatusCode)
                 {
                     hodEvaluationData = await response.Content.ReadFromJsonAsync<HodEvaluationResponseDto>();
 
-                    if (hodEvaluationData != null)
+                    if (hodEvaluationData != null && hodEvaluationData.Evaluations?.Any() == true)
                     {
-                        Console.WriteLine($"✅ HOD evaluation loaded - StatusId: {hodEvaluationData.StatusId}, Evaluations count: {hodEvaluationData.Evaluations?.Count ?? 0}");
+                        hodStrengths = hodEvaluationData.HodStrengths ?? string.Empty;
+                        hodWeaknesses = hodEvaluationData.HodWeaknesses ?? string.Empty;
+                        DeanComments = hodEvaluationData.DeanReturnComments ?? string.Empty;
+                        statusid = hodEvaluationData.StatusId;
 
-                        if (hodEvaluationData.Evaluations?.Any() == true)
+                        foreach (var eval in hodEvaluationData.Evaluations)
                         {
-                            hodStrengths = hodEvaluationData.HodStrengths ?? string.Empty;
-                            hodWeaknesses = hodEvaluationData.HodWeaknesses ?? string.Empty;
-                            DeanComments = hodEvaluationData.DeanReturnComments ?? string.Empty;
-                            statusid = hodEvaluationData.StatusId;
-
-                            // ✅ Populate ALL rating dictionaries with existing data
-                            foreach (var eval in hodEvaluationData.Evaluations)
-                            {
-                                if (eval.CriterionType == "DirectTeaching")
-                                {
-                                    teachingActivitiesRatings[eval.CriterionId] = eval.RatingId;
-                                }
-                                else if (eval.CriterionType == "Scientific")
-                                {
-                                    scientificActivityRatings[eval.CriterionId] = eval.RatingId;
-                                }
-                                else if (eval.CriterionType == "Administrative" || eval.CriterionType == "AdministrativeTotal")
-                                {
-                                    scientificActivityRatings[eval.CriterionId] = eval.RatingId;
-                                }
-                                else if (eval.CriterionType == "StudentActivities")
-                                {
-                                    studentActivitiesRatings[eval.CriterionId] = eval.RatingId;
-                                }
-                                else if (eval.CriterionType == "PersonalTraits")
-                                {
-                                    personalTraitsRatings[eval.CriterionId] = eval.RatingId;
-                                }
-                            }
-
-                            Console.WriteLine($"✅ Loaded ratings - Teaching: {teachingActivitiesRatings.Count}, Scientific: {scientificActivityRatings.Count}, Student: {studentActivitiesRatings.Count}, Personal: {personalTraitsRatings.Count}");
+                            if (eval.CriterionType == "DirectTeaching")
+                                teachingActivitiesRatings[eval.CriterionId] = eval.RatingId;
+                            else if (eval.CriterionType == "Scientific")
+                                scientificActivityRatings[eval.CriterionId] = eval.RatingId;
+                            else if (eval.CriterionType == "Administrative" || eval.CriterionType == "AdministrativeTotal")
+                                scientificActivityRatings[eval.CriterionId] = eval.RatingId;
+                            else if (eval.CriterionType == "StudentActivities")
+                                studentActivitiesRatings[eval.CriterionId] = eval.RatingId;
+                            else if (eval.CriterionType == "PersonalTraits")
+                                personalTraitsRatings[eval.CriterionId] = eval.RatingId;
                         }
-                        else
-                        {
-                            Console.WriteLine("⚠️ HOD evaluation exists but has no evaluations");
-                        }
+
+                        Console.WriteLine($"✅ Loaded ratings from existing HOD evaluation");
                     }
-                    else
-                    {
-                        Console.WriteLine("⚠️ HOD evaluation response was null");
-                    }
-                }
-                else
-                {
-                    var errorContent = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine($"⚠️ HOD evaluation not found - Status: {response.StatusCode}, Content: {errorContent}");
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"❌ Error loading HOD evaluation: {ex.Message}");
-                Console.WriteLine($"Stack trace: {ex.StackTrace}");
             }
 
             Console.WriteLine("✅ LoadData completed successfully");
@@ -654,15 +920,44 @@
         catch (Exception ex)
         {
             Console.WriteLine($"❌ Critical error in LoadData: {ex.Message}");
-            Console.WriteLine($"Stack trace: {ex.StackTrace}");
             await JS.InvokeVoidAsync("alert", $"حدث خطأ: {ex.Message}");
         }
         finally
         {
             isLoadingModal = false;
             StateHasChanged();
-            Console.WriteLine("🔵 LoadData finished, isLoadingModal = false");
         }
+        try
+        {
+            // ... existing code for loading teaching data, professor evaluations, etc ...
+
+            // ✅ ADD THIS AT THE END after loading everything
+            if (SelectedTA != null && semesterTeachingLoads.Any() && profdto != null)
+            {
+                await LoadProfessorsNeedingReminder();
+            }
+
+            Console.WriteLine("✅ LoadData completed successfully");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Critical error in LoadData: {ex.Message}");
+            await JS.InvokeVoidAsync("alert", $"حدث خطأ: {ex.Message}");
+        }
+        finally
+        {
+            isLoadingModal = false;
+            StateHasChanged();
+        }
+    }
+    private Dictionary<int, string> GetCriterionSources(string criterionType)
+    {
+        if (hodEvaluationData?.Evaluations == null)
+            return new Dictionary<int, string>();
+
+        return hodEvaluationData.Evaluations
+            .Where(e => e.CriterionType == criterionType)
+            .ToDictionary(e => e.CriterionId, e => e.SourceRole ?? "HOD");
     }
     private Dictionary<int, int> GetAdministrativeRatings()
     {
@@ -815,10 +1110,10 @@
             {
                 evaluationId=SelectedTA.EvaluationId,
                 EvaluationPeriodId = EvaluationPeriodId,
-                ProfessorId = selectedProfessorId, // ✅ Use the selected professor
-                TAId = SelectedTA.Id,
-                HodComments = HodReturnComment ,// ✅ Add this property to your DTO if not exists
-                TaName = SelectedTA.Name
+                ProfessorId = selectedProfessorId, 
+                TAId = SelectedTA.employeeId,
+                HodComments = HodReturnComment ,
+                TaName = SelectedTA.employeeName
             };
 
             var response = await Http.PostAsJsonAsync(
@@ -873,7 +1168,6 @@
 
         try
         {
-            // Combine all ratings from different sections
             var allRatings = new Dictionary<int, int>();
 
             foreach (var rating in teachingActivitiesRatings)
@@ -900,23 +1194,51 @@
                 RatingId = kvp.Value
             }).ToList();
 
-            // ✅ FIXED: Check if evaluation exists by checking hodEvaluationData.HodEvaluationId
-            // An evaluation truly exists if it has an ID in the database
             bool evaluationExists = hodEvaluationData?.EvaluationId > 0;
 
-            Console.WriteLine($"🔍 Evaluation exists: {evaluationExists}, HodEvaluationId: {hodEvaluationData?.EvaluationId}, StatusId: {statusid}");
+            Console.WriteLine($"🔍 Evaluation exists: {evaluationExists}, IsDeanUser: {IsDeanUser}");
 
-            if (evaluationExists)
+            if (IsDeanUser)
             {
-                // ✅ Update existing evaluation
+                var updateDeanDto = new UpdateDeanEvaluationDto
+                {
+                    EvaluationId = SelectedTA.EvaluationId,
+                    CriterionRatings = criterionRatings,
+                    TotalScore = CalculateFinalTotal(),
+                    DeanComments = hodWeaknesses, 
+                    CreatedByUserId = DeanEmployeeId 
+                };
+
+                Console.WriteLine($"📤 Dean updating evaluation {SelectedTA.EvaluationId} with {criterionRatings.Count} ratings");
+
+                var response = await Http.PutAsJsonAsync(
+                    "/api/Dean/updateEvaluationCriteria",
+                    updateDeanDto);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    await JS.InvokeVoidAsync("alert", "تم تحديث التقييم من قبل العميد بنجاح");
+                    await LoadData();
+                    await OnSaveSuccess.InvokeAsync();
+                }
+                else
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"❌ Dean update failed: {error}");
+                    await JS.InvokeVoidAsync("alert", $"فشل تحديث التقييم: {error}");
+                }
+            }
+            else if (evaluationExists)
+            {
                 var updateDto = new UpdateHodEvaluationDto
                 {
                     CriterionRatings = criterionRatings,
                     HodStrengths = hodStrengths,
-                    HodWeaknesses = hodWeaknesses
+                    HodWeaknesses = hodWeaknesses,
+                    FinalScore = CalculateFinalTotal()
                 };
 
-                Console.WriteLine($"📤 Updating evaluation {SelectedTA.EvaluationId} with {criterionRatings.Count} ratings");
+                Console.WriteLine($"📤 HOD updating evaluation {SelectedTA.EvaluationId} with {criterionRatings.Count} ratings");
 
                 var response = await Http.PutAsJsonAsync(
                     $"api/HodEvaluation/UpdateHodEvaluation/{SelectedTA.EvaluationId}",
@@ -925,7 +1247,7 @@
                 if (response.IsSuccessStatusCode)
                 {
                     await JS.InvokeVoidAsync("alert", "تم تحديث التقييم بنجاح");
-                    await LoadData(); // ✅ Reload data after save
+                    await LoadData();
                     await OnSaveSuccess.InvokeAsync();
                 }
                 else
@@ -937,13 +1259,14 @@
             }
             else
             {
-                // ✅ Create new evaluation
                 var createDto = new CreateHodEvaluationDto
                 {
                     EvaluationId = SelectedTA.EvaluationId,
                     CriterionRatings = criterionRatings,
                     HodStrengths = hodStrengths,
-                    HodWeaknesses = hodWeaknesses
+                    HodWeaknesses = hodWeaknesses,
+                    FinalScore = CalculateFinalTotal(),
+                    TeachingLoadScore = (int)AverageTeachingLoadGrade()
                 };
 
                 Console.WriteLine($"📤 Creating new evaluation for {SelectedTA.EvaluationId} with {criterionRatings.Count} ratings");
@@ -953,7 +1276,7 @@
                 if (response.IsSuccessStatusCode)
                 {
                     await JS.InvokeVoidAsync("alert", "تم حفظ التقييم بنجاح");
-                    await LoadData(); // ✅ Reload data after save
+                    await LoadData();
                     await OnSaveSuccess.InvokeAsync();
                 }
                 else
@@ -1096,8 +1419,6 @@ private decimal GetTeachingActivitiesTotal()
         {
             isGeneratingPdf = true;
             StateHasChanged();
-
-            // Now generate PDF
             await pdfModule.InvokeVoidAsync("saveElementAsPdf", "pdfArea", "evaluation-report.pdf");
         }
         finally

@@ -13,6 +13,7 @@ builder.Services.AddDbContext<SrsDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddRazorComponents()
+    .AddInteractiveServerComponents()
     .AddInteractiveWebAssemblyComponents();
 
 builder.Services.AddScoped<IEvaluationPeriod, EvaluationPeriodService>();
@@ -24,20 +25,23 @@ builder.Services.AddScoped<IHODEvaluation, HODEvaluationService>();
 builder.Services.AddScoped<IDean, DeanServices>();
 builder.Services.AddScoped<INotification, NotificationService>();
 builder.Services.AddScoped<IHRService, HRService>();
+builder.Services.AddScoped<IReminderService, ReminderService>();
+builder.Services.AddScoped<IExternalApiService, ExternalApiService>();
 builder.Services.AddHttpClient();
 
 //allow  cors policy 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowBlazorWasm", policy =>
+    options.AddPolicy("AllowBlazorApp", policy =>
     {
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
+        policy.WithOrigins("https://localhost:7223") // Your Blazor app URL
+              .AllowAnyHeader()
+              .AllowAnyMethod();
     });
 });
 
 var app = builder.Build();
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -50,6 +54,7 @@ else
     app.UseHsts();
 }
 
+
 app.UseHttpsRedirection();
 app.UseCors("AllowBlazorWasm");
 
@@ -57,8 +62,12 @@ app.MapControllers();
 
 app.UseAntiforgery();
 
+// Serve static files from the client wwwroot
+app.UseStaticFiles();
+
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
+    .AddInteractiveServerRenderMode()
     .AddInteractiveWebAssemblyRenderMode()
     .AddAdditionalAssemblies(typeof(Srs.Client._Imports).Assembly);
 

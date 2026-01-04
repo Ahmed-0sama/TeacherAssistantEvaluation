@@ -1,84 +1,94 @@
 ﻿@using Shared.Dtos
 @inject HttpClient Http
 
-<div class="card shadow-sm w-100" dir="rtl">
-    <div class="card-body">
-        @if (isLoading)
-        {
+<div class="row" dir="rtl">
+    @if (isLoading)
+    {
+        <div class="col-12">
             <div class="text-center py-5">
                 <div class="spinner-border text-primary" role="status"></div>
                 <p class="mt-3">جاري تحميل البيانات</p>
             </div>
-        }
-        else if (errorMessage != null)
-        {
+        </div>
+    }
+    else if (errorMessage != null)
+    {
+        <div class="col-12">
             <div class="alert alert-danger">@errorMessage</div>
             <button class="btn btn-primary" @onclick="LoadActivityData">إعادة المحاولة</button>
-        }
-        else
+        </div>
+    }
+    else if (semesters != null && semesters.Any())
+    {
+        @foreach (var semester in semesters)
         {
-            <h3 style="color:cornflowerblue">النشاط التعليمي</h3>
-            <hr style="color:cornflowerblue" />
+            <div class="col-md-6 mb-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <h3 style="color:cornflowerblue">النشاط التعليمي - @semester.semesterName</h3>
+                        <hr style="color:cornflowerblue" />
 
-            <div class="row g-3 mt-3">
-                <div class="col-md-4">
-                    <label class="form-label">الساعات التدريسية الفعلية</label>
-                    <InputNumber class="form-control"
-                                 @bind-Value="educationalActivity.TeachingData.ActualTeachingLoad"
-                                 readonly />
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">الساعات التدريسية المتوقعة</label>
-                    <InputNumber class="form-control" @bind-Value="educationalActivity.TeachingData.ExpectedTeachingLoad" readonly />
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">عدد الحصص</label>
-                    <InputNumber class="form-control" @bind-Value="educationalActivity.TeachingData.ClassCount" readonly />
+                        <div class="row g-3 mt-3">
+                            <div class="col-md-6">
+                                <label class="form-label">الساعات التدريسية الفعلية</label>
+                                <input class="form-control" value="@semester.ActualTeachingLoad" readonly />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">الساعات التدريسية المتوقعة</label>
+                                <input class="form-control" value="@semester.ExpectedTeachingLoad" readonly />
+                            </div>
+                        </div>
+
+                        <div class="mt-3">
+                            <label class="form-label">عدد المقررات: @semester.courses.Count</label>
+                        </div>
+
+                        <div class="table-responsive mt-3">
+                            <table class="table table-striped table-hover table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>رمز المقرر</th>
+                                        <th>اسم المقرر</th>
+                                        <th>الساعات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var course in semester.courses)
+                                    {
+                                        <tr>
+                                            <td>@course.courseCode.Trim()</td>
+                                            <td>@course.courseName.Trim()</td>
+                                            <td>@course.teachingHours </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
-
-            <table class="table table-striped table-hover">
-                <thead>
-                    <tr>
-                        <th>رمز المقرر</th>
-                        <th>اسم المقرر</th>
-                        <th>الساعات</th>
-                        <th>عدد الحصص</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var course in educationalActivity.Courses)
-                    {
-                        <tr>
-                            <td>@course.CourseCode</td>
-                            <td>@course.CourseName</td>
-                            <td>@course.CreditHours</td>
-                            <td>@course.Sections</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-
         }
-    </div>
+    }
+    else
+    {
+        <div class="col-12">
+            <div class="alert alert-info">لا توجد بيانات متاحة</div>
+        </div>
+    }
 </div>
-
-@code {
+@code{
     private bool isLoading = false;
     private string? errorMessage;
-    private EducationalActivityDto educationalActivity = new EducationalActivityDto();
-    [Parameter] public EducationalActivityDto? InitialData { get; set; }
-    [Parameter] public bool IsEditMode { get; set; }
+    private List<TeachingDataDto>? semesters;
+
+    [Parameter] public int employeeid { get; set; }  
+    [Parameter] public int evaluationPeriod { get; set; }
+    [Parameter]
+    public int evaluationid { get; set; }
     [Parameter] public EventCallback<EducationalActivityDto> OnActivityLoaded { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
-        // If Parent sends initial data, use it
-        if (InitialData != null)
-        {
-            educationalActivity = InitialData;
-        }
-
         await LoadActivityData();
     }
 
@@ -88,31 +98,56 @@
         {
             isLoading = true;
             errorMessage = null;
-            educationalActivity = new EducationalActivityDto
+
+            var response = await Http.GetAsync($"/api/Evaluation/GetActivityData?taEmployeeId={employeeid}&periodId={evaluationPeriod}&evaluationid={evaluationid}&startDate=2025-1-1&endDate=2025-12-31");
+
+            if (response.IsSuccessStatusCode)
             {
-                TeachingData = new TeachingDataDto
+                semesters = await response.Content.ReadFromJsonAsync<List<TeachingDataDto>>();
+
+                if (semesters == null || !semesters.Any())
                 {
-                    ActualTeachingLoad = 12,
-                    ExpectedTeachingLoad = 10,
-                    ClassCount = 3
-                },
-                Courses = new List<CourseDto>
-            {
-                new CourseDto { CourseCode = "CS101", CourseName = "مقدمة في الحاسب", CreditHours = 6, Sections = 2 },
-                new CourseDto { CourseCode = "CS205", CourseName = "هياكل البيانات", CreditHours = 6, Sections = 1 },
+                    errorMessage = "لا توجد بيانات متاحة";
+                }
+                else
+                {
+                    semesters = semesters.OrderBy(s => s.semestercode).ToList();
+                    Console.WriteLine($"Loaded {semesters.Count} semesters successfully");
+                    
+                    // ✅ ADD THIS: Send data back to parent
+                    await NotifyParent();
+                }
             }
-            };
-            //use when calling the actual api
-            // educationalActivity = await Http.GetFromJsonAsync<EducationalActivityDto>("api/educational-activity") ?? new EducationalActivityDto();
-            await OnActivityLoaded.InvokeAsync(educationalActivity);
+            else
+            {
+                errorMessage = $"خطأ في الخادم: {response.StatusCode}";
+            }
         }
         catch (Exception ex)
         {
-            errorMessage = ex.Message;
+            errorMessage = $"فشل تحميل البيانات: {ex.Message}";
+            Console.WriteLine($"Error: {ex.Message}");
         }
         finally
         {
             isLoading = false;
+        }
+    }
+    
+    private async Task NotifyParent()
+    {
+        if (semesters != null && semesters.Any())
+        {
+            // Get the first (or latest) semester data
+            var latestSemester = semesters.OrderByDescending(s => s.semestercode).First();
+            
+            var educationalData = new EducationalActivityDto
+            {
+                TeachingData = latestSemester
+            };
+            
+            await OnActivityLoaded.InvokeAsync(educationalData);
+            Console.WriteLine("✅ Educational data sent to parent");
         }
     }
 }

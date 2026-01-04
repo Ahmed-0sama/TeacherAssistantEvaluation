@@ -12,5 +12,7 @@ namespace Business_Access.Interfaces
     {
         Task<bool> SendReminderAsync(SendReminderDto dto);
         Task<List<ReminderDto>> GetAllReminders(int EmployeeId);
+        Task <bool> MarkAsRead(int notification);
+
     }
 }

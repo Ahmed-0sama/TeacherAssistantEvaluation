@@ -30,22 +30,22 @@
 
                     <!-- Program Info -->
                     <div class="row g-3 mb-4">
-                        <div class="col-md-3">
+                        <div class="col-12 col-sm-6 col-md-3">
                             <label class="form-label">البرنامج في الماجيستير</label>
                             <InputText class="form-control" @bind-Value="mastersData.Major" readonly />
                         </div>
 
-                        <div class="col-md-3">
+                        <div class="col-12 col-sm-6 col-md-3">
                             <label class="form-label">الساعات المكتسبة</label>
                             <InputNumber class="form-control" @bind-Value="mastersData.HoursGained" readonly />
                         </div>
 
-                        <div class="col-md-3">
+                        <div class="col-12 col-sm-6 col-md-3">
                             <label class="form-label">المعدل التراكمي</label>
                             <InputNumber class="form-control" @bind-Value="mastersData.Grade" readonly />
                         </div>
 
-                        <div class="col-md-3">
+                        <div class="col-12 col-sm-6 col-md-3">
                             <label class="form-label">التاريخ المتوقع للاتمام</label>
                             <InputDate class="form-control" @bind-Value="mastersData.EstimatedGraduationDate" readonly />
                         </div>
@@ -54,7 +54,7 @@
                     <!-- Progress Indicators -->
                     <h6 class="mb-3">مؤشرات التقدم</h6>
                     <div class="row g-3">
-                        <div class="col-md-4 d-flex align-items-center mb-2">
+                        <div class="col-12 col-sm-6 col-md-4 d-flex align-items-center mb-2">
                             <img src="icons/@(mastersData.ResearchPointsCompleted ? "check-circle-fill.svg" : "check-circle.svg")"
                                  width="20" height="20" style="margin-inline-end: 12px;" />
                             <span class="@(mastersData.ResearchPointsCompleted ? "text-dark" : "text-muted")">
@@ -62,7 +62,7 @@
                             </span>
                         </div>
 
-                        <div class="col-md-4 d-flex align-items-center mb-2">
+                        <div class="col-12 col-sm-6 col-md-4 d-flex align-items-center mb-2">
                             <img src="icons/@(mastersData.SearchInResources ? "check-circle-fill.svg" : "check-circle.svg")"
                                  width="20" height="20" style="margin-inline-end: 12px;" />
                             <span class="@(mastersData.SearchInResources ? "text-dark" : "text-muted")">
@@ -70,7 +70,7 @@
                             </span>
                         </div>
 
-                        <div class="col-md-4 d-flex align-items-center mb-2">
+                        <div class="col-12 col-sm-6 col-md-4 d-flex align-items-center mb-2">
                             <img src="icons/@(mastersData.SearchPlanning ? "check-circle-fill.svg" : "check-circle.svg")"
                                  width="20" height="20" style="margin-inline-end: 12px;" />
                             <span class="@(mastersData.SearchPlanning ? "text-dark" : "text-muted")">
@@ -78,7 +78,7 @@
                             </span>
                         </div>
 
-                        <div class="col-md-4 d-flex align-items-center mb-2">
+                        <div class="col-12 col-sm-6 col-md-4 d-flex align-items-center mb-2">
                             <img src="icons/@(mastersData.CollectDataAndAnalyze ? "check-circle-fill.svg" : "check-circle.svg")"
                                  width="20" height="20" style="margin-inline-end: 12px;" />
                             <span class="@(mastersData.CollectDataAndAnalyze ? "text-dark" : "text-muted")">
@@ -86,7 +86,7 @@
                             </span>
                         </div>
 
-                        <div class="col-md-4 d-flex align-items-center mb-2">
+                        <div class="col-12 col-sm-6 col-md-4 d-flex align-items-center mb-2">
                             <img src="icons/@(mastersData.ResearchReportWriting ? "check-circle-fill.svg" : "check-circle.svg")"
                                  width="20" height="20" style="margin-inline-end: 12px;" />
                             <span class="@(mastersData.ResearchReportWriting ? "text-dark" : "text-muted")">
@@ -94,7 +94,7 @@
                             </span>
                         </div>
 
-                        <div class="col-md-4 d-flex align-items-center mb-2">
+                        <div class="col-12 col-sm-6 col-md-4 d-flex align-items-center mb-2">
                             <img src="icons/@(mastersData.ScientificResearchReport ? "check-circle-fill.svg" : "check-circle.svg")"
                                  width="20" height="20" style="margin-inline-end: 12px;" />
                             <span class="@(mastersData.ScientificResearchReport ? "text-dark" : "text-muted")">
@@ -104,7 +104,7 @@
                     </div>
                 </div>
             </div>
-            }
+
             <!-- Research Papers Section -->
             <div class="card shadow-sm mb-4">
                 <div class="card-body">
@@ -214,7 +214,7 @@
             <div class="card-body">
                 <h5 class="card-title mb-4">انشطة علمية اخري</h5>
                 <div class="row g-3">
-                    <div class="col-md-4">
+                    <div class="col-12 col-md-4">
                         <div class="form-check form-check-rtl">
                             <input type="checkbox"
                                    class="form-check-input"
@@ -228,7 +228,7 @@
                         </div>
                     </div>
 
-                    <div class="col-md-4">
+                    <div class="col-12 col-md-4">
                         <div class="form-check form-check-rtl">
                             <input type="checkbox"
                                    class="form-check-input"
@@ -242,7 +242,7 @@
                         </div>
                     </div>
 
-                    <div class="col-md-4">
+                    <div class="col-12 col-md-4">
                         <div class="form-check form-check-rtl">
                             <input type="checkbox"
                                    class="form-check-input"
@@ -258,7 +258,7 @@
                 </div>
             </div>
         </div>
-        
+        }
     </div>
 </div>
 
@@ -284,31 +284,32 @@
                             <ValidationMessage For="@(() => currentPaper.Title)" class="text-danger" />
                         </div>
 
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <label class="form-label fw-bold">اسم المؤتمر/الدورية <span class="text-danger">*</span></label>
                             <InputText class="form-control" @bind-Value="currentPaper.ConferenceOrJournal" placeholder="أدخل اسم المؤتمر أو الدورية" />
                             <ValidationMessage For="@(() => currentPaper.ConferenceOrJournal)" class="text-danger" />
                         </div>
 
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <label class="form-label fw-bold">المكان <span class="text-danger">*</span></label>
                             <InputText class="form-control" @bind-Value="currentPaper.Location" placeholder="مثال: الرياض، السعودية" />
                             <ValidationMessage For="@(() => currentPaper.Location)" class="text-danger" />
                         </div>
 
-                        <div class="col-md-4">
+                        <div class="col-12 col-sm-6 col-md-4">
                             <label class="form-label fw-bold">عدد الصفحات <span class="text-danger">*</span></label>
                             <InputNumber class="form-control" @bind-Value="currentPaper.PageCount" placeholder="0" />
                             <ValidationMessage For="@(() => currentPaper.PageCount)" class="text-danger" />
                         </div>
 
-                        <div class="col-md-4">
+                        <div class="col-12 col-sm-6 col-md-4">
                             <label class="form-label fw-bold">التاريخ <span class="text-danger">*</span></label>
-                            <InputDate class="form-control" @bind-Value="currentPaper.Date" />
-                            <ValidationMessage For="@(() => currentPaper.Date)" class="text-danger" />
+                            <InputDate class="form-control"
+                                       @bind-Value="currentPaper.Date"
+                                       max="@DateOnly.FromDateTime(DateTime.Today).ToString("yyyy-MM-dd")" />
                         </div>
 
-                        <div class="col-md-4">
+                        <div class="col-12 col-sm-6 col-md-4">
                             <label class="form-label fw-bold">الحالة <span class="text-danger">*</span></label>
                                 <InputSelect class="form-select" @bind-Value="currentPaper.Status" TValue="int">
                                     <option value="0">-- اختر الحالة --</option>
@@ -320,7 +321,7 @@
                                 <ValidationMessage For="@(() => currentPaper.Status)" class="text-danger" />
 
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-12 col-sm-6">
                             <label class="form-label fw-bold">Url <span class="text-danger">*</span></label>
                             <InputText class="form-control" @bind-Value="currentPaper.Url"/>
                             <ValidationMessage For="@(() => currentPaper.Url)" class="text-danger" />

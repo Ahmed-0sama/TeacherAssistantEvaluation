@@ -11,5 +11,7 @@ namespace Shared.Dtos.HODEvaluation
         public List<CriterionRatingDto> CriterionRatings { get; set; }
         public string HodStrengths { get; set; }
         public string HodWeaknesses { get; set; }
+        public decimal FinalScore { get; set; }
+        public int CreatedByUserId { get; set; }
     }
 }
