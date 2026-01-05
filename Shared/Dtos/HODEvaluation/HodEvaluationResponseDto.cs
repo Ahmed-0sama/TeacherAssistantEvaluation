@@ -18,6 +18,7 @@ namespace Shared.Dtos.HODEvaluation
         public decimal PersonalTraitsTotal { get; set; }
         public decimal AdministrativeTotal { get; set; }
         public decimal TotalScore { get; set; }
+        public string FinalGrade { get; set; }
         public decimal MaxScore { get; set; }
         public string HodStrengths { get; set; }
         public string HodWeaknesses { get; set; }

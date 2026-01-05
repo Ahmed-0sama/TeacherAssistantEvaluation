@@ -248,7 +248,7 @@
                 var result = await response.Content.ReadFromJsonAsync<GetEvaluationPeriodDto>();
                 evaluationPeriodId = result.PeriodId;
                 hasActiveEvaluationPeriod = true;
-                Console.WriteLine($"✅ evaluationPeriod retrieved: {evaluationPeriodId}");
+                Console.WriteLine($"evaluationPeriod retrieved: {evaluationPeriodId}");
             }
             else
             {
@@ -309,9 +309,8 @@
                 return;
             }
 
-            Console.WriteLine($"📡 Loading GTA info for employee {TA_EMPLOYEE_ID}...");
+            Console.WriteLine($"Loading GTA info for employee {TA_EMPLOYEE_ID}...");
 
-            // ✅ Single API call to get enriched data
             var response = await http.GetAsync(
                 $"api/Evaluation/GetGTAInfoWithEvaluation?taEmployeeId={TA_EMPLOYEE_ID}&periodId={evaluationPeriodId}");
 
@@ -329,22 +328,20 @@
                 userData.EmployeeNumber = result.employeeId;
                 evaluationId = result.EvaluationId;
 
-                Console.WriteLine($"✅ User data loaded: {userData.employeeName}");
-                Console.WriteLine($"✅ EvaluationId: {evaluationId}, StatusId: {result.statusid}");
+                Console.WriteLine($"User data loaded: {userData.employeeName}");
+                Console.WriteLine($"EvaluationId: {evaluationId}, StatusId: {result.statusid}");
 
-                // Check if there's an existing submission
                 if (result.HasSubmitted)
                 {
                     await LoadExistingTAData();
                     isExistingSubmission = true;
-                    Console.WriteLine("✅ Existing submission loaded");
+                    Console.WriteLine("Existing submission loaded");
                 }
                 else
                 {
-                    Console.WriteLine("ℹ️ No existing submission found - new evaluation");
+                    Console.WriteLine("No existing submission found - new evaluation");
                 }
 
-                // Handle view-only mode based on status
                 if (result.statusid == 6)
                 {
                     StatusId = result.statusid;
@@ -352,7 +349,6 @@
 
                 if (result.statusid == 3)
                 {
-                    // Get return message from evaluation
                     var evalResponse = await http.GetAsync($"api/Evaluation/{evaluationId}");
                     if (evalResponse.IsSuccessStatusCode)
                     {
@@ -398,18 +394,18 @@
                 var result = await response.Content.ReadFromJsonAsync<GetEvaluationDto>();
                 evaluationId = result.EvaluationId;
                 
-                Console.WriteLine($"✅ Evaluation retrieved/created with ID: {evaluationId}");
+                Console.WriteLine($"Evaluation retrieved/created with ID: {evaluationId}");
 
                 var submissionResponse = await http.GetAsync($"/api/Evaluation/GetTASubmission/{evaluationId}");
                 if (submissionResponse.IsSuccessStatusCode)
                 {
                     await LoadExistingTAData();
                     isExistingSubmission = true;
-                    Console.WriteLine("✅ Existing submission loaded");
+                    Console.WriteLine("Existing submission loaded");
                 }
                 else
                 {
-                    Console.WriteLine("ℹ️ No existing submission found - new evaluation");
+                    Console.WriteLine("No existing submission found - new evaluation");
                 }
                 if (result.StatusId == 6)
                 {
@@ -431,13 +427,13 @@
             else
             {
                 var error = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"❌ Failed to get or create evaluation: {error}");
+                Console.WriteLine($"Failed to get or create evaluation: {error}");
                 errorMessage = $"فشل في تحميل التقييم: {error}";
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Error getting or creating evaluation: {ex.Message}");
+            Console.WriteLine($"Error getting or creating evaluation: {ex.Message}");
             errorMessage = $"حدث خطأ: {ex.Message}";
         }
     }
@@ -490,7 +486,7 @@
                         IsCompletedCulturalActivity = existingData.ParticipatedInCultural
                     };
 
-                    Console.WriteLine("✅ All existing data mapped successfully");
+                    Console.WriteLine("All existing data mapped successfully");
                     await InvokeAsync(StateHasChanged);
                 }
             }
@@ -503,7 +499,6 @@
 
     private async Task SaveDraft()
     {
-        Console.WriteLine("=== Starting SaveDraft ===");
 
         if (educationalData == null)
         {
@@ -533,7 +528,7 @@
             return;
         }
 
-        Console.WriteLine("✅ All data present, proceeding with saving draft...");
+        Console.WriteLine("All data present, proceeding with saving draft...");
 
         var researchActivities = researchPapers.Select(p => new CreateResearchActivityDto
         {
@@ -627,7 +622,7 @@
             return;
         }
 
-        Console.WriteLine("✅ All data present, proceeding with final submission...");
+        Console.WriteLine("All data present, proceeding with final submission...");
 
         var researchActivities = researchPapers.Select(p => new CreateResearchActivityDto
         {
@@ -666,7 +661,7 @@
 
             if (response.IsSuccessStatusCode)
             {
-                Console.WriteLine("✅ Evaluation submitted successfully!");
+                Console.WriteLine("Evaluation submitted successfully!");
                 successMessage = "تم إرسال التقييم بنجاح!";
                 errorMessage = null;
                 viewonly = true;
@@ -675,14 +670,14 @@
             else
             {
                 var error = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"❌ Submit failed: {error}");
+                Console.WriteLine($"Submit failed: {error}");
                 errorMessage = $"فشل في إرسال التقييم: {error}";
                 StateHasChanged();
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Exception during submit: {ex.Message}");
+            Console.WriteLine($" Exception during submit: {ex.Message}");
             errorMessage = $"حدث خطأ أثناء الإرسال: {ex.Message}";
             StateHasChanged();
         }
@@ -696,7 +691,7 @@
 
             if (response.IsSuccessStatusCode)
             {
-                Console.WriteLine("✅ Submission created successfully!");
+                Console.WriteLine("Submission created successfully!");
 
                 try
                 {
@@ -710,13 +705,13 @@
                         {
                             submissionId = idElement.GetInt32();
                             isExistingSubmission = true;
-                            Console.WriteLine($"📋 New submission ID: {submissionId}");
+                            Console.WriteLine($"New submission ID: {submissionId}");
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"ℹ️ Could not extract submission ID: {ex.Message}");
+                    Console.WriteLine($"Could not extract submission ID: {ex.Message}");
                 }
 
                 successMessage = "تم حفظ البيانات بنجاح!";
@@ -727,14 +722,14 @@
             else
             {
                 var error = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"❌ Create submission failed: {error}");
+                Console.WriteLine($"Create submission failed: {error}");
                 errorMessage = $"فشل في حفظ البيانات: {error}";
                 StateHasChanged();
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Exception during create: {ex.Message}");
+            Console.WriteLine($"Exception during create: {ex.Message}");
             errorMessage = $"حدث خطأ أثناء الحفظ: {ex.Message}";
             StateHasChanged();
         }
@@ -757,13 +752,12 @@
             return;
         }
 
-        // Ensure EvaluationId is set in userData
         if (userData.EvaluationId == 0)
         {
             userData.EvaluationId = evaluationId;
         }
 
-        Console.WriteLine($"✅ Opening HOD modal with EvaluationId: {userData.EvaluationId}");
+        Console.WriteLine($"Opening HOD modal with EvaluationId: {userData.EvaluationId}");
 
         ShowHodModal = true;
         StateHasChanged();
@@ -773,12 +767,12 @@
     {
         try
         {
-            Console.WriteLine($"🔄 Updating submission for evaluation ID: {evaluationId}");
+            Console.WriteLine($"Updating submission for evaluation ID: {evaluationId}");
             var response = await http.PutAsJsonAsync($"/api/Evaluation/UpdateTASubmission/{evaluationId}", data);
 
             if (response.IsSuccessStatusCode)
             {
-                Console.WriteLine("✅ Submission updated successfully!");
+                Console.WriteLine("Submission updated successfully!");
                 successMessage = "تم تحديث البيانات بنجاح!";
                 errorMessage = null;
                 StateHasChanged();
@@ -786,14 +780,14 @@
             else
             {
                 var error = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"❌ Update submission failed: {error}");
+                Console.WriteLine($"Update submission failed: {error}");
                 errorMessage = $"فشل في تحديث البيانات: {error}";
                 StateHasChanged();
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Exception during update: {ex.Message}");
+            Console.WriteLine($"Exception during update: {ex.Message}");
             errorMessage = $"حدث خطأ أثناء التحديث: {ex.Message}";
             StateHasChanged();
         }

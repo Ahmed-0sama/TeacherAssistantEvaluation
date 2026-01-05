@@ -261,7 +261,7 @@
     private MastersDto mastersDto = new MastersDto();
     private bool ModalVisable = false;
     private bool IsReadOnly = false;
-    private const int SUPERVISOR_ID = 9614; // Replace with actual logged-in supervisor ID
+    private const int SUPERVISOR_ID = 9614; 
 
     protected override async Task OnInitializedAsync()
     {
@@ -305,7 +305,6 @@
         {
             Console.WriteLine($"📡 Fetching GTA list for supervisor {SUPERVISOR_ID}");
 
-            // ✅ Single API call to get enriched data
             var response = await Http.GetAsync(
                 $"api/GSDean/GetGTAListWithEvaluations?supervisorId={SUPERVISOR_ID}&evaluationPeriodId={EvaluationPeriodId}&startDate=2025-01-01");
 
@@ -318,11 +317,11 @@
             taList = await response.Content.ReadFromJsonAsync<List<UserDataDto>>()
                 ?? new List<UserDataDto>();
 
-            Console.WriteLine($"✅ Loaded {taList.Count} GTAs with evaluation statuses");
+            Console.WriteLine($"Loaded {taList.Count} GTAs with evaluation statuses");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Error loading GTA list: {ex.Message}");
+            Console.WriteLine($"Error loading GTA list: {ex.Message}");
             errorMessage = $"خطأ في تحميل قائمة مساعدي التدريس: {ex.Message}";
         }
     }

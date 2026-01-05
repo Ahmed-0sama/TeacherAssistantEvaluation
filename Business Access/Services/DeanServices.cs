@@ -47,15 +47,12 @@ namespace Business_Access.Services
             if (evaluation == null)
                 return null;
 
-            // ✅ ONLY get ACTIVE HOD evaluations
             var hodEvaluations = evaluation.Hodevaluations?
-                .Where(x => x.IsActive)  // ← ADD THIS FILTER
+                .Where(x => x.IsActive)  
                 .ToList() ?? new List<Hodevaluation>();
 
-            // ✅ Check if Dean has edited this evaluation
             bool hasDeanEdited = hodEvaluations.Any(h => h.SourceRole == "Dean");
 
-            // Aggregate Section Totals - ensure decimal type
             var teachingActivities = hodEvaluations
                 .Where(x => x.Criterion?.CriterionType == "DirectTeaching")
                 .Sum(x => x.Rating != null
@@ -117,16 +114,6 @@ namespace Business_Access.Services
             // Use the stored TotalScore from the Evaluation table
             var totalscore = evaluation.TotalScore;
 
-            // Grade simple mapping
-            var finalGrade = totalscore switch
-            {
-                >= 90 => "ممتاز",
-                >= 80 => "جيد جداً",
-                >= 70 => "جيد",
-                >= 60 => "مقبول",
-                _ => "ضعيف"
-            };
-
             return new DeanEvaluationDetailDto
             {
                 EvaluationId = evaluation.EvaluationId,
@@ -149,7 +136,7 @@ namespace Business_Access.Services
 
                 // Final total
                 TotalScore = totalscore ?? 0,
-                FinalGrade = finalGrade,
+                FinalGrade = GetFinalGrade(totalscore??0),
 
                 // HOD Comments
                 HodStrengths = evaluation.HodStrengths,
@@ -166,7 +153,6 @@ namespace Business_Access.Services
             {
                 try
                 {
-                    // ✅ 1. Validate evaluation exists
                     var evaluation = await _db.Evaluations.FindAsync(dto.EvaluationId);
                     if (evaluation == null)
                     {
@@ -179,7 +165,6 @@ namespace Business_Access.Services
                         };
                     }
 
-                    // ✅ 2. Validate evaluation is in correct status (5 = Pending Dean Approval or 7 = Returned by Dean)
                     if (evaluation.StatusId != 5 && evaluation.StatusId != 7)
                     {
                         await transaction.RollbackAsync();
@@ -191,7 +176,6 @@ namespace Business_Access.Services
                         };
                     }
 
-                    // ✅ 3. Get all active HOD evaluation rows
                     var activeRows = await _db.Hodevaluations
                         .Where(h => h.EvaluationId == dto.EvaluationId && h.IsActive)
                         .ToListAsync();
@@ -207,7 +191,6 @@ namespace Business_Access.Services
                         };
                     }
 
-                    // ✅ 4. Process each criterion rating update
                     foreach (var item in dto.CriterionRatings)
                     {
                         var activeRow = activeRows
@@ -216,11 +199,9 @@ namespace Business_Access.Services
                         if (activeRow == null)
                             continue;
 
-                        // ✅ 5. Check if the rating is actually different
                         if (activeRow.RatingId == item.RatingId)
-                            continue; // No change needed
+                            continue; 
 
-                        // ✅ NEW: If the active row is already from Dean, UPDATE IT instead of creating new row
                         if (activeRow.SourceRole == "Dean")
                         {
                             activeRow.RatingId = item.RatingId;
@@ -229,7 +210,6 @@ namespace Business_Access.Services
                         }
                         else
                         {
-                            // ✅ Original logic: Deactivate HOD row and create new Dean row
                             activeRow.IsActive = false;
 
                             var newDeanRow = new Hodevaluation
@@ -248,9 +228,9 @@ namespace Business_Access.Services
                     }
 
 
-                    // ✅ 8. Update evaluation totals and comments if provided
                     if (dto.TotalScore.HasValue)
                     {
+                        evaluation.FinalGrade= GetFinalGrade(dto.TotalScore.Value);
                         evaluation.TotalScore = dto.TotalScore.Value;
                     }
 
@@ -265,7 +245,6 @@ namespace Business_Access.Services
                     };
                     await _notificationService.SendNotificationAsync(notificationdto);
 
-                    // ✅ 11. Save all changes
                     await _db.SaveChangesAsync();
                     await transaction.CommitAsync();
 
@@ -289,8 +268,16 @@ namespace Business_Access.Services
                 }
             }
         }
-            
-        // ⭐ Add the MapScoreToPoints method (SAME AS HOD SERVICE)
+        public string GetFinalGrade(decimal totalscore) {
+            return totalscore  switch
+            {
+                >= 90 => "ممتاز",
+                >= 80 => "جيد جداً",
+                >= 70 => "جيد",
+                >= 60 => "مقبول",
+                _ => "ضعيف"
+            };
+        }
         private decimal MapScoreToPoints(int scoreValue, string criterionType)
         {
             return criterionType switch
@@ -361,7 +348,6 @@ namespace Business_Access.Services
                             EvaluationId = dto.EvaluationId
                         };
                     }
-
                     // Update evaluation status
                     evaluation.StatusId = 6;
                     evaluation.DateApproved = DateTime.UtcNow;
@@ -399,18 +385,18 @@ namespace Business_Access.Services
         {
             try
             {
-                Console.WriteLine($"📡 Loading TAs for Dean - Period: {periodId}, Department: {deanDepartmentId}");
+                Console.WriteLine($" Loading TAs for Dean - Period: {periodId}, Department: {deanDepartmentId}");
 
                 // Step 1: Get TA list from external API
                 var taList = await _externalApiService.GetGTAListAsync(deanDepartmentId, startDate);
 
                 if (taList == null || !taList.Any())
                 {
-                    Console.WriteLine("⚠️ No TAs found from external API");
+                    Console.WriteLine("No TAs found from external API");
                     return new List<EvaluationApiResponseDto>();
                 }
 
-                Console.WriteLine($"✅ Loaded {taList.Count} TAs from external API");
+                Console.WriteLine($" Loaded {taList.Count} TAs from external API");
 
                 // Step 2: Get all evaluations for this period
                 var evaluations = await _db.Evaluations
@@ -431,7 +417,7 @@ namespace Business_Access.Services
                 {
                     if (evaluationMap.TryGetValue(ta.employeeId, out var evaluation))
                     {
-                        // ✅ TA has an evaluation - show actual status
+                        // TA has an evaluation - show actual status
                         var dto = new EvaluationApiResponseDto
                         {
                             evaluationId = evaluation.EvaluationId,
@@ -448,7 +434,7 @@ namespace Business_Access.Services
                     }
                     else
                     {
-                        // ✅ TA doesn't have an evaluation yet - show as waiting
+                        //  TA doesn't have an evaluation yet - show as waiting
                         var dto = new EvaluationApiResponseDto
                         {
                             evaluationId = 0, // No evaluation yet
@@ -461,17 +447,17 @@ namespace Business_Access.Services
                         };
 
                         result.Add(dto);
-                        Console.WriteLine($"ℹ️ TA {ta.employeeName} has no evaluation yet - showing as waiting");
+                        Console.WriteLine($" TA {ta.employeeName} has no evaluation yet - showing as waiting");
                     }
                 }
 
-                Console.WriteLine($"✅ Total TAs returned: {result.Count}");
+                Console.WriteLine($" Total TAs returned: {result.Count}");
 
                 return result;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ Error in GetTAsForDeanAsync: {ex.Message}");
+                Console.WriteLine($" Error in GetTAsForDeanAsync: {ex.Message}");
                 throw new Exception($"Failed to get TAs for Dean: {ex.Message}", ex);
             }
         }

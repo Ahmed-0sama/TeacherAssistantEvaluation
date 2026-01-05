@@ -151,7 +151,7 @@ namespace Business_Access.Services
                 }
                 else
                 {
-                    Console.WriteLine($"⚠️ Warning: Main evaluation not found for TA {profEvaluation.TaEmployeeId}");
+                    Console.WriteLine($" Warning: Main evaluation not found for TA {profEvaluation.TaEmployeeId}");
                 }
                 // Update fields
                 profEvaluation.StatusId = 2; // Reset status to Submitted upon update

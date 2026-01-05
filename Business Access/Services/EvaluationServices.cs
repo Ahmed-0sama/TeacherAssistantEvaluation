@@ -135,7 +135,6 @@ namespace Business_Access.Services
                     await db.SaveChangesAsync();
                 }
 
-                // Update evaluation status to "Submitted"
                 evaluation.StatusId = 1; // Submitted status - adjust based on your status IDs
                 evaluation.DateSubmitted = DateTime.Now;
                 db.Evaluations.Update(evaluation);
@@ -176,7 +175,6 @@ namespace Business_Access.Services
                 submission.HasAttendingSeminars = submissionDto.HasAttendingSeminars;
                 submission.AdvisedStudentCount = submissionDto.AdvisedStudentCount;
 
-                // Update added boolean fields
                 submission.IsInAcademicAdvisingCommittee = submissionDto.IsInAcademicAdvisingCommittee;
                 submission.IsInSchedulingCommittee = submissionDto.IsInSchedulingCommittee;
                 submission.IsInQualityAssuranceCommittee = submissionDto.IsInQualityAssuranceCommittee;
@@ -193,7 +191,6 @@ namespace Business_Access.Services
                     db.ResearchActivities.RemoveRange(submission.ResearchActivities);
                 }
 
-                // Add updated research activities
                 if (submissionDto.ResearchActivities?.Any() == true)
                 {
                     foreach (var activityDto in submissionDto.ResearchActivities)
@@ -512,7 +509,7 @@ namespace Business_Access.Services
                     throw new Exception($"Employee with ID {taEmployeeId} not found");
                 }
 
-                Console.WriteLine($"✅ Loaded employee info: {employeeInfo.employeeName}");
+                Console.WriteLine($"Loaded employee info: {employeeInfo.employeeName}");
 
                 var evaluation = await GetOrCreateEvaluationAsync(taEmployeeId, periodId);
 
@@ -524,13 +521,13 @@ namespace Business_Access.Services
 
                 employeeInfo.HasSubmitted = submission != null;
 
-                Console.WriteLine($"✅ Enriched employee data - EvaluationId: {employeeInfo.EvaluationId}, Status: {employeeInfo.statusid}");
+                Console.WriteLine($" Enriched employee data - EvaluationId: {employeeInfo.EvaluationId}, Status: {employeeInfo.statusid}");
 
                 return employeeInfo;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ Error in GetGTAInfoWithEvaluationAsync: {ex.Message}");
+                Console.WriteLine($" Error in GetGTAInfoWithEvaluationAsync: {ex.Message}");
                 throw new Exception($"Failed to get GTA info with evaluation: {ex.Message}", ex);
             }
         }

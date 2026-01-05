@@ -73,7 +73,6 @@ namespace Business_Access.Services
                         EvaluationId = dto.EvaluationId,
                         CriterionId = criterionRating.CriterionId,
                         RatingId = criterionRating.RatingId,
-
                         SourceRole = "HOD",
                         IsActive = true,
                         CreatedAt = DateTime.UtcNow,
@@ -83,8 +82,10 @@ namespace Business_Access.Services
                     _db.Hodevaluations.Add(hodEval);
                 }
                 evaluation.TotalScore = dto.FinalScore;
+                evaluation.FinalGrade= GetFinalGrade(dto.FinalScore);
                 evaluation.DateSubmitted = DateTime.UtcNow;
                 // Update evaluation status and comments
+                evaluation.FinalGrade = dto.FinalGrade;
                 evaluation.StatusId = 5; // Completed HOD evaluation
                 evaluation.HodStrengths = dto.HodStrengths;
                 evaluation.HodWeaknesses = dto.HodWeaknesses;
@@ -105,7 +106,17 @@ namespace Business_Access.Services
                 throw;
             }
         }
-
+        private string GetFinalGrade(decimal totalscore)
+        {
+            return totalscore switch
+            {
+                >= 90 => "ممتاز",
+                >= 80 => "جيد جداً",
+                >= 70 => "جيد",
+                >= 60 => "مقبول",
+                _ => "ضعيف"
+            };
+        }
         public async Task<HodEvaluationResponseDto> GetHodEvaluationAsync(int evaluationId)
         {
             var evaluations = await _db.Hodevaluations
@@ -168,6 +179,7 @@ namespace Business_Access.Services
                 AdministrativeTotal = administrativeTotal,
                 TotalScore=evaluation.TotalScore??0,
                 MaxScore = 40, // 10 + 10 + 10 + 10
+                FinalGrade= evaluation.FinalGrade,
                 HodStrengths = evaluation.HodStrengths,
                 HodWeaknesses = evaluation.HodWeaknesses,
                 DeanReturnComments = evaluation.DeanReturnComment
@@ -237,6 +249,7 @@ namespace Business_Access.Services
                     PersonalTraitsTotal = personalTraitsTotal,
                     AdministrativeTotal = administrativeTotal,
                     TotalScore = evaluation.TotalScore??0,
+                    FinalGrade = evaluation.FinalGrade,
                     MaxScore = maxScore,
                     HodStrengths = evaluation.HodStrengths,
                     HodWeaknesses = evaluation.HodWeaknesses
@@ -252,12 +265,10 @@ namespace Business_Access.Services
             await using var transaction = await _db.Database.BeginTransactionAsync();
             try
             {
-                // ✅ 1. Validate evaluation exists
                 var evaluation = await _db.Evaluations.FindAsync(evaluationId);
                 if (evaluation == null)
                     throw new Exception("Evaluation not found");
 
-                // ✅ 2. Validate that HOD evaluation exists (should exist for update)
                 var activeRows = await _db.Hodevaluations
                  .Where(h => h.EvaluationId == evaluationId && h.IsActive)
                  .ToListAsync();
@@ -281,11 +292,11 @@ namespace Business_Access.Services
                     activeRow.CreatedByUserId = dto.CreatedByUserId;
                 }
                 evaluation.TotalScore = dto.FinalScore;
-
+                evaluation.FinalGrade = GetFinalGrade(dto.FinalScore);
                 evaluation.HodStrengths = dto.HodStrengths;
                 evaluation.HodWeaknesses = dto.HodWeaknesses;
 
-
+                evaluation.FinalGrade = dto.FinalGrade;
                 // If evaluation was returned (status 7), update it back to completed (status 5)
                 // Otherwise, keep status 5 if it was already completed
                 //2 maybe returned from ta
@@ -307,7 +318,6 @@ namespace Business_Access.Services
                 };
                 await _notificationService.SendNotificationAsync(notificationdto);
 
-                // ✅ 7. Save all changes
                 await _db.SaveChangesAsync();
                 await transaction.CommitAsync();
 
@@ -388,20 +398,18 @@ namespace Business_Access.Services
         {
             try
             {
-                Console.WriteLine($"📡 Loading TAs for HOD - Period: {periodId}, Department: {hodDepartmentId}");
+                Console.WriteLine($"Loading TAs for HOD - Period: {periodId}, Department: {hodDepartmentId}");
 
-                // Step 1: Get TA list from external API
                 var taList = await _externalApiService.GetGTAListAsync(hodDepartmentId, startDate);
 
                 if (taList == null || !taList.Any())
                 {
-                    Console.WriteLine("⚠️ No TAs found from external API");
+                    Console.WriteLine(" No TAs found from external API");
                     return new List<UserDataDto>();
                 }
 
-                Console.WriteLine($"✅ Loaded {taList.Count} TAs from external API");
+                Console.WriteLine($"Loaded {taList.Count} TAs from external API");
 
-                // Step 2: Get all evaluations for this period
                 var evaluations = await _db.Evaluations
                     .Include(e => e.Period)
                     .Include(e => e.Status)
@@ -411,9 +419,8 @@ namespace Business_Access.Services
 
                 var evaluationMap = evaluations.ToDictionary(e => e.TaEmployeeId);
 
-                Console.WriteLine($"✅ Found {evaluations.Count} evaluations in database");
+                Console.WriteLine($" Found {evaluations.Count} evaluations in database");
 
-                // Step 3: Get HOD evaluations for this period
                 var hodEvaluations = await _db.Hodevaluations
                     .Where(h => evaluations.Select(e => e.EvaluationId).Contains(h.EvaluationId) && h.IsActive)
                     .ToListAsync();
@@ -422,9 +429,8 @@ namespace Business_Access.Services
                     .GroupBy(h => h.EvaluationId)
                     .ToDictionary(g => g.Key, g => g.ToList());
 
-                Console.WriteLine($"✅ Found {hodEvaluationMap.Count} HOD evaluations");
+                Console.WriteLine($"Found {hodEvaluationMap.Count} HOD evaluations");
 
-                // Step 4: Enrich TA list with evaluation and HOD data
                 foreach (var ta in taList)
                 {
                     if (evaluationMap.TryGetValue(ta.employeeId, out var evaluation))
@@ -434,23 +440,21 @@ namespace Business_Access.Services
                         ta.statusid = evaluation.StatusId;
                         ta.HasHodEvaluation = hodEvaluationMap.ContainsKey(evaluation.EvaluationId);
 
-                        Console.WriteLine($"✅ Enriched TA: {ta.employeeName} - StatusId: {evaluation.StatusId} - HasHOD: {ta.HasHodEvaluation}");
+                        Console.WriteLine($"Enriched TA: {ta.employeeName} - StatusId: {evaluation.StatusId} - HasHOD: {ta.HasHodEvaluation}");
                     }
                     else
                     {
-                        // ✅ TA doesn't have an evaluation yet - show as waiting
                         ta.EvaluationId = 0;
-                        ta.statusid = 0; // No evaluation - will show "انتظار"
+                        ta.statusid = 0; 
                         ta.HasHodEvaluation = false;
 
-                        Console.WriteLine($"ℹ️ TA {ta.employeeName} has no evaluation yet - will show as waiting");
+                        Console.WriteLine($"TA {ta.employeeName} has no evaluation yet - will show as waiting");
                     }
 
                     ta.EmployeeNumber = ta.employeeId;
                 }
 
-                // ✅ CHANGED: Return ALL TAs, not just submitted ones
-                Console.WriteLine($"✅ Total GTAs returned: {taList.Count}");
+                Console.WriteLine($"Total GTAs returned: {taList.Count}");
 
                 return taList; // Return all GTAs
             }

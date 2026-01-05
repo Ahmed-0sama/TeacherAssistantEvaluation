@@ -38,19 +38,17 @@ namespace Business_Access.Services
                 if (evaluation == null)
                     throw new KeyNotFoundException($"Evaluation with ID {evaluationDto.EvaluationId} not found");
 
-                // Check if VPGS evaluation already exists for this evaluation
                 var existingVpgsEval = await _db.VpgsEvaluations
                     .FirstOrDefaultAsync(ve => ve.EvaluationId == evaluationDto.EvaluationId);
 
                 if (existingVpgsEval != null)
                     throw new InvalidOperationException($"VPGS evaluation already exists for evaluation ID {evaluationDto.EvaluationId}");
 
-                // Create new VPGS evaluation
                 var vpgsEvaluation = new VpgsEvaluation
                 {
                     EvaluationId = evaluationDto.EvaluationId,
                     ScientificScore = evaluationDto.ScientificScore,
-                    StatusId= 2 // Set as 2 as its given the grade status based on evaluation status
+                    StatusId= 2
 
                 };
 
@@ -95,7 +93,7 @@ namespace Business_Access.Services
                 .Include(ve => ve.Evaluation)
                     .ThenInclude(e => e.Status)
                 .Include(ve => ve.Evaluation)
-                    .ThenInclude(e => e.Tasubmission) // This is correct - loads the TA submission
+                    .ThenInclude(e => e.Tasubmission) 
                 .FirstOrDefaultAsync(ve => ve.EvaluationId == evaluationId);
 
             if (vpgsEval == null)
@@ -119,8 +117,6 @@ namespace Business_Access.Services
                 if (vpgsEval == null)
                     throw new KeyNotFoundException($"VPGS evaluation for evaluation ID {evaluationId} not found");
 
-                // Check if evaluation can still be edited
-                // Assuming status IDs: 1=Draft, 2=Submitted, etc. Adjust based on your workflow
                 if (vpgsEval.Evaluation.StatusId > 6)
                     throw new InvalidOperationException("Cannot update VPGS evaluation after final approval stage");
 
@@ -164,20 +160,18 @@ namespace Business_Access.Services
         {
             try
             {
-                Console.WriteLine($"📡 Loading GTAs for VPGS - Period: {periodId}, Supervisor: {supervisorId}");
+                Console.WriteLine($"Loading GTAs for VPGS - Period: {periodId}, Supervisor: {supervisorId}");
 
-                // Step 1: Get GTA list from external API
                 var gtaList = await _externalApiService.GetGTAListAsync(supervisorId, startDate);
 
                 if (gtaList == null || !gtaList.Any())
                 {
-                    Console.WriteLine("⚠️ No GTAs found from external API");
+                    Console.WriteLine("No GTAs found from external API");
                     return new List<UserDataDto>();
                 }
 
-                Console.WriteLine($"✅ Loaded {gtaList.Count} GTAs from external API");
+                Console.WriteLine($"Loaded {gtaList.Count} GTAs from external API");
 
-                // Step 2: Get all evaluations for this period
                 var evaluations = await _db.Evaluations
                     .Include(e => e.Period)
                     .Include(e => e.Status)
@@ -187,18 +181,16 @@ namespace Business_Access.Services
 
                 var evaluationMap = evaluations.ToDictionary(e => e.TaEmployeeId);
 
-                Console.WriteLine($"✅ Found {evaluations.Count} evaluations in database");
+                Console.WriteLine($"Found {evaluations.Count} evaluations in database");
 
-                // Step 3: Get VPGS evaluations for this period
                 var vpgsEvaluations = await _db.VpgsEvaluations
                     .Where(ve => evaluations.Select(e => e.EvaluationId).Contains(ve.EvaluationId ?? 0))
                     .ToListAsync();
 
                 var vpgsMap = vpgsEvaluations.ToDictionary(ve => ve.EvaluationId ?? 0);
 
-                Console.WriteLine($"✅ Found {vpgsEvaluations.Count} VPGS evaluations");
+                Console.WriteLine($"Found {vpgsEvaluations.Count} VPGS evaluations");
 
-                // Step 4: Enrich GTA list with evaluation and VPGS data
                 foreach (var gta in gtaList)
                 {
                     if (evaluationMap.TryGetValue(gta.employeeId, out var evaluation))
@@ -209,7 +201,7 @@ namespace Business_Access.Services
                         gta.HasSubmitted = evaluation.StatusId >= 2; // StatusId >= 2 means submitted
                         gta.HasVpgsEvaluation = vpgsMap.ContainsKey(evaluation.EvaluationId);
 
-                        Console.WriteLine($"✅ Enriched GTA: {gta.employeeName} - StatusId: {evaluation.StatusId} - HasSubmitted: {gta.HasSubmitted} - HasVPGS: {gta.HasVpgsEvaluation}");
+                        Console.WriteLine($" Enriched GTA: {gta.employeeName} - StatusId: {evaluation.StatusId} - HasSubmitted: {gta.HasSubmitted} - HasVPGS: {gta.HasVpgsEvaluation}");
                     }
                     else
                     {
@@ -219,19 +211,19 @@ namespace Business_Access.Services
                         gta.HasSubmitted = false;
                         gta.HasVpgsEvaluation = false;
 
-                        Console.WriteLine($"ℹ️ GTA {gta.employeeName} has no evaluation yet");
+                        Console.WriteLine($" GTA {gta.employeeName} has no evaluation yet");
                     }
 
                     gta.EmployeeNumber = gta.employeeId;
                 }
 
-                Console.WriteLine($"✅ Total GTAs processed: {gtaList.Count}");
+                Console.WriteLine($"Total GTAs processed: {gtaList.Count}");
 
                 return gtaList;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ Error in GetGTAsForVPGSAsync: {ex.Message}");
+                Console.WriteLine($" Error in GetGTAsForVPGSAsync: {ex.Message}");
                 throw new Exception($"Failed to get GTAs for VPGS: {ex.Message}", ex);
             }
         }

@@ -476,11 +476,11 @@
     private UserDataDto userData = new UserDataDto();
     private int EvaluationPeriodId ;
     private bool isViewMode = true;
-    private const int SUPERVISOR_ID = 7150; // Example supervisor ID
+    private const int SUPERVISOR_ID = 7150; 
     private string SelectedDepartment { get; set; } = string.Empty;
     private string SelectedPeriod { get; set; } = string.Empty;
     
-    // ✅ Computed property that uses backend flag
+    // Computed property that uses backend flag
     private bool HasDeanEdited => SelectedData?.HasDeanEdited ?? false;
 
     private IEnumerable<EvaluationApiResponseDto> FilteredEvaluations
@@ -518,7 +518,7 @@
         try
         {
             await GetEvaluationPeriod();
-            await LoadGTAList(); // ✅ Use this instead of the old method
+            await LoadGTAList(); 
         }
         catch (Exception ex)
         {
@@ -565,7 +565,6 @@
 
             var startDate = "2025-01-01"; // TODO: Get from evaluation period
 
-            // ✅ Single API call to get enriched TA list
             var url = $"/api/Dean/GetTAsForDean?periodId={EvaluationPeriodId}&deanDepartmentId={SUPERVISOR_ID}&startDate={startDate}";
 
             Console.WriteLine($"📡 Calling: {url}");
@@ -620,7 +619,7 @@
 
                         if (evaluationDetail != null)
                         {
-                            // ✅ FIX: Preserve the TA name from original data
+                            // FIX: Preserve the TA name from original data
                             evaluationDetail.taName = eval.taName;
                             evaluationDetail.taEmployeeId = eval.taEmployeeId;
 
@@ -636,46 +635,46 @@
                     {
                         // Keep the original data with the name
                         updatedEvaluations.Add(eval);
-                        Console.WriteLine($"⚠️ No evaluation found for TA {eval.taEmployeeId} - keeping original data");
+                        Console.WriteLine($"No evaluation found for TA {eval.taEmployeeId} - keeping original data");
                     }
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"⚠️ Error fetching evaluation for TA {eval.taEmployeeId}: {ex.Message}");
+                    Console.WriteLine($"Error fetching evaluation for TA {eval.taEmployeeId}: {ex.Message}");
                     updatedEvaluations.Add(eval);
                 }
             }
 
             Evaluations = updatedEvaluations;
-            Console.WriteLine($"✅ Loaded evaluation details for {Evaluations.Count} GTAs");
+            Console.WriteLine($" Loaded evaluation details for {Evaluations.Count} GTAs");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Error loading evaluation details: {ex.Message}");
+            Console.WriteLine($" Error loading evaluation details: {ex.Message}");
         }
     }
     private async Task ShowDetailsModal()
     {
         if (SelectedData == null)
         {
-            Console.WriteLine("⚠️ SelectedData is null, cannot show HOD modal");
+            Console.WriteLine(" SelectedData is null, cannot show HOD modal");
             return;
         }
 
-        Console.WriteLine($"🔵 ShowDetailsModal called for evaluation: {SelectedData.EvaluationId}");
+        Console.WriteLine($" ShowDetailsModal called for evaluation: {SelectedData.EvaluationId}");
         Console.WriteLine($"   - TaEmployeeId: {SelectedData.TaEmployeeId}");
         Console.WriteLine($"   - TaName: {SelectedData.TaName}");
         var userDatadto = await FetchEmployeeInfo(userData.employeeId);
 
         if (userDatadto != null)
         {
-            // ✅ Update SelectedTA with full info
+            //  Update SelectedTA with full info
             userData.employeeName = userDatadto.employeeName;
             userData.Department = userDatadto.Department;
             userData.college = userDatadto.college;
             userDatadto.jobTitle = userDatadto.jobTitle;
 
-            Console.WriteLine($"✅ Employee info updated:");
+            Console.WriteLine($" Employee info updated:");
             Console.WriteLine($"   - Name: {userDatadto.employeeName}");
             Console.WriteLine($"   - Department: {userDatadto.Department}");
             Console.WriteLine($"   - College: {userDatadto.college}");
@@ -684,7 +683,7 @@
 
         // Create a fresh userData object with all required fields
 
-        Console.WriteLine($"✅ User Data populated:");
+        Console.WriteLine($" User Data populated:");
         Console.WriteLine($"   - ID: {userData.employeeId}");
         Console.WriteLine($"   - Name: {userData.employeeName}");
         Console.WriteLine($"   - EvaluationId: {userData.EvaluationId}");
@@ -695,7 +694,7 @@
         isViewMode = true;
         IsHodModalVisible = true;
 
-        Console.WriteLine($"✅ Modal state changed:");
+        Console.WriteLine($" Modal state changed:");
         Console.WriteLine($"   - IsModalVisible: {IsModalVisible}");
         Console.WriteLine($"   - IsHodModalVisible: {IsHodModalVisible}");
         Console.WriteLine($"   - IsViewMode: {isViewMode}");
@@ -707,11 +706,11 @@
     {
         if (SelectedData == null)
         {
-            Console.WriteLine("⚠️ SelectedData is null, cannot show HOD modal");
+            Console.WriteLine("⚠ SelectedData is null, cannot show HOD modal");
             return;
         }
 
-        Console.WriteLine($"🔵 ShowEditModal called for evaluation: {SelectedData.EvaluationId}");
+        Console.WriteLine($" ShowEditModal called for evaluation: {SelectedData.EvaluationId}");
 
         // Create a fresh userData object with all required fields
         userData = new UserDataDto
@@ -724,14 +723,14 @@
             college = "" // Set if available from SelectedData
         };
 
-        Console.WriteLine($"✅ Opening HOD Component in EDIT mode for Dean");
+        Console.WriteLine($" Opening HOD Component in EDIT mode for Dean");
 
         // Close Dean modal and open HOD modal in EDIT mode
         IsModalVisible = false;
         isViewMode = false; // Allow editing
         IsHodModalVisible = true;
 
-        Console.WriteLine($"✅ Modal state changed:");
+        Console.WriteLine($" Modal state changed:");
         Console.WriteLine($"   - IsModalVisible: {IsModalVisible}");
         Console.WriteLine($"   - IsHodModalVisible: {IsHodModalVisible}");
         Console.WriteLine($"   - IsViewMode: {isViewMode}");
@@ -753,7 +752,7 @@
     {
         Console.WriteLine($"🔵 Opening modal for evaluation: {eval.evaluationId}");
 
-        // ✅ CHECK: Validate evaluation ID
+        //  CHECK: Validate evaluation ID
         if (eval.evaluationId == 0)
         {
             Console.WriteLine("⚠️ Cannot open modal: evaluationId is 0");
@@ -771,13 +770,13 @@
 
         try
         {
-            // ✅ STEP 1: Fetch employee info using eval.taEmployeeId (not userData.employeeId!)
-            Console.WriteLine($"📡 Fetching employee info for TA {eval.taEmployeeId}");
+            //  STEP 1: Fetch employee info using eval.taEmployeeId (not userData.employeeId!)
+            Console.WriteLine($" Fetching employee info for TA {eval.taEmployeeId}");
             var employeeInfo = await FetchEmployeeInfo(eval.taEmployeeId);
 
-            // ✅ STEP 2: Fetch evaluation details
+            //  STEP 2: Fetch evaluation details
             var url = $"/api/Dean/evaluationDetail/{eval.evaluationId}";
-            Console.WriteLine($"📡 Fetching: {url}");
+            Console.WriteLine($" Fetching: {url}");
 
             var response = await Http.GetAsync(url);
 
@@ -787,7 +786,7 @@
 
                 if (SelectedData == null)
                 {
-                    Console.WriteLine("⚠️ SelectedData is null after deserialization");
+                    Console.WriteLine(" SelectedData is null after deserialization");
                     DetailError = "فشل تحميل بيانات التقييم";
                     ShowToast(DetailError, "error");
                     return;
@@ -800,7 +799,7 @@
                 SelectedData.AcademicAdvisingScore = 4;
                 SelectedData.TeachingLoadCompletionScore = 10;
 
-                // ✅ STEP 3: Populate userData with employee info from API
+                //  STEP 3: Populate userData with employee info from API
                 userData.employeeId = eval.taEmployeeId;
                 userData.employeeName = employeeInfo?.employeeName ?? SelectedData.TaName ?? $"TA #{eval.taEmployeeId}";
                 userData.EmployeeNumber = eval.taEmployeeId;
@@ -810,32 +809,32 @@
                 //userData.qualification = employeeInfo?.qualification ?? "";
                 userData.jobTitle = employeeInfo?.jobTitle ?? "";
 
-                // ✅ STEP 4: Also update SelectedData for display in Dean modal
+                //  STEP 4: Also update SelectedData for display in Dean modal
                 if (employeeInfo != null)
                 {
                     SelectedData.TaName = employeeInfo.employeeName;
                     // You might want to add a Department property to DeanEvaluationDetailDto
-                    Console.WriteLine($"✅ Employee info loaded:");
-                    Console.WriteLine($"   - Name: {employeeInfo.employeeName}");
-                    Console.WriteLine($"   - Department: {employeeInfo.Department}");
-                    Console.WriteLine($"   - College: {employeeInfo.college}");
+                    Console.WriteLine($" Employee info loaded:");
+                    Console.WriteLine($"  Name: {employeeInfo.employeeName}");
+                    Console.WriteLine($" Department: {employeeInfo.Department}");
+                    Console.WriteLine($"College: {employeeInfo.college}");
                     //Console.WriteLine($"   - Qualification: {employeeInfo.qualification}");
-                    Console.WriteLine($"   - Job Title: {employeeInfo.jobTitle}");
+                    Console.WriteLine($" Job Title: {employeeInfo.jobTitle}");
                 }
 
-                Console.WriteLine("✅ Modal data loaded successfully");
+                Console.WriteLine(" Modal data loaded successfully");
             }
             else
             {
                 var errorContent = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"❌ API Error: {response.StatusCode} - {errorContent}");
+                Console.WriteLine($" API Error: {response.StatusCode} - {errorContent}");
                 DetailError = $"فشل تحميل تفاصيل التقييم: {response.StatusCode}";
                 ShowToast(DetailError, "error");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Exception in OpenModal: {ex.Message}");
+            Console.WriteLine($" Exception in OpenModal: {ex.Message}");
             Console.WriteLine($"Stack trace: {ex.StackTrace}");
             DetailError = $"خطأ: {ex.Message}";
             ShowToast(DetailError, "error");
@@ -850,7 +849,7 @@
     {
         try
         {
-            Console.WriteLine($"📡 Fetching employee info for ID: {employeeId}");
+            Console.WriteLine($"Fetching employee info for ID: {employeeId}");
 
             var response = await Http.GetAsync(
                 $"/api/evaluation/info/{employeeId}");
@@ -858,18 +857,18 @@
             if (response.IsSuccessStatusCode)
             {
                 var employeeInfo = await response.Content.ReadFromJsonAsync<UserDataDto>();
-                Console.WriteLine($"✅ Employee info loaded: {employeeInfo?.employeeName}");
+                Console.WriteLine($"Employee info loaded: {employeeInfo?.employeeName}");
                 return employeeInfo;
             }
             else
             {
-                Console.WriteLine($"⚠️ Failed to load employee info: {response.StatusCode}");
+                Console.WriteLine($"Failed to load employee info: {response.StatusCode}");
                 return null;
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Error fetching employee info: {ex.Message}");
+            Console.WriteLine($"Error fetching employee info: {ex.Message}");
             return null;
         }
     }
@@ -1068,7 +1067,6 @@
         return SelectedData.TotalScore;
     }
     
-    // ✅ FIXED: Match HOD component calculation exactly
     private decimal CalculateTotalScoreDetailed()
     {
         if (SelectedData == null)

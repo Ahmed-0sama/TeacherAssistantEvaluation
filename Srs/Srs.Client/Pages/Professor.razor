@@ -616,11 +616,11 @@
             return 0;
 
         // Status 4: Returned by HOD for re-evaluation
-        if (hasProfEval && profEval?.StatusId == 4)  // ✅ Uses ?. null-safe operator
+        if (hasProfEval && profEval?.StatusId == 4)  
             return 4;
 
         // Status 1: Evaluated and submitted to HOD
-        if (hasProfEval && profEval?.StatusId == 2)  // ✅ Uses ?. null-safe operator
+        if (hasProfEval && profEval?.StatusId == 2)  
             return 2;
 
         // Default: Waiting for professor evaluation (TA submitted, professor hasn't evaluated yet)
@@ -654,7 +654,6 @@
         StateHasChanged();
     }
 
-    // Validation methods
     private void ValidateOfficeHours()
     {
         validationErrors.Remove("officeHours");
@@ -799,7 +798,7 @@
 
             if (saveSuccess)
             {
-                await LoadData(); // Reload data
+                await LoadData(); 
                 HideModal();
             }
         }

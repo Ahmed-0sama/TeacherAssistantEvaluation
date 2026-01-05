@@ -398,7 +398,7 @@
 
         try
         {
-            Console.WriteLine("📡 Loading VPGS page data...");
+            Console.WriteLine("Loading VPGS page data...");
 
             await GetEvaluationPeriod();
 
@@ -418,7 +418,7 @@
             taList = await response.Content.ReadFromJsonAsync<List<UserDataDto>>()
                 ?? new List<UserDataDto>();
 
-            Console.WriteLine($"✅ Loaded {taList.Count} GTAs for VPGS");
+            Console.WriteLine($" Loaded {taList.Count} GTAs for VPGS");
 
             var submitted = taList.Count(t => t.HasSubmitted);
             var evaluated = taList.Count(t => t.HasVpgsEvaluation);
@@ -457,7 +457,7 @@
     }
     private async Task OpenModal(UserDataDto ta)
     {
-        // ✅ Don't allow opening modal if TA hasn't submitted
+        //  Don't allow opening modal if TA hasn't submitted
         if (!ta.HasSubmitted)
         {
             await JS.InvokeVoidAsync("alert", "لم يقدم مساعد التدريس تقييمه بعد");
@@ -471,7 +471,7 @@
         try
         {
             int evaluationId = ta.EvaluationId;
-            Console.WriteLine($"📋 Opening modal for {ta.employeeName} - EvaluationId: {evaluationId}");
+            Console.WriteLine($"Opening modal for {ta.employeeName} - EvaluationId: {evaluationId}");
 
             // Try to fetch existing VPGS evaluation
             var response = await Http.GetAsync($"api/Vpgs/evaluation/{evaluationId}");
@@ -485,7 +485,7 @@
                     currentVpgsEvaluationId = vpgsData.VpgsevalId;
                     scientificScore = vpgsData.ScientificScore;
 
-                    Console.WriteLine($"✅ Loaded VPGS evaluation - Score: {scientificScore}");
+                    Console.WriteLine($" Loaded VPGS evaluation - Score: {scientificScore}");
                 }
             }
             else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
@@ -493,12 +493,12 @@
                 // No existing evaluation - initialize for new entry
                 currentVpgsEvaluationId = null;
                 scientificScore = 0;
-                Console.WriteLine("ℹ️ No existing VPGS evaluation - ready for new entry");
+                Console.WriteLine("No existing VPGS evaluation - ready for new entry");
             }
             else
             {
                 var errorContent = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"⚠️ Error loading VPGS: {errorContent}");
+                Console.WriteLine($"Error loading VPGS: {errorContent}");
             }
 
             // Load masters progress data
@@ -509,7 +509,7 @@
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Error loading modal data: {ex}");
+            Console.WriteLine($" Error loading modal data: {ex}");
             await JS.InvokeVoidAsync("alert", $"حدث خطأ: {ex.Message}");
         }
         finally
@@ -545,7 +545,7 @@
                         ScientificResearchReport = gsdeanData.ThesisDefense
                     };
 
-                    Console.WriteLine("✅ Masters data loaded from GSDean");
+                    Console.WriteLine("Masters data loaded from GSDean");
                 }
             }
             else
@@ -571,11 +571,11 @@
     {
         try
         {
-            Console.WriteLine($"🔍 Loading research papers for evaluation ID: {evaluationId}");
+            Console.WriteLine($"Loading research papers for evaluation ID: {evaluationId}");
 
             var response = await Http.GetAsync($"/api/Evaluation/GetTASubmission/{evaluationId}");
 
-            Console.WriteLine($"📡 Response Status: {response.StatusCode}");
+            Console.WriteLine($"Response Status: {response.StatusCode}");
 
             if (response.IsSuccessStatusCode)
             {
@@ -596,7 +596,7 @@
                         Url = activity.Url
                     }).ToList();
 
-                    Console.WriteLine($"✅ Successfully loaded {researchPapers.Count} research papers");
+                    Console.WriteLine($"Successfully loaded {researchPapers.Count} research papers");
 
                     otherActivities = new OtherActivitiesDto
                     {
@@ -606,25 +606,25 @@
                     };
                     foreach (var paper in researchPapers)
                     {
-                        Console.WriteLine($"  - Paper: {paper.Title}, Status: {paper.Status}, Date: {paper.Date}");
+                        Console.WriteLine($"Paper: {paper.Title}, Status: {paper.Status}, Date: {paper.Date}");
                     }
                 }
                 else
                 {
-                    Console.WriteLine("ℹ️ No research activities found in submission");
+                    Console.WriteLine("No research activities found in submission");
                     researchPapers = new List<ResearchPaperDto>();
                 }
             }
             else
             {
                 var errorContent = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"❌ Error Response: {errorContent}");
+                Console.WriteLine($"Error Response: {errorContent}");
                 researchPapers = new List<ResearchPaperDto>();
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Exception loading papers: {ex.Message}");
+            Console.WriteLine($"Exception loading papers: {ex.Message}");
             Console.WriteLine($"Stack trace: {ex.StackTrace}");
             researchPapers = new List<ResearchPaperDto>();
         }
@@ -666,7 +666,7 @@
                 if (response.IsSuccessStatusCode)
                 {
                     await JS.InvokeVoidAsync("alert", "تم حفظ التقييم بنجاح");
-                    Console.WriteLine($"✅ VPGS evaluation created successfully");
+                    Console.WriteLine($"VPGS evaluation created successfully");
                     CloseModal();
                     await OnInitializedAsync(); // Reload the list
                 }
@@ -674,7 +674,7 @@
                 {
                     var error = await response.Content.ReadAsStringAsync();
                     await JS.InvokeVoidAsync("alert", $"فشل حفظ التقييم: {error}");
-                    Console.WriteLine($"❌ Failed to create VPGS: {error}");
+                    Console.WriteLine($"Failed to create VPGS: {error}");
                 }
             }
             else
@@ -690,7 +690,7 @@
                 if (response.IsSuccessStatusCode)
                 {
                     await JS.InvokeVoidAsync("alert", "تم تحديث التقييم بنجاح");
-                    Console.WriteLine($"✅ VPGS evaluation updated successfully");
+                    Console.WriteLine($"VPGS evaluation updated successfully");
                     CloseModal();
                     await OnInitializedAsync(); // Reload the list
                 }

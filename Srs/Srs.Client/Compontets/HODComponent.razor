@@ -298,6 +298,8 @@
                                                                              OnScientificTotalChanged="OnScientificTotalReceived"
                                                                              IsViewMode="@IsViewMode"
                                                                              ExistingRatings="@GetAdministrativeRatings()"
+                                                                             OnVpgsDataAvailabilityChanged="OnVpgsDataAvailabilityChanged"
+                                                                             OnGsdeanDataAvailabilityChanged="OnGsdeabDataAvailabilityChanged"
                                                                              CriterionSources="@GetCriterionSources("Administrative")" />
 
                     <Srs.Client.Compontets.GradesComponent OnPersonalTraitsChanged="OnPersonalTraitsRatingsChanged"
@@ -385,37 +387,49 @@
                 </div> 
             }
         </div>
-        <div class="modal-footer">
-            @if (IsViewMode)
-            {
-                <button type="button" class="btn btn-secondary" @onclick="HandleClose">إغلاق</button>
+            <div class="modal-footer">
+                @if (IsViewMode)
+                {
+                    <button type="button" class="btn btn-secondary" @onclick="HandleClose">إغلاق</button>
                     <button class="btn btn-primary" @onclick="DownloadPdf">
                         Export As PDF
                     </button>
+                    <button type="button"
+                            class="btn btn-outline-primary px-4"
+                            @onclick="PrintModal"
+                            disabled="@isLoadingModal">
+                        <i class="bi bi-printer me-2"></i>طباعة التقرير الكامل
+                    </button>
+                }
+                else if (!isLoadingModal)
+                {
+                    <button type="button" class="btn btn-secondary" @onclick="HandleClose">إلغاء</button>
 
-                <button type="button"
-                        class="btn btn-outline-primary px-4"
-                        @onclick="PrintModal"
-                        disabled="@isLoadingModal">
-                    <i class="bi bi-printer me-2"></i>طباعة التقرير الكامل
-                </button>
+                    @if (!hasVpgsData||!hasGsdeanData)
+                    {
+                        <div class="alert alert-danger mb-0 me-2 d-inline-flex align-items-center">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            <strong>لا يمكن حفظ التقييم:</strong> يجب على نائب الرئيس  او وكيل الكبة للدراسات العليا إكمال التقييم أولاً 
+                        </div>
+                    }
 
-            }
-            else if (!isLoadingModal)
-            {
-                <button type="button" class="btn btn-secondary" @onclick="HandleClose">إلغاء</button>
-                <button type="button" class="btn btn-primary"
-                        @onclick="HandleSave"
-                        disabled="@isSaving">
-                    @(isSaving ? "جارٍ الحفظ..." : "حفظ التقييم")
-                </button>
+                    <button type="button" class="btn btn-primary"
+                            @onclick="HandleSave"
+                            disabled="@(isSaving || !hasVpgsData||!hasGsdeanData)">
+                        @if (!hasVpgsData||!hasGsdeanData)
+                        {
+                            <i class="bi bi-lock-fill me-2"></i>
+                        }
+                        @(isSaving ? "جارٍ الحفظ..." : "حفظ التقييم")
+                    </button>
+
                     <button type="button" class="btn btn-warning"
                             @onclick="OpenReturnModal"
-                            disabled="@isSaving">
+                            disabled="@(isSaving || !hasVpgsData||!hasGsdeanData)">
                         <i class="bi bi-arrow-return-right me-2"></i>إرجاع التقييم
                     </button>
-            }
-          </div>
+                }
+            </div>
      </div>
     </div>
 </div>
@@ -625,8 +639,10 @@
     [Parameter] public EventCallback OnSaveSuccess { get; set; }
     [Parameter] public bool IsDeanUser { get; set; } = false;
     [Parameter] public int DeanEmployeeId { get; set; } = 0;
+    private bool hasGsdeanData = true;
     private decimal scientificTotal = 0;
     private int statusid = 0;
+    private bool hasVpgsData = true;
     private bool isLoadingModal = true;
     private bool isGeneratingPdf = false;
     private string HodReturnComment = "";
@@ -655,7 +671,17 @@
     // Computed properties - العبء التدريسي = Professor evaluations (30) + Teaching load completion (10) + Teaching Activities (10)
     decimal teachingLoadScore => (CalculateAverageScore()) + teachingLoadGrade(teachingdto.ActualTeachingLoad,teachingdto.ExpectedTeachingLoad) + GetTeachingActivitiesTotal();
     private List<TeachingDataDto> semesterTeachingLoads = new List<TeachingDataDto>();
-
+    private void OnGsdeabDataAvailabilityChanged(bool gshasData)
+    {
+        hasGsdeanData = gshasData;
+        Console.WriteLine($" GS Dean data availability changed: {gshasData}");
+    }
+    private void OnVpgsDataAvailabilityChanged(bool hasData)
+    {
+        hasVpgsData = hasData;
+        Console.WriteLine($" VPGS data availability changed: {hasData}");
+        StateHasChanged();
+    }
     private decimal AverageTeachingLoadGrade()
     {
         if (!semesterTeachingLoads.Any())
@@ -704,7 +730,6 @@
             Console.WriteLine($"✅ Found {submittedProfessorIds.Count} professors who submitted");
 
             // Find professors who haven't submitted
-            // ⚠️ KEY FIX: This will now show ALL professors if none have submitted
             professorsNeedingReminder = allProfessors
                 .Where(prof => !submittedProfessorIds.Contains(prof.ProfessorId))
                 .Select(prof => new ProfessorReminderInfo
@@ -786,7 +811,7 @@
         studentActivitiesRatings.Clear();
         hodStrengths = string.Empty;
         hodWeaknesses = string.Empty;
-
+        hasVpgsData = true;
         try
         {
             if (SelectedTA == null || SelectedTA.EvaluationId == 0 || EvaluationPeriodId == 0)
@@ -829,12 +854,12 @@
                 {
                     semesterTeachingLoads = await response.Content.ReadFromJsonAsync<List<TeachingDataDto>>()
                         ?? new List<TeachingDataDto>();
-                    Console.WriteLine($"✅ Loaded {semesterTeachingLoads.Count} semesters");
+                    Console.WriteLine($"Loaded {semesterTeachingLoads.Count} semesters");
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ Error loading teaching data: {ex.Message}");
+                Console.WriteLine($" Error loading teaching data: {ex.Message}");
             }
 
             // Load professor evaluations
@@ -851,7 +876,7 @@
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ Error loading professor evaluations: {ex.Message}");
+                Console.WriteLine($" Error loading professor evaluations: {ex.Message}");
             }
 
             // Load HOD evaluation
@@ -867,7 +892,8 @@
                         hodWeaknesses = hodEvaluationData.HodWeaknesses ?? string.Empty;
                         DeanComments = hodEvaluationData.DeanReturnComments ?? string.Empty;
                         statusid = hodEvaluationData.StatusId;
-
+                
+                        
                         foreach (var eval in hodEvaluationData.Evaluations)
                         {
                             if (eval.CriterionType == "DirectTeaching")
@@ -890,7 +916,6 @@
                 Console.WriteLine($"❌ Error loading HOD evaluation: {ex.Message}");
             }
 
-            // ✅ CRITICAL: Load professors needing reminder
             if (SelectedTA != null && semesterTeachingLoads.Any())
             {
                 await LoadProfessorsNeedingReminder();
@@ -1162,10 +1187,12 @@
                 var updateDeanDto = new UpdateDeanEvaluationDto
                 {
                     EvaluationId = SelectedTA.EvaluationId,
+                    
                     CriterionRatings = criterionRatings,
                     TotalScore = CalculateFinalTotal(),
                     DeanComments = hodWeaknesses, 
-                    CreatedByUserId = DeanEmployeeId 
+                    CreatedByUserId = DeanEmployeeId,
+                   
                 };
 
                 Console.WriteLine($"📤 Dean updating evaluation {SelectedTA.EvaluationId} with {criterionRatings.Count} ratings");

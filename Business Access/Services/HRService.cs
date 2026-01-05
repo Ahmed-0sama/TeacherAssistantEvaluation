@@ -24,23 +24,22 @@ namespace Business_Access.Services
         {
             try
             {
-                Console.WriteLine($"📡 Loading statistics - Period: {evaluationPeriod}, Department: {hrDepartmentId}");
+                Console.WriteLine($"Loading statistics - Period: {evaluationPeriod}, Department: {hrDepartmentId}");
 
                 // Step 1: Get ALL TAs from external API
                 var allTAs = await _externalApiService.GetGTAListAsync(hrDepartmentId, startDate);
 
                 if (allTAs == null || !allTAs.Any())
                 {
-                    Console.WriteLine("⚠️ No TAs found from external API for statistics");
+                    Console.WriteLine(" No TAs found from external API for statistics");
                     return new EvaluationStatisticsDto();
                 }
 
                 var totalTAsCount = allTAs.Count;
                 var taIds = allTAs.Select(ta => ta.employeeId).ToHashSet();
 
-                Console.WriteLine($"✅ Total TAs from API: {totalTAsCount}");
+                Console.WriteLine($" Total TAs from API: {totalTAsCount}");
 
-                // Step 2: Get evaluation counts in a single query using GroupBy
                 var statusCounts = await _context.Evaluations
                     .Where(e => e.PeriodId == evaluationPeriod && taIds.Contains(e.TaEmployeeId))
                     .GroupBy(e => e.StatusId)
@@ -50,7 +49,6 @@ namespace Business_Access.Services
                 // Convert to dictionary for easy lookup
                 var statusDict = statusCounts.ToDictionary(x => x.StatusId, x => x.Count);
 
-                // Step 3: Count TAs without evaluations
                 var tasWithEvaluations = await _context.Evaluations
                     .Where(e => e.PeriodId == evaluationPeriod && taIds.Contains(e.TaEmployeeId))
                     .Select(e => e.TaEmployeeId)
@@ -58,7 +56,6 @@ namespace Business_Access.Services
 
                 var tasWithoutEvaluations = taIds.Count(id => !tasWithEvaluations.Contains(id));
 
-                // Step 4: Build statistics using dictionary lookups
                 var statistics = new EvaluationStatisticsDto
                 {
                     TotalEvaluations = totalTAsCount,
@@ -102,7 +99,6 @@ namespace Business_Access.Services
             {
                 Console.WriteLine($"📡 Loading ALL TAs for HR - Period: {periodId}, Department: {hrDepartmentId}");
 
-                // Step 1: Get TA list from external API
                 var taList = await _externalApiService.GetGTAListAsync(hrDepartmentId, startDate);
 
                 if (taList == null || !taList.Any())
@@ -113,7 +109,6 @@ namespace Business_Access.Services
 
                 Console.WriteLine($"✅ Loaded {taList.Count} TAs from external API");
 
-                // Step 2: Get all evaluations for this period
                 var evaluations = await _context.Evaluations
                     .Include(e => e.Period)
                     .Include(e => e.Status)
@@ -125,7 +120,6 @@ namespace Business_Access.Services
 
                 Console.WriteLine($"✅ Found {evaluations.Count} evaluations in database");
 
-                // Step 3: Get HOD evaluations for this period
                 var hodEvaluations = await _context.Hodevaluations
                     .Where(h => evaluations.Select(e => e.EvaluationId).Contains(h.EvaluationId) && h.IsActive)
                     .ToListAsync();
@@ -136,7 +130,6 @@ namespace Business_Access.Services
 
                 Console.WriteLine($"✅ Found {hodEvaluationMap.Count} HOD evaluations");
 
-                // Step 4: Enrich TA list with evaluation data
                 foreach (var ta in taList)
                 {
                     if (evaluationMap.TryGetValue(ta.employeeId, out var evaluation))
@@ -162,7 +155,6 @@ namespace Business_Access.Services
                     ta.EmployeeNumber = ta.employeeId;
                 }
 
-                // ✅ Return ALL TAs (HR sees everyone)
                 Console.WriteLine($"✅ Total TAs returned for HR: {taList.Count}");
 
                 return taList;

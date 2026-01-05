@@ -256,7 +256,7 @@ else{
                 EvaluationPeriodId = result.PeriodId;
                 evaluationPeriodDisplay = $"{result.StartDate.ToString("yyyy-MM-dd")} إلى {result.EndDate.ToString("yyyy-MM-dd")}";
 
-                Console.WriteLine($"✅ evaluationPeriod retrieved {EvaluationPeriodId}");
+                Console.WriteLine($"evaluationPeriod retrieved {EvaluationPeriodId}");
             }
         }
         catch (Exception ex)
@@ -272,7 +272,7 @@ else{
         {
             if (EvaluationPeriodId == 0)
             {
-                Console.WriteLine("⚠️ Cannot load statistics: No active evaluation period");
+                Console.WriteLine("Cannot load statistics: No active evaluation period");
                 return;
             }
 
@@ -280,7 +280,7 @@ else{
 
             var url = $"/api/Statistics/EvaluationStatistics?evaluationPeriod={EvaluationPeriodId}&hrDepartmentId={HR_DEPARTMENT_ID}&startDate={startDate}";
 
-            Console.WriteLine($"📡 Calling: {url}");
+            Console.WriteLine($"Calling: {url}");
 
             var response = await Http.GetAsync(url);
 
@@ -290,18 +290,18 @@ else{
                 if (result != null)
                 {
                     evstat = result;
-                    Console.WriteLine($"✅ Evaluation statistics retrieved successfully.");
-                    Console.WriteLine($"   - Total: {evstat.TotalEvaluations}");
-                    Console.WriteLine($"   - TA Pending: {evstat.TAPending}");
-                    Console.WriteLine($"   - HOD Pending: {evstat.HodPending}");
-                    Console.WriteLine($"   - Dean Pending: {evstat.DeanPending}");
-                    Console.WriteLine($"   - Accepted: {evstat.accepted}");
+                    Console.WriteLine($"Evaluation statistics retrieved successfully.");
+                    Console.WriteLine($"Total: {evstat.TotalEvaluations}");
+                    Console.WriteLine($"TA Pending: {evstat.TAPending}");
+                    Console.WriteLine($"HOD Pending: {evstat.HodPending}");
+                    Console.WriteLine($"Dean Pending: {evstat.DeanPending}");
+                    Console.WriteLine($"Accepted: {evstat.accepted}");
                 }
             }
             else
             {
                 var error = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"❌ Failed to load statistics: {error}");
+                Console.WriteLine($"Failed to load statistics: {error}");
             }
         }
         catch (Exception ex)
@@ -318,7 +318,7 @@ else{
 
         try
         {
-            Console.WriteLine("📡 Loading HR page data...");
+            Console.WriteLine("Loading HR page data...");
 
             if (EvaluationPeriodId == 0)
             {
@@ -328,7 +328,6 @@ else{
 
             var startDate = "2025-01-01"; 
 
-            // ✅ Single API call to get ALL TAs with enriched data
             var url = $"/api/Statistics/GetAllTAsForHR?periodId={EvaluationPeriodId}&hrDepartmentId={HR_DEPARTMENT_ID}&startDate={startDate}";
 
             Console.WriteLine($"📡 Calling: {url}");

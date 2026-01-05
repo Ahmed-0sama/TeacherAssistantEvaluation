@@ -388,6 +388,10 @@
     private AdminstrativeActivityDto administrativeData = new AdminstrativeActivityDto();
     private string? errorMessage;
     private decimal vpg;
+    private bool hasVpgsData = true;
+    private bool hasgsdeanData = true;
+    [Parameter] public EventCallback<bool> OnVpgsDataAvailabilityChanged { get; set; }
+    [Parameter] public EventCallback<bool> OnGsdeanDataAvailabilityChanged { get; set; }
 
     [Parameter] public EventCallback<Dictionary<int, int>> OnRatingsChanged { get; set; }
     [Parameter] public bool IsViewMode { get; set; }
@@ -538,6 +542,7 @@
 
                 if (evaluationData != null)
                 {
+                    hasgsdeanData = true;
                     mastersData = new MastersDto
                     {
                         Major = evaluationData.ProgramName,
@@ -558,12 +563,14 @@
                 }
                 else
                 {
+                    hasgsdeanData = false;
                     errorMessage = "لم يتم العثور على بيانات التقييم";
                 }
             }
             else if (gsdeanResponse.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
                 Console.WriteLine("No evaluation data found - initializing empty form");
+                hasgsdeanData = false;
                 mastersData = new MastersDto
                 {
                     Major = "",
@@ -595,18 +602,22 @@
                     if (vpgsData != null)
                     {
                         scientificScore = vpgsData.ScientificScore;
+                        hasVpgsData = true;
                     }
                 }
                 else if (vpgsResponse.StatusCode == System.Net.HttpStatusCode.NotFound)
                 {
+                    hasVpgsData = false;
                     scientificScore = 0;
                 }
             }
             catch (Exception vpgsEx)
             {
+                hasVpgsData = false;
                 Console.WriteLine($"⚠️ Non-critical error loading VPGS data: {vpgsEx.Message}");
                 scientificScore = 0;
             }
+            await OnVpgsDataAvailabilityChanged.InvokeAsync(hasVpgsData);
 
             try
             {

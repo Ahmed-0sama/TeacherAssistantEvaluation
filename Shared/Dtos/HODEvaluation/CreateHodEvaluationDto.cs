@@ -14,6 +14,7 @@ namespace Shared.Dtos.HODEvaluation
         public string HodStrengths { get; set; }
         public string HodWeaknesses { get; set; }
         public decimal FinalScore { get; set; }
+        public string FinalGrade { get; set; }
         public int CreatedByUserId { get; set; }
     }
 }

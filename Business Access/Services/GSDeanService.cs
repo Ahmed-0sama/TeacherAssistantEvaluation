@@ -269,11 +269,11 @@ namespace Business_Access.Services
 
                 if (gtaList == null || !gtaList.Any())
                 {
-                    Console.WriteLine("⚠️ No GTAs found");
+                    Console.WriteLine(" No GTAs found");
                     return new List<UserDataDto>();
                 }
 
-                Console.WriteLine($"✅ Loaded {gtaList.Count} GTAs from external API");
+                Console.WriteLine($"Loaded {gtaList.Count} GTAs from external API");
 
                 // Step 2: Get all evaluations for this period
                 var evaluations = await _context.GsdeanEvaluations
@@ -303,7 +303,7 @@ namespace Business_Access.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ Error in GetGTAListWithEvaluationsAsync: {ex.Message}");
+                Console.WriteLine($" Error in GetGTAListWithEvaluationsAsync: {ex.Message}");
                 throw new Exception($"Failed to get GTA list with evaluations: {ex.Message}", ex);
             }
         }
