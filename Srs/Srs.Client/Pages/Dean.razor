@@ -539,7 +539,7 @@
             {
                 var result = await response.Content.ReadFromJsonAsync<GetEvaluationPeriodDto>();
                 EvaluationPeriodId = result.PeriodId;
-                Console.WriteLine($"✅ evaluationPeriod retrieved{EvaluationPeriodId}");
+                Console.WriteLine($" evaluationPeriod retrieved{EvaluationPeriodId}");
             }
         }
         catch (Exception ex)
@@ -555,7 +555,7 @@
 
         try
         {
-            Console.WriteLine("📡 Loading Dean page data...");
+            Console.WriteLine(" Loading Dean page data...");
 
             if (EvaluationPeriodId == 0)
             {
@@ -567,7 +567,7 @@
 
             var url = $"/api/Dean/GetTAsForDean?periodId={EvaluationPeriodId}&deanDepartmentId={SUPERVISOR_ID}&startDate={startDate}";
 
-            Console.WriteLine($"📡 Calling: {url}");
+            Console.WriteLine($" Calling: {url}");
 
             var response = await Http.GetAsync(url);
 
@@ -580,7 +580,7 @@
             Evaluations = await response.Content.ReadFromJsonAsync<List<EvaluationApiResponseDto>>()
                 ?? new List<EvaluationApiResponseDto>();
 
-            Console.WriteLine($"✅ Loaded {Evaluations.Count} TAs for Dean");
+            Console.WriteLine($"Loaded {Evaluations.Count} TAs for Dean");
 
             if (!Evaluations.Any())
             {
@@ -590,7 +590,7 @@
         catch (Exception ex)
         {
             LoadError = $"خطأ في تحميل قائمة مساعدي التدريس: {ex.Message}";
-            Console.WriteLine($"❌ Error: {ex}");
+            Console.WriteLine($" Error: {ex}");
         }
         finally
         {
@@ -624,7 +624,7 @@
                             evaluationDetail.taEmployeeId = eval.taEmployeeId;
 
                             updatedEvaluations.Add(evaluationDetail);
-                            Console.WriteLine($"✅ Found evaluation for TA {eval.taEmployeeId} - {eval.taName}");
+                            Console.WriteLine($" Found evaluation for TA {eval.taEmployeeId} - {eval.taName}");
                         }
                         else
                         {
@@ -706,7 +706,7 @@
     {
         if (SelectedData == null)
         {
-            Console.WriteLine("⚠ SelectedData is null, cannot show HOD modal");
+            Console.WriteLine("SelectedData is null, cannot show HOD modal");
             return;
         }
 
@@ -740,7 +740,7 @@
 
     private void HideHodModal()
     {
-        Console.WriteLine("?? Closing HOD modal, reopening Dean modal");
+        Console.WriteLine("Closing HOD modal, reopening Dean modal");
 
         // Close HOD modal and reopen Dean modal
         IsHodModalVisible = false;
@@ -750,12 +750,12 @@
 
     private async Task OpenModal(EvaluationApiResponseDto eval)
     {
-        Console.WriteLine($"🔵 Opening modal for evaluation: {eval.evaluationId}");
+        Console.WriteLine($" Opening modal for evaluation: {eval.evaluationId}");
 
         //  CHECK: Validate evaluation ID
         if (eval.evaluationId == 0)
         {
-            Console.WriteLine("⚠️ Cannot open modal: evaluationId is 0");
+            Console.WriteLine(" Cannot open modal: evaluationId is 0");
             ShowToast("لا يوجد تقييم متاح لهذا المساعد", "error");
             return;
         }
@@ -1001,7 +1001,7 @@
 
     private async Task HandleSaveSuccess()
     {
-        Console.WriteLine("🔵 HandleSaveSuccess called - reloading evaluation data");
+        Console.WriteLine(" HandleSaveSuccess called - reloading evaluation data");
 
         // Reload the evaluation data after save
         if (SelectedData != null)
@@ -1019,11 +1019,10 @@
                 // Reload the Dean modal with fresh data
                 IsModalVisible = false; // Close first
                 StateHasChanged();
-                //await Task.Delay(100); // Small delay to ensure clean state
 
                 await OpenModal(eval); // Reopen with fresh data - will fetch HasDeanEdited from backend
 
-                Console.WriteLine("✅ Evaluation data reloaded successfully");
+                Console.WriteLine(" Evaluation data reloaded successfully");
             }
         }
     }

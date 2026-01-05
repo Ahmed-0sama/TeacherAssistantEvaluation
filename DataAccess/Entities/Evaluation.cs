@@ -23,7 +23,6 @@ public partial class Evaluation
 
     public string? FinalGrade { get; set; }
     public decimal? TotalScore { get; set; }
-    public decimal? StudentSurveyScore { get; set; }//goes to auto caculated score
 
     public DateTime? DateSubmitted { get; set; }
 

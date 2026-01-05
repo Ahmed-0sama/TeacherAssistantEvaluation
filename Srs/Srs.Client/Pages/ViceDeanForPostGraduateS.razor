@@ -21,11 +21,33 @@
             <div class="w-75 mb-4 shadow-sm">
                 @if (isLoading)
                 {
-                    <p class="text-center">جارٍ تحميل البيانات...</p>
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">جارٍ التحميل...</span>
+                        </div>
+                        <p class="mt-3">جارٍ تحميل البيانات...</p>
+                    </div>
+                }
+                else if (!hasActiveEvaluationPeriod)
+                {
+                    <div class="alert alert-warning text-center py-5" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill" style="font-size: 3rem;"></i>
+                        <h4 class="mt-3 mb-2">لا توجد فترة تقييم نشطة حالياً</h4>
+                    </div>
                 }
                 else if (!string.IsNullOrEmpty(errorMessage))
                 {
-                    <div class="alert alert-danger text-center">@errorMessage</div>
+                    <div class="alert alert-danger text-center">
+                        <i class="bi bi-x-circle-fill me-2"></i>
+                        @errorMessage
+                    </div>
+                }
+                else if (!taList.Any())
+                {
+                    <div class="alert alert-info text-center py-4">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        لا يوجد مساعدو تدريس مسجلون في هذه الفترة
+                    </div>
                 }
                 else
                 {
@@ -57,7 +79,7 @@
                                         </td>
                                         <td>
                                             <button class="btn btn-sm btn-primary" @onclick="() => OpenModal(ta)">
-                                                @(ta.statusid == 2? "عرض" : ta.statusid == 1 ? "تقييم" : "إجراء")
+                                                @(ta.statusid == 2 ? "عرض" : ta.statusid == 1 ? "تقييم" : "إجراء")
                                             </button>
                                         </td>
                                     </tr>
@@ -206,6 +228,7 @@
                                            min="0"
                                            max="5"
                                            step="1"
+                                           readonly="@IsReadOnly"
                                            onkeypress="return (event.charCode >= 48 && event.charCode <= 53) || event.charCode === 8"
                                            oninput="this.value = Math.floor(Math.abs(this.value)); if(this.value > 5) this.value = 5;" />
                                 </div>
@@ -219,22 +242,20 @@
                                                value="@($"{mastersDto.GradeGivenbySupervisor:F2}%")"
                                                readonly />
                                     </div>
-
                                 }
                             </div>
-                        </div> 
-                        
+                        </div>
                     }
                 </div>
                 <div class="modal-footer">
                     @if (!IsReadOnly && !isLoadingModalData)
                     {
                         <div class="w-100 mb-3">
-                            <label class="form-label fw-bold"> الملاحظات اضافية</label>
+                            <label class="form-label fw-bold">الملاحظات الإضافية</label>
                             <textarea class="form-control"
                                       rows="3"
                                       @bind="mastersDto.Notes"
-                                      placeholder="اضف ملاحظات حول تقدم الطلاب مثال مطابقتة للخطة او اي تحديات يواجهها"></textarea>
+                                      placeholder="أضف ملاحظات حول تقدم الطالب مثل مطابقته للخطة أو أي تحديات يواجهها"></textarea>
                         </div>
                         <button type="button" class="btn btn-secondary" @onclick="CloseModal">إغلاق</button>
 
@@ -243,6 +264,10 @@
                                 disabled="@isSaving">
                             @(isSaving ? "جارٍ الحفظ..." : "اعتماد الدرجة")
                         </button>
+                    }
+                    else if (IsReadOnly)
+                    {
+                        <button type="button" class="btn btn-secondary" @onclick="CloseModal">إغلاق</button>
                     }
                 </div>
             </div>
@@ -254,51 +279,89 @@
     private bool isLoading = true;
     private bool isLoadingModalData = false;
     private bool isSaving = false;
-	private int EvaluationPeriodId;
+    private int EvaluationPeriodId;
     private string? errorMessage;
     private List<UserDataDto> taList = new();
     private UserDataDto? selectedTA;
     private MastersDto mastersDto = new MastersDto();
     private bool ModalVisable = false;
     private bool IsReadOnly = false;
-    private const int SUPERVISOR_ID = 9614; 
+    private const int SUPERVISOR_ID = 9614;
+
+    private bool hasActiveEvaluationPeriod = false;
 
     protected override async Task OnInitializedAsync()
     {
+        isLoading = true;
+        errorMessage = null;
+        hasActiveEvaluationPeriod = false;
+
         try
         {
             await GetEvaluationPeriod();
-            var evaluations = await Http.GetFromJsonAsync<List<GetEvaluationDto>>("/api/evaluation/period/1");
-            await LoadGTAList();
+
+            if (hasActiveEvaluationPeriod)
+            {
+                await LoadGTAList();
+            }
+            else
+            {
+                Console.WriteLine("⚠️ No active evaluation period - skipping GTA list load");
+            }
         }
         catch (Exception ex)
         {
             errorMessage = $"حدث خطأ أثناء تحميل البيانات: {ex.Message}";
+            Console.WriteLine($"❌ Error in OnInitializedAsync: {ex.Message}");
         }
         finally
         {
             isLoading = false;
         }
     }
+
     private async Task GetEvaluationPeriod()
     {
         try
         {
+            Console.WriteLine("📡 Checking for active evaluation period...");
             var response = await Http.GetAsync($"api/EvaluationPeriod/GetActiveEvaluationPeriod");
 
             if (response.IsSuccessStatusCode)
             {
                 var result = await response.Content.ReadFromJsonAsync<GetEvaluationPeriodDto>();
-                EvaluationPeriodId = result.PeriodId;
-                Console.WriteLine($"✅ evaluationPeriod retrieved{EvaluationPeriodId}");
+
+                if (result != null && result.PeriodId > 0)
+                {
+                    EvaluationPeriodId = result.PeriodId;
+                    hasActiveEvaluationPeriod = true;
+                    Console.WriteLine($"✅ Active evaluation period found: {EvaluationPeriodId}");
+                }
+                else
+                {
+                    hasActiveEvaluationPeriod = false;
+                    Console.WriteLine("⚠️ Response successful but no valid period ID");
+                }
+            }
+            else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                hasActiveEvaluationPeriod = false;
+                Console.WriteLine("⚠️ No active evaluation period (404)");
+            }
+            else
+            {
+                hasActiveEvaluationPeriod = false;
+                var errorContent = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"❌ Error getting evaluation period: {response.StatusCode} - {errorContent}");
             }
         }
         catch (Exception ex)
         {
-            errorMessage = $"لا توجد فترة تقييم حاليا {ex.Message}";
-            Console.WriteLine($"No Active EvaluationPeriod  {ex.Message}");
+            hasActiveEvaluationPeriod = false;
+            Console.WriteLine($"❌ Exception getting evaluation period: {ex.Message}");
         }
     }
+
     private async Task LoadGTAList()
     {
         try
@@ -317,14 +380,15 @@
             taList = await response.Content.ReadFromJsonAsync<List<UserDataDto>>()
                 ?? new List<UserDataDto>();
 
-            Console.WriteLine($"Loaded {taList.Count} GTAs with evaluation statuses");
+            Console.WriteLine($"✅ Loaded {taList.Count} GTAs with evaluation statuses");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error loading GTA list: {ex.Message}");
+            Console.WriteLine($"❌ Error loading GTA list: {ex.Message}");
             errorMessage = $"خطأ في تحميل قائمة مساعدي التدريس: {ex.Message}";
         }
     }
+
     private async Task OpenModal(UserDataDto ta)
     {
         selectedTA = ta;
@@ -367,21 +431,22 @@
                         ScientificResearchReport = existingData.ThesisDefense,
                         Notes = existingData.EvaluationComments
                     };
+                    Console.WriteLine("✅ Existing evaluation data loaded");
                 }
             }
             else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
                 // No existing data - this is fine for new evaluations
-                Console.WriteLine("No existing evaluation found - creating new");
+                Console.WriteLine("⚠️ No existing evaluation found - creating new");
             }
             else
             {
-                Console.WriteLine($"Error fetching data: {response.StatusCode}");
+                Console.WriteLine($"❌ Error fetching data: {response.StatusCode}");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error loading evaluation data: {ex.Message}");
+            Console.WriteLine($"❌ Error loading evaluation data: {ex.Message}");
         }
         finally
         {
@@ -393,13 +458,18 @@
     {
         if (isSaving) return;
 
+        if (!hasActiveEvaluationPeriod || EvaluationPeriodId <= 0)
+        {
+            await JS.InvokeVoidAsync("alert", "لا توجد فترة تقييم نشطة. لا يمكن حفظ التقييم.");
+            return;
+        }
+
         isSaving = true;
         try
         {
             var createDto = new CreateGsdeanEvaluationDto
             {
-                
-                GsSupervisorId = 1, // Should get from logged in user context
+                GsSupervisorId = SUPERVISOR_ID,
                 TaEmployeeId = selectedTA.employeeId,
                 EvaluationPeriodId = EvaluationPeriodId,
                 ProgramName = dto.Major,
@@ -414,8 +484,9 @@
                 DataCollection = dto.CollectDataAndAnalyze,
                 Writing = dto.ResearchReportWriting,
                 ThesisDefense = dto.ScientificResearchReport
-
             };
+
+            Console.WriteLine($"📤 Submitting evaluation for TA {selectedTA.employeeId} in period {EvaluationPeriodId}");
 
             var response = await Http.PostAsJsonAsync("/api/GSdean/CreateEvaluation", createDto);
 
@@ -427,6 +498,8 @@
             }
 
             await JS.InvokeVoidAsync("alert", "تم حفظ التقييم بنجاح!");
+            Console.WriteLine("✅ Evaluation saved successfully");
+
             CloseModal();
 
             // Refresh the list
@@ -434,6 +507,7 @@
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"❌ Error saving evaluation: {ex.Message}");
             await JS.InvokeVoidAsync("alert", $"خطأ: {ex.Message}");
         }
         finally

@@ -104,9 +104,6 @@ namespace Business_Access.Services
 
             var scientificScore = vpgsScore + gsDeanScore;
 
-            // Student Survey
-            var studentSurvey = (decimal)(evaluation.StudentSurveyScore ?? 0);
-
             // Academic Advising
             var academicAdvisingCount = evaluation.Tasubmission?.AdvisedStudentCount ?? 0;
             var academicAdvising = (decimal)Math.Min(academicAdvisingCount, 5);
@@ -130,7 +127,7 @@ namespace Business_Access.Services
                 PersonalTraitsTotal = personalTraits,
                 AdministrativeTotal = administrative,
                 ScientificActivityScore = scientificScore,
-                StudentSurveyScore = studentSurvey,
+                //StudentSurveyScore = studentSurvey,
                 AcademicAdvisingScore = academicAdvising,
                 ProfessorAverageCourseScore = Math.Round(professorAverageScore, 2),
 

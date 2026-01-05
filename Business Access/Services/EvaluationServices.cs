@@ -580,7 +580,7 @@ namespace Business_Access.Services
                 DateSubmitted = evaluation.DateSubmitted,
                 DateApproved = evaluation.DateApproved,
                 FinalGrade = evaluation.FinalGrade ?? "",
-                StudentSurveyScore = evaluation.StudentSurveyScore,
+                //StudentSurveyScore = evaluation.StudentSurveyScore,
                 CanEdit = evaluation.StatusId == 1 || evaluation.StatusId == 6, // Draft or Returned
                 CurrentStage = GetCurrentStage(evaluation.StatusId),
                 HodRetrunMessage = evaluation.HodReturnComment ?? "",

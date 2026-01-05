@@ -171,7 +171,7 @@
             {
                 var result = await response.Content.ReadFromJsonAsync<GetEvaluationPeriodDto>();
                 EvaluationPeriodId = result.PeriodId;
-                Console.WriteLine($"✅ evaluationPeriod retrieved{EvaluationPeriodId}");
+                Console.WriteLine($"evaluationPeriod retrieved{EvaluationPeriodId}");
             }
         }
         catch (Exception ex)
@@ -198,7 +198,6 @@
 
             var startDate = "2025-01-01"; // TODO: Get from evaluation period
 
-            // ✅ Single API call to get enriched TA list
             var url = $"/api/HodEvaluation/GetTAsForHOD?periodId={EvaluationPeriodId}&hodDepartmentId={professorEmployeeId}&startDate={startDate}";
 
             Console.WriteLine($"📡 Calling: {url}");

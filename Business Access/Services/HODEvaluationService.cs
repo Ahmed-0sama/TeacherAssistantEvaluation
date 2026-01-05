@@ -85,7 +85,6 @@ namespace Business_Access.Services
                 evaluation.FinalGrade= GetFinalGrade(dto.FinalScore);
                 evaluation.DateSubmitted = DateTime.UtcNow;
                 // Update evaluation status and comments
-                evaluation.FinalGrade = dto.FinalGrade;
                 evaluation.StatusId = 5; // Completed HOD evaluation
                 evaluation.HodStrengths = dto.HodStrengths;
                 evaluation.HodWeaknesses = dto.HodWeaknesses;
@@ -296,7 +295,6 @@ namespace Business_Access.Services
                 evaluation.HodStrengths = dto.HodStrengths;
                 evaluation.HodWeaknesses = dto.HodWeaknesses;
 
-                evaluation.FinalGrade = dto.FinalGrade;
                 // If evaluation was returned (status 7), update it back to completed (status 5)
                 // Otherwise, keep status 5 if it was already completed
                 //2 maybe returned from ta

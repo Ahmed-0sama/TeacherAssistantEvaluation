@@ -428,7 +428,7 @@
         catch (Exception ex)
         {
             errorMessage = $"حدث خطأ أثناء تحميل البيانات: {ex.Message}";
-            Console.WriteLine($"❌ Error: {ex}");
+            Console.WriteLine($"Error: {ex}");
         }
         finally
         {
@@ -457,7 +457,6 @@
     }
     private async Task OpenModal(UserDataDto ta)
     {
-        //  Don't allow opening modal if TA hasn't submitted
         if (!ta.HasSubmitted)
         {
             await JS.InvokeVoidAsync("alert", "لم يقدم مساعد التدريس تقييمه بعد");
@@ -501,10 +500,8 @@
                 Console.WriteLine($"Error loading VPGS: {errorContent}");
             }
 
-            // Load masters progress data
             await LoadMastersProgressData(evaluationId);
 
-            // Load research papers
             await LoadResearchPapers(evaluationId);
         }
         catch (Exception ex)

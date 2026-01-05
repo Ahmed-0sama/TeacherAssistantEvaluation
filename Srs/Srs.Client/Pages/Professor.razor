@@ -341,7 +341,6 @@
 
     protected override async Task OnInitializedAsync()
     {
-        Console.WriteLine("=== OnInitializedAsync called ===");
         Console.WriteLine($"HttpClient BaseAddress: {Http.BaseAddress}");
         await GetEvaluationPeriod();
         await LoadData();
@@ -360,19 +359,19 @@
                 if (result != null && result.PeriodId > 0)
                 {
                     evaluationperiodid = result.PeriodId;
-                    Console.WriteLine($"✅ evaluationPeriod retrieved: {evaluationperiodid}");
+                    Console.WriteLine($" evaluationPeriod retrieved: {evaluationperiodid}");
                     errorMessage = null; // Clear any previous error
                 }
                 else
                 {
                     errorMessage = "لا توجد فترة تقييم نشطة حالياً";
-                    Console.WriteLine("⚠️ No active evaluation period found");
+                    Console.WriteLine("No active evaluation period found");
                 }
             }
             else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
                 errorMessage = "لا توجد فترة تقييم نشطة حالياً";
-                Console.WriteLine("⚠️ No active evaluation period (404)");
+                Console.WriteLine(" No active evaluation period (404)");
             }
             else
             {
@@ -387,13 +386,13 @@
                     errorMessage = $"خطأ في تحميل فترة التقييم: {errorContent}";
                 }
 
-                Console.WriteLine($"❌ Error getting evaluation period: {errorContent}");
+                Console.WriteLine($" Error getting evaluation period: {errorContent}");
             }
         }
         catch (Exception ex)
         {
             errorMessage = "لا توجد فترة تقييم نشطة حالياً";
-            Console.WriteLine($"❌ Exception getting evaluation period: {ex.Message}");
+            Console.WriteLine($" Exception getting evaluation period: {ex.Message}");
         }
     }
 
@@ -406,7 +405,6 @@
         {
             Console.WriteLine("=== Starting LoadData ===");
 
-            // ✅ Check if there's an active evaluation period before loading data
             if (evaluationperiodid <= 0)
             {
                 Console.WriteLine("⚠️ No active evaluation period, skipping data load");
@@ -439,7 +437,6 @@
         {
             Console.WriteLine($"Loading data for professor {currentProfessorId} and period {evaluationperiodid}...");
 
-            // ✅ Single API call to get enriched data
             var response = await Http.GetAsync(
                 $"api/ProfessorEvaluation/GetCoursesWithEvaluations?professorId={currentProfessorId}&evaluationPeriodId={evaluationperiodid}&StartDate=2025-01-01&EndDate=2025-12-31");
 
@@ -459,12 +456,12 @@
 
             Console.WriteLine($"✅ Loaded {professorData.Courses.Count} courses");
 
-            // ✅ NO SECOND API CALL - Just use the enriched data directly
+            //  NO SECOND API CALL - Just use the enriched data directly
             foreach (var course in professorData.Courses)
             {
                 foreach (var ta in course.GTAs)
                 {
-                    // ✅ Get status directly from backend enrichment
+                    //  Get status directly from backend enrichment
                     int statusId = ta.IsEvaluated ? (ta.Evaluation?.StatusId ?? 0) : 0;
 
                     Console.WriteLine($"🔍 TA {ta.employeeId}: IsEvaluated={ta.IsEvaluated}, StatusId from backend={ta.Evaluation?.StatusId}, Final StatusId={statusId}");
@@ -478,7 +475,7 @@
                         PeriodId = evaluationperiodid,
                         PeriodName = ta.Evaluation?.PeriodName ?? "فترة التقييم الحالية",
 
-                        // ✅ Use status directly from backend
+                        //  Use status directly from backend
                         StatusId = statusId,
                         StatusName = GetStatusName(statusId),
                         CanEdit = CanEditEvaluation(statusId),
@@ -490,7 +487,7 @@
                         CourseName = course.CourseName?.Trim() ?? "",
                         NumberOfClasses = course.TeachingHours > 0 ? course.TeachingHours : 12,
 
-                        // ✅ Evaluation data
+                        //  Evaluation data
                         ReturnComments = ta.Evaluation?.HodReturnComment,
                         ProfessorEvaluationTotal = ta.Evaluation?.TotalScore,
                         IsEvaluated = ta.IsEvaluated
@@ -501,16 +498,16 @@
                 }
             }
 
-            Console.WriteLine($"✅ Total view models created: {evaluationsList.Count}");
+            Console.WriteLine($" Total view models created: {evaluationsList.Count}");
         }
         catch (HttpRequestException httpEx)
         {
-            Console.WriteLine($"❌ HTTP Error: {httpEx.Message}");
+            Console.WriteLine($" HTTP Error: {httpEx.Message}");
             throw new Exception($"خطأ في الاتصال بالخادم: {httpEx.Message}");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Unexpected error: {ex.Message}");
+            Console.WriteLine($" Unexpected error: {ex.Message}");
             Console.WriteLine($"Stack trace: {ex.StackTrace}");
             throw;
         }
@@ -584,27 +581,27 @@
                         && !string.IsNullOrEmpty(profEvalDetail.HodReturnComment))
                     {
                         ReturnComment = profEvalDetail.HodReturnComment;
-                        Console.WriteLine($"✅ Loaded ReturnComment from API: {ReturnComment}");
+                        Console.WriteLine($" Loaded ReturnComment from API: {ReturnComment}");
                     }
 
-                    Console.WriteLine($"✅ Loaded existing evaluation successfully");
+                    Console.WriteLine($" Loaded existing evaluation successfully");
                 }
                 else
                 {
-                    Console.WriteLine("⚠️ Evaluation data is null");
+                    Console.WriteLine(" Evaluation data is null");
                 }
             }
             else
             {
                 var error = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"⚠️ Failed to load evaluation: {response.StatusCode} - {error}");
+                Console.WriteLine($" Failed to load evaluation: {response.StatusCode} - {error}");
             }
 
             StateHasChanged();
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Error loading evaluation: {ex.Message}");
+            Console.WriteLine($" Error loading evaluation: {ex.Message}");
             StateHasChanged();
         }
     }
@@ -750,14 +747,14 @@
                 {
                     saveMessage = "تم تحديث التقييم بنجاح";
                     saveSuccess = true;
-                    Console.WriteLine("✅ Update successful");
+                    Console.WriteLine(" Update successful");
                 }
                 else
                 {
                     var error = await response.Content.ReadAsStringAsync();
                     saveMessage = $"فشل تحديث التقييم: {error}";
                     saveSuccess = false;
-                    Console.WriteLine($"❌ Update failed: {error}");
+                    Console.WriteLine($" Update failed: {error}");
                 }
             }
             else
