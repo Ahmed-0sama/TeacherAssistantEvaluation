@@ -721,8 +721,7 @@
         {
             professorsNeedingReminder.Clear();
 
-            // Extract all unique professors from teaching data (semesterTeachingLoads)
-            var allProfessors = semesterTeachingLoads
+            var allProfessorCourses = semesterTeachingLoads
                 .SelectMany(semester => semester.courses ?? new List<CourseDto>())
                 .Where(course => !string.IsNullOrEmpty(course.courseProfessorId))
                 .Select(course => new
@@ -732,37 +731,33 @@
                     CourseCode = course.courseCode?.Trim(),
                     CourseName = course.courseName?.Trim()
                 })
-                .DistinctBy(p => p.ProfessorId)
-                .ToList();
+                .ToList(); 
 
-            Console.WriteLine($" Found {allProfessors.Count} total professors from teaching data");
+            Console.WriteLine($"🔍 Found {allProfessorCourses.Count} professor-course assignments");
 
-            // Get professors who already submitted (from profdto)
-            var submittedProfessorIds = (profdto ?? new List<ProfessorEvaluationResponseDto>())
+            //  Get submitted professor-course combinations
+            var submittedCombos = (profdto ?? new List<ProfessorEvaluationResponseDto>())
                 .Where(p => p.IsSubmitted)
-                .Select(p => p.ProfessorEmployeeId)
-                .Distinct()
+                .Select(p => new { p.ProfessorEmployeeId, p.CourseCode })
                 .ToList();
-
-            Console.WriteLine($" Found {submittedProfessorIds.Count} professors who submitted");
-
-            // Find professors who haven't submitted
-            professorsNeedingReminder = allProfessors
-                .Where(prof => !submittedProfessorIds.Contains(prof.ProfessorId))
-                .Select(prof => new ProfessorReminderInfo
+            professorsNeedingReminder = allProfessorCourses
+                .Where(pc => !submittedCombos.Any(sc =>
+                    sc.ProfessorEmployeeId == pc.ProfessorId &&
+                    sc.CourseCode == pc.CourseCode))
+                .Select(pc => new ProfessorReminderInfo
                 {
-                    ProfessorId = prof.ProfessorId,
-                    ProfessorName = prof.ProfessorName,
-                    CourseCode = prof.CourseCode,
-                    CourseName = prof.CourseName
+                    ProfessorId = pc.ProfessorId,
+                    ProfessorName = pc.ProfessorName,
+                    CourseCode = pc.CourseCode,
+                    CourseName = pc.CourseName
                 })
                 .ToList();
 
-            Console.WriteLine($"Found {professorsNeedingReminder.Count} professors needing reminder");
+            Console.WriteLine($"📧 Found {professorsNeedingReminder.Count} professor-courses needing reminder");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error loading professors needing reminder: {ex.Message}");
+            Console.WriteLine($"❌ Error loading professors needing reminder: {ex.Message}");
         }
     }
     private void ShowProfessorsReminderModal()
@@ -1104,31 +1099,44 @@
     {
         if (!semesterTeachingLoads.Any())
         {
-            Console.WriteLine(" No teaching loads found");
-            return true; 
+            Console.WriteLine("No teaching loads found");
+            return true;
         }
 
-        var allProfessorsFromTeaching = semesterTeachingLoads
+        var allProfessorCourseCombos = semesterTeachingLoads
             .SelectMany(semester => semester.courses ?? new List<CourseDto>())
-            .Where(course => !string.IsNullOrEmpty(course.courseProfessorId))
-            .Select(course => int.Parse(course.courseProfessorId.Trim()))
-            .Distinct()
+            .Where(course => !string.IsNullOrEmpty(course.courseProfessorId) &&
+                            !string.IsNullOrEmpty(course.courseCode))
+            .Select(course => new
+            {
+                ProfessorId = int.Parse(course.courseProfessorId.Trim()),
+                CourseCode = course.courseCode.Trim()
+            })
+            .Distinct() // Distinct on the combination
             .ToList();
 
-        if (!allProfessorsFromTeaching.Any())
+        if (!allProfessorCourseCombos.Any())
         {
             Console.WriteLine(" No professors found in teaching data");
             return true;
         }
 
-        var submittedProfessorIds = (profdto ?? new List<ProfessorEvaluationResponseDto>())
+        var submittedProfessorCourseCombos = (profdto ?? new List<ProfessorEvaluationResponseDto>())
             .Where(p => p.IsSubmitted)
-            .Select(p => p.ProfessorEmployeeId)
+            .Select(p => new
+            {
+                ProfessorId = p.ProfessorEmployeeId,
+                CourseCode = p.CourseCode
+            })
             .Distinct()
             .ToList();
-        bool allSubmitted = allProfessorsFromTeaching.All(profId => submittedProfessorIds.Contains(profId));
+        bool allSubmitted = allProfessorCourseCombos.All(combo =>
+            submittedProfessorCourseCombos.Any(submitted =>
+                submitted.ProfessorId == combo.ProfessorId &&
+                submitted.CourseCode == combo.CourseCode));
 
-        Console.WriteLine($" Professors check: Total={allProfessorsFromTeaching.Count}, Submitted={submittedProfessorIds.Count}, AllSubmitted={allSubmitted}");
+        Console.WriteLine($"📊 Professor-Course check: Total={allProfessorCourseCombos.Count}, " +
+                          $"Submitted={submittedProfessorCourseCombos.Count}, AllSubmitted={allSubmitted}");
 
         return allSubmitted;
     }
@@ -1229,7 +1237,7 @@
 
             bool evaluationExists = hodEvaluationData?.EvaluationId > 0;
 
-            Console.WriteLine($"🔍 Evaluation exists: {evaluationExists}, IsDeanUser: {IsDeanUser}");
+            Console.WriteLine($" Evaluation exists: {evaluationExists}, IsDeanUser: {IsDeanUser}");
 
             if (IsDeanUser)
             {
@@ -1244,7 +1252,7 @@
                    
                 };
 
-                Console.WriteLine($"📤 Dean updating evaluation {SelectedTA.EvaluationId} with {criterionRatings.Count} ratings");
+                Console.WriteLine($" Dean updating evaluation {SelectedTA.EvaluationId} with {criterionRatings.Count} ratings");
 
                 var response = await Http.PutAsJsonAsync(
                     "/api/Dean/updateEvaluationCriteria",
@@ -1273,7 +1281,7 @@
                     FinalScore = CalculateFinalTotal()
                 };
 
-                Console.WriteLine($"📤 HOD updating evaluation {SelectedTA.EvaluationId} with {criterionRatings.Count} ratings");
+                Console.WriteLine($" HOD updating evaluation {SelectedTA.EvaluationId} with {criterionRatings.Count} ratings");
 
                 var response = await Http.PutAsJsonAsync(
                     $"api/HodEvaluation/UpdateHodEvaluation/{SelectedTA.EvaluationId}",
@@ -1288,7 +1296,7 @@
                 else
                 {
                     var error = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine($"❌ Update failed: {error}");
+                    Console.WriteLine($" Update failed: {error}");
                     await JS.InvokeVoidAsync("alert", $"فشل تحديث التقييم: {error}");
                 }
             }
@@ -1304,7 +1312,7 @@
                     TeachingLoadScore = (int)AverageTeachingLoadGrade()
                 };
 
-                Console.WriteLine($"📤 Creating new evaluation for {SelectedTA.EvaluationId} with {criterionRatings.Count} ratings");
+                Console.WriteLine($" Creating new evaluation for {SelectedTA.EvaluationId} with {criterionRatings.Count} ratings");
 
                 var response = await Http.PostAsJsonAsync("api/HodEvaluation/create", createDto);
 

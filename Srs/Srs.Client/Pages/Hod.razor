@@ -200,7 +200,7 @@
 
             var url = $"/api/HodEvaluation/GetTAsForHOD?periodId={EvaluationPeriodId}&hodDepartmentId={professorEmployeeId}&startDate={startDate}";
 
-            Console.WriteLine($"📡 Calling: {url}");
+            Console.WriteLine($" Calling: {url}");
 
             var response = await Http.GetAsync(url);
 
@@ -213,7 +213,7 @@
             taList = await response.Content.ReadFromJsonAsync<List<UserDataDto>>()
                 ?? new List<UserDataDto>();
 
-            Console.WriteLine($"✅ Loaded {taList.Count} TAs for HOD");
+            Console.WriteLine($" Loaded {taList.Count} TAs for HOD");
 
             if (!taList.Any())
             {
@@ -223,7 +223,7 @@
         catch (Exception ex)
         {
             errorMessage = $"حدث خطأ أثناء تحميل البيانات: {ex.Message}";
-            Console.WriteLine($"❌ Error: {ex}");
+            Console.WriteLine($" Error: {ex}");
         }
         finally
         {

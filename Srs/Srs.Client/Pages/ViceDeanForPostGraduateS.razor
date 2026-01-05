@@ -236,10 +236,10 @@
                                 @if (IsReadOnly && mastersDto.GradeGivenbySupervisor.HasValue)
                                 {
                                     <div class="col-md-4 mb-3">
-                                        <label class="form-label fw-bold">نسبة الإنجاز</label>
+                                        <label class="form-label fw-bold">الملاحظات الإضافية</label>
                                         <input type="text"
                                                class="form-control"
-                                               value="@($"{mastersDto.GradeGivenbySupervisor:F2}%")"
+                                               value="@($"{mastersDto.Notes}")"
                                                readonly />
                                     </div>
                                 }
