@@ -7,11 +7,11 @@ public partial class GsdeanEvaluation
 {
     public int GsevalId { get; set; }
     public int EvaluationPeriodId { get; set; }
-    public int? GsdeanEmloyeeId { get; set; }
-    public int? TaEmployeeId { get; set; }//it should be int or what?
+    public int? GSDean_EmloyeeID { get; set; }
+    public int? TaEmployeeId { get; set; }
     public string ProgramName { get; set; } = null!;
     public int CompletedHours { get; set; }
-    public decimal Gpa { get; set; }
+    public decimal GPA { get; set; }
     public DateOnly ExpectedCompletionDate { get; set; }
     public int? ProgressScore { get; set; }
     public string? EvaluationComments { get; set; }

@@ -181,7 +181,7 @@
                             <p class="mb-2"><strong>كود المقرر:</strong> @selectedEvaluation.CourseCode</p>
                         </div>
                         <div class="col-6">
-                            <p class="mb-2"><strong>عدد الحصص:</strong> @selectedEvaluation.NumberOfClasses</p>
+                            <p class="mb-2"><strong>كود الفصل:</strong> @selectedEvaluation.semesterCode</p>
                         </div>
                         <div class="col-6">
                             <p class="mb-2"><strong>الفصل الدراسي:</strong> @selectedEvaluation.SemesterName</p>
@@ -474,12 +474,12 @@
                         TAEmployeeId = ta.employeeId,
                         PeriodId = evaluationperiodid,
                         PeriodName = ta.Evaluation?.PeriodName ?? "فترة التقييم الحالية",
-
+                        
                         //  Use status directly from backend
                         StatusId = statusId,
                         StatusName = GetStatusName(statusId),
                         CanEdit = CanEditEvaluation(statusId),
-
+                        semesterCode = professorData.SemesterCode,
                         // Course and TA info
                         SemesterName = $"Semester {professorData.SemesterNumber} - {professorData.SemesterYear}",
                         TAName = ta.employeeName?.Trim() ?? "",
@@ -541,6 +541,7 @@
             // New evaluation with actual course data from LMS
             currentProfEval = new ProfessorEvaluationResponseDto
             {
+                SemesterCode = eval.semesterCode,
                 EvaluationPeriodId = eval.EvaluationPeriodId,
                 TaEmployeeId = eval.TAEmployeeId,
                 ProfessorEmployeeId = currentProfessorId,
@@ -732,6 +733,7 @@
                     EvalId = selectedEvaluation.EvaluationId ?? 0,
                     CourseCode = currentProfEval.CourseCode,
                     SemesterName = currentProfEval.SemesterName,
+                    SemesterCode = currentProfEval.SemesterCode,
                     CourseName = currentProfEval.CourseName,
                     OfficeHoursScore = currentProfEval.OfficeHoursScore,
                     AttendanceScore = currentProfEval.AttendanceScore,
@@ -767,6 +769,7 @@
                     EvaluationPeriodId = currentProfEval.EvaluationPeriodId,
                     TaEmployeeId = currentProfEval.TaEmployeeId,
                     SemesterName = currentProfEval.SemesterName,
+                    SemesterCode = currentProfEval.SemesterCode,
                     ProfessorEmployeeId = currentProfessorId,
                     CourseCode = currentProfEval.CourseCode,
                     CourseName = currentProfEval.CourseName,

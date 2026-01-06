@@ -29,7 +29,7 @@ namespace Business_Access.Services
                 EvaluationPeriodId = entity.EvaluationPeriodId,
                 ProgramName = entity.ProgramName,
                 CompletedHours = entity.CompletedHours,
-                Gpa = entity.Gpa,
+                Gpa = entity.GPA,
                 ExpectedCompletionDate = entity.ExpectedCompletionDate,
                 ProgressScore = entity.ProgressScore,
                 EvaluationComments = entity.EvaluationComments,
@@ -86,12 +86,12 @@ namespace Business_Access.Services
             {
                 var entity = new GsdeanEvaluation
                 {
-                    GsdeanEmloyeeId = dto.GsSupervisorId,
+                    GSDean_EmloyeeID = dto.GsSupervisorId,
                     EvaluationPeriodId = dto.EvaluationPeriodId,
                     TaEmployeeId= dto.TaEmployeeId,
                     ProgramName = dto.ProgramName,
                     CompletedHours = dto.CompletedHours,
-                    Gpa = dto.Gpa,
+                    GPA = dto.Gpa,
                     ExpectedCompletionDate = dto.ExpectedCompletionDate,
                     ProgressScore = dto.ProgressScore,
                     EvaluationComments = dto.EvaluationComments,
@@ -134,7 +134,7 @@ namespace Business_Access.Services
                 // Update fields
                 entity.ProgramName = dto.ProgramName;
                 entity.CompletedHours = dto.CompletedHours;
-                entity.Gpa = dto.Gpa;
+                entity.GPA = dto.Gpa;
                 entity.ExpectedCompletionDate = dto.ExpectedCompletionDate;
                 entity.ProgressScore = dto.ProgressScore;
                 entity.EvaluationComments = dto.EvaluationComments;
@@ -179,7 +179,7 @@ namespace Business_Access.Services
                 {
                     ProgramName = entity.ProgramName,
                     CompletedHours = entity.CompletedHours,
-                    Gpa = entity.Gpa,
+                    Gpa = entity.GPA,
                     ExpectedCompletionDate = entity.ExpectedCompletionDate,
                     TopicChosen = entity.TopicChosen,
                     LiteratureReview = entity.LiteratureReview,

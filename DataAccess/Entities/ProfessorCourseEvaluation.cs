@@ -13,6 +13,7 @@ public partial class ProfessorCourseEvaluation
     public string CourseName { get; set; } = null!;
     public string SemesterName { get; set; }
     public int OfficeHoursScore { get; set; }
+    public int SemesterCode { get; set; }
     public int AttendanceScore { get; set; }
     public int PerformanceScore { get; set; }
     public int? TotalScore { get; set; }

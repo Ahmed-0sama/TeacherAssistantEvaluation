@@ -29,6 +29,7 @@ namespace Business_Access.Services
 
             var jsonString = await response.Content.ReadAsStringAsync();
             var data = JsonSerializer.Deserialize<ProfessorDataResponseDto>(jsonString);
+           
 
             return data;
         }

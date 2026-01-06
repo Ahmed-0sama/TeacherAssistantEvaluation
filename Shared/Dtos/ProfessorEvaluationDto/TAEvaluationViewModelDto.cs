@@ -20,6 +20,7 @@ namespace Shared.Dtos.ProfessorEvaluationDto
         // From Professor Evaluation Status
         public int StatusId { get; set; }
         public string StatusName { get; set; } = string.Empty;
+        public int semesterCode { get; set; }     
         public bool CanEdit { get; set; }
 
         // From TA Details API (to be fetched)

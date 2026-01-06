@@ -20,6 +20,7 @@ namespace Shared.Dtos.ProfessorEvaluationDto
             public string CourseName { get; set; }
 
             public string SemesterName { get; set; }
+            public int SemesterCode { get; set; }
             [Required]
             [Range(0, 10)]
             public int OfficeHoursScore { get; set; }

@@ -26,7 +26,7 @@ namespace Shared.Dtos.ProfessorEvaluationDto
         public string CourseName { get; set; }
         [Required(ErrorMessage = "Semester name is required")]
         public string SemesterName { get; set; }
-
+        public int SemesterCode { get; set; }
         [Required(ErrorMessage = "Office hours score is required")]
         [Range(0, 10, ErrorMessage = "Office hours score must be between 0 and 10")]
         public int OfficeHoursScore { get; set; }

@@ -57,6 +57,7 @@ namespace Business_Access.Services
                     ProfessorEmployeeId = evaluationDto.ProfessorEmployeeId,
                     CourseCode = evaluationDto.CourseCode.Trim(),
                     SemesterName= evaluationDto.SemesterName,
+                    SemesterCode= evaluationDto.SemesterCode,
                     CourseName = evaluationDto.CourseName.Trim(),
                     OfficeHoursScore = evaluationDto.OfficeHoursScore,
                     AttendanceScore = evaluationDto.AttendanceScore,
@@ -158,6 +159,7 @@ namespace Business_Access.Services
                 profEvaluation.CourseCode = evaluationDto.CourseCode.Trim();
                 profEvaluation.CourseName = evaluationDto.CourseName.Trim();
                 profEvaluation.SemesterName = evaluationDto.SemesterName;
+                profEvaluation.SemesterCode = evaluationDto.SemesterCode;
                 profEvaluation.OfficeHoursScore = evaluationDto.OfficeHoursScore;
                 profEvaluation.AttendanceScore = evaluationDto.AttendanceScore;
                 profEvaluation.PerformanceScore = evaluationDto.PerformanceScore;
@@ -281,7 +283,8 @@ namespace Business_Access.Services
                 TaEmployeeId = profEvaluation.TaEmployeeId,              // NEW
                 ProfessorEmployeeId = profEvaluation.ProfessorEmployeeId,
                 ProfessorName = professorName,
-                SemesterName=profEvaluation.SemesterName,
+                SemesterCode=profEvaluation.SemesterCode,
+                SemesterName =profEvaluation.SemesterName,
                 CourseCode = profEvaluation.CourseCode,
                 CourseName = profEvaluation.CourseName,
                 OfficeHoursScore = profEvaluation.OfficeHoursScore,

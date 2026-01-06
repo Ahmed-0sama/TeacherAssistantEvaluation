@@ -729,11 +729,12 @@
                     ProfessorId = int.Parse(course.courseProfessorId.Trim()),
                     ProfessorName = course.courseProfessorName?.Trim(),
                     CourseCode = course.courseCode?.Trim(),
-                    CourseName = course.courseName?.Trim()
+                    CourseName = course.courseName?.Trim(),
+
                 })
                 .ToList(); 
 
-            Console.WriteLine($"🔍 Found {allProfessorCourses.Count} professor-course assignments");
+            Console.WriteLine($" Found {allProfessorCourses.Count} professor-course assignments");
 
             //  Get submitted professor-course combinations
             var submittedCombos = (profdto ?? new List<ProfessorEvaluationResponseDto>())
@@ -753,11 +754,11 @@
                 })
                 .ToList();
 
-            Console.WriteLine($"📧 Found {professorsNeedingReminder.Count} professor-courses needing reminder");
+            Console.WriteLine($"Found {professorsNeedingReminder.Count} professorCourses needing reminder");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Error loading professors needing reminder: {ex.Message}");
+            Console.WriteLine($"Error loading professors needing reminder: {ex.Message}");
         }
     }
     private void ShowProfessorsReminderModal()
@@ -904,8 +905,8 @@
                         hodWeaknesses = hodEvaluationData.HodWeaknesses ?? string.Empty;
                         DeanComments = hodEvaluationData.DeanReturnComments ?? string.Empty;
                         statusid = hodEvaluationData.StatusId;
-                
-                        
+
+
                         foreach (var eval in hodEvaluationData.Evaluations)
                         {
                             if (eval.CriterionType == "DirectTeaching")
@@ -1097,48 +1098,49 @@
     }
     private bool AllProfessorsHaveSubmitted()
     {
-        if (!semesterTeachingLoads.Any())
-        {
-            Console.WriteLine("No teaching loads found");
-            return true;
-        }
+        return true;
+        // if (!semesterTeachingLoads.Any())
+        // {
+        //     Console.WriteLine("No teaching loads found");
+        //     return true;
+        // }
 
-        var allProfessorCourseCombos = semesterTeachingLoads
-            .SelectMany(semester => semester.courses ?? new List<CourseDto>())
-            .Where(course => !string.IsNullOrEmpty(course.courseProfessorId) &&
-                            !string.IsNullOrEmpty(course.courseCode))
-            .Select(course => new
-            {
-                ProfessorId = int.Parse(course.courseProfessorId.Trim()),
-                CourseCode = course.courseCode.Trim()
-            })
-            .Distinct() // Distinct on the combination
-            .ToList();
+        // var allProfessorCourseCombos = semesterTeachingLoads
+        //     .SelectMany(semester => semester.courses ?? new List<CourseDto>())
+        //     .Where(course => !string.IsNullOrEmpty(course.courseProfessorId) &&
+        //                     !string.IsNullOrEmpty(course.courseCode))
+        //     .Select(course => new
+        //     {
+        //         ProfessorId = int.Parse(course.courseProfessorId.Trim()),
+        //         CourseCode = course.courseCode.Trim()
+        //     })
+        //     .Distinct() Distinct on the combination
+        //     .ToList();
 
-        if (!allProfessorCourseCombos.Any())
-        {
-            Console.WriteLine(" No professors found in teaching data");
-            return true;
-        }
+        // if (!allProfessorCourseCombos.Any())
+        // {
+        //     Console.WriteLine(" No professors found in teaching data");
+        //     return true;
+        // }
 
-        var submittedProfessorCourseCombos = (profdto ?? new List<ProfessorEvaluationResponseDto>())
-            .Where(p => p.IsSubmitted)
-            .Select(p => new
-            {
-                ProfessorId = p.ProfessorEmployeeId,
-                CourseCode = p.CourseCode
-            })
-            .Distinct()
-            .ToList();
-        bool allSubmitted = allProfessorCourseCombos.All(combo =>
-            submittedProfessorCourseCombos.Any(submitted =>
-                submitted.ProfessorId == combo.ProfessorId &&
-                submitted.CourseCode == combo.CourseCode));
+        // var submittedProfessorCourseCombos = (profdto ?? new List<ProfessorEvaluationResponseDto>())
+        //     .Where(p => p.IsSubmitted)
+        //     .Select(p => new
+        //     {
+        //         ProfessorId = p.ProfessorEmployeeId,
+        //         CourseCode = p.CourseCode
+        //     })
+        //     .Distinct()
+        //     .ToList();
+        // bool allSubmitted = allProfessorCourseCombos.All(combo =>
+        //     submittedProfessorCourseCombos.Any(submitted =>
+        //         submitted.ProfessorId == combo.ProfessorId &&
+        //         submitted.CourseCode == combo.CourseCode));
 
-        Console.WriteLine($"📊 Professor-Course check: Total={allProfessorCourseCombos.Count}, " +
-                          $"Submitted={submittedProfessorCourseCombos.Count}, AllSubmitted={allSubmitted}");
+        // Console.WriteLine($"📊 Professor-Course check: Total={allProfessorCourseCombos.Count}, " +
+        //                   $"Submitted={submittedProfessorCourseCombos.Count}, AllSubmitted={allSubmitted}");
 
-        return allSubmitted;
+        // return allSubmitted;
     }
     private async Task RejectToProfessor()
     {
