@@ -603,6 +603,14 @@
                                         <small class="text-muted">
                                             <strong>رمز المقرر:</strong> @prof.CourseCode
                                         </small>
+                                        <br />
+                                        <small class="text-muted">
+                                            <strong>الفصل الدراسي:</strong> @prof.SemesterName
+                                        </small>
+                                        <br />
+                                        <small class="text-muted">
+                                            <strong>رمز الفصل:</strong> @prof.SemesterCode
+                                        </small>
                                     </div>
                                     <span class="badge bg-warning text-dark">
                                         <i class="bi bi-clock me-1"></i>
@@ -657,6 +665,7 @@
     [Parameter] public EventCallback OnSaveSuccess { get; set; }
     [Parameter] public bool IsDeanUser { get; set; } = false;
     [Parameter] public int DeanEmployeeId { get; set; } = 0;
+    [Parameter] public int HodEmployeeId { get; set; } = 0;
     private bool hasGsdeanData = true;
     private decimal scientificTotal = 0;
     private int statusid = 0;
@@ -721,44 +730,68 @@
         {
             professorsNeedingReminder.Clear();
 
-            var allProfessorCourses = semesterTeachingLoads
-                .SelectMany(semester => semester.courses ?? new List<CourseDto>())
-                .Where(course => !string.IsNullOrEmpty(course.courseProfessorId))
-                .Select(course => new
-                {
-                    ProfessorId = int.Parse(course.courseProfessorId.Trim()),
-                    ProfessorName = course.courseProfessorName?.Trim(),
-                    CourseCode = course.courseCode?.Trim(),
-                    CourseName = course.courseName?.Trim(),
+            // Get all professor-course-SEMESTER combinations (same as AllProfessorsHaveSubmitted)
+            var allProfessorCourseSemesterCombos = semesterTeachingLoads
+                .SelectMany(semester => (semester.courses ?? new List<CourseDto>())
+                    .Where(course => !string.IsNullOrEmpty(course.courseProfessorId) &&
+                                    !string.IsNullOrEmpty(course.courseCode))
+                    .Select(course => new
+                    {
+                        ProfessorId = int.Parse(course.courseProfessorId.Trim()),
+                        ProfessorName = course.courseProfessorName?.Trim(),
+                        CourseCode = course.courseCode.Trim(),
+                        CourseName = course.courseName?.Trim(),
+                        SemesterCode = semester.semestercode,  
+                        SemesterName = semester.semesterName ?? "Unknown" 
+                    }))
+                .Distinct()
+                .ToList();
 
-                })
-                .ToList(); 
+            Console.WriteLine($"📋 Found {allProfessorCourseSemesterCombos.Count} professor-course-semester assignments");
 
-            Console.WriteLine($" Found {allProfessorCourses.Count} professor-course assignments");
-
-            //  Get submitted professor-course combinations
+            // Get submitted professor-course-SEMESTER combinations
             var submittedCombos = (profdto ?? new List<ProfessorEvaluationResponseDto>())
                 .Where(p => p.IsSubmitted)
-                .Select(p => new { p.ProfessorEmployeeId, p.CourseCode })
+                .Select(p => new
+                {
+                    p.ProfessorEmployeeId,
+                    p.CourseCode,
+                    p.SemesterCode  // ← ADD THIS
+                })
                 .ToList();
-            professorsNeedingReminder = allProfessorCourses
+
+            Console.WriteLine($"✅ Found {submittedCombos.Count} submitted combinations");
+
+            // Find non-submitted combinations (check all three: Professor, Course, AND Semester)
+            professorsNeedingReminder = allProfessorCourseSemesterCombos
                 .Where(pc => !submittedCombos.Any(sc =>
                     sc.ProfessorEmployeeId == pc.ProfessorId &&
-                    sc.CourseCode == pc.CourseCode))
+                    sc.CourseCode == pc.CourseCode &&
+                    sc.SemesterCode == pc.SemesterCode)) 
                 .Select(pc => new ProfessorReminderInfo
                 {
                     ProfessorId = pc.ProfessorId,
                     ProfessorName = pc.ProfessorName,
                     CourseCode = pc.CourseCode,
-                    CourseName = pc.CourseName
+                    CourseName = pc.CourseName,
+                    SemesterCode = pc.SemesterCode,      
+                    SemesterName = pc.SemesterName
                 })
                 .ToList();
 
-            Console.WriteLine($"Found {professorsNeedingReminder.Count} professorCourses needing reminder");
+            foreach (var reminder in professorsNeedingReminder.Take(3))
+            {
+                Console.WriteLine($"   - {reminder.ProfessorName} | {reminder.CourseCode} | {reminder.SemesterCode}");
+            }
+            if (professorsNeedingReminder.Count > 3)
+            {
+                Console.WriteLine($"   ... and {professorsNeedingReminder.Count - 3} more");
+            }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error loading professors needing reminder: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
         }
     }
     private void ShowProfessorsReminderModal()
@@ -1098,49 +1131,58 @@
     }
     private bool AllProfessorsHaveSubmitted()
     {
-        return true;
-        // if (!semesterTeachingLoads.Any())
-        // {
-        //     Console.WriteLine("No teaching loads found");
-        //     return true;
-        // }
 
-        // var allProfessorCourseCombos = semesterTeachingLoads
-        //     .SelectMany(semester => semester.courses ?? new List<CourseDto>())
-        //     .Where(course => !string.IsNullOrEmpty(course.courseProfessorId) &&
-        //                     !string.IsNullOrEmpty(course.courseCode))
-        //     .Select(course => new
-        //     {
-        //         ProfessorId = int.Parse(course.courseProfessorId.Trim()),
-        //         CourseCode = course.courseCode.Trim()
-        //     })
-        //     .Distinct() Distinct on the combination
-        //     .ToList();
+        if (!semesterTeachingLoads.Any())
+        {
+            Console.WriteLine("No teaching loads found");
+            return true;
+        }
 
-        // if (!allProfessorCourseCombos.Any())
-        // {
-        //     Console.WriteLine(" No professors found in teaching data");
-        //     return true;
-        // }
+        // Get all unique combinations of (Professor, Course, Semester)
+        var allProfessorCourseSemesterCombos = semesterTeachingLoads
+            .SelectMany(semester => (semester.courses ?? new List<CourseDto>())
+                .Where(course => !string.IsNullOrEmpty(course.courseProfessorId) &&
+                                !string.IsNullOrEmpty(course.courseCode))
+                .Select(course => new
+                {
+                    ProfessorId = int.Parse(course.courseProfessorId.Trim()),
+                    CourseCode = course.courseCode.Trim(),
+                    semestercode = semester.semestercode,
+                    SemesterName = semester.semesterName ?? "Unknown"
+                }))
+            .Distinct()
+            .ToList();
 
-        // var submittedProfessorCourseCombos = (profdto ?? new List<ProfessorEvaluationResponseDto>())
-        //     .Where(p => p.IsSubmitted)
-        //     .Select(p => new
-        //     {
-        //         ProfessorId = p.ProfessorEmployeeId,
-        //         CourseCode = p.CourseCode
-        //     })
-        //     .Distinct()
-        //     .ToList();
-        // bool allSubmitted = allProfessorCourseCombos.All(combo =>
-        //     submittedProfessorCourseCombos.Any(submitted =>
-        //         submitted.ProfessorId == combo.ProfessorId &&
-        //         submitted.CourseCode == combo.CourseCode));
+        if (!allProfessorCourseSemesterCombos.Any())
+        {
+            Console.WriteLine("No professors found in teaching data");
+            return true;
+        }
 
-        // Console.WriteLine($"📊 Professor-Course check: Total={allProfessorCourseCombos.Count}, " +
-        //                   $"Submitted={submittedProfessorCourseCombos.Count}, AllSubmitted={allSubmitted}");
+        var submittedProfessorCourseSemesterCombos = (profdto ?? new List<ProfessorEvaluationResponseDto>())
+            .Where(p => p.IsSubmitted)
+            .Select(p => new
+            {
+                ProfessorId = p.ProfessorEmployeeId,
+                CourseCode = p.CourseCode,
+                semestercode = p.SemesterCode // Make sure this property exists in ProfessorEvaluationResponseDto
+            })
+            .Distinct()
+            .ToList();
 
-        // return allSubmitted;
+        // Check if all combinations have been submitted
+        bool allSubmitted = allProfessorCourseSemesterCombos.All(combo =>
+            submittedProfessorCourseSemesterCombos.Any(submitted =>
+                submitted.ProfessorId == combo.ProfessorId &&
+                submitted.CourseCode == combo.CourseCode &&
+                submitted.semestercode == combo.semestercode));
+
+        Console.WriteLine($"📊 Professor-Course-Semester check:");
+        Console.WriteLine($"   Total combinations required: {allProfessorCourseSemesterCombos.Count}");
+        Console.WriteLine($"   Submitted combinations: {submittedProfessorCourseSemesterCombos.Count}");
+        Console.WriteLine($"   All submitted: {allSubmitted}");
+
+        return allSubmitted;
     }
     private async Task RejectToProfessor()
     {
@@ -1246,7 +1288,6 @@
                 var updateDeanDto = new UpdateDeanEvaluationDto
                 {
                     EvaluationId = SelectedTA.EvaluationId,
-                    
                     CriterionRatings = criterionRatings,
                     TotalScore = CalculateFinalTotal(),
                     DeanComments = hodWeaknesses, 
@@ -1309,6 +1350,7 @@
                     EvaluationId = SelectedTA.EvaluationId,
                     CriterionRatings = criterionRatings,
                     HodStrengths = hodStrengths,
+                    CreatedByUserId=HodEmployeeId,
                     HodWeaknesses = hodWeaknesses,
                     FinalScore = CalculateFinalTotal(),
                     TeachingLoadScore = (int)AverageTeachingLoadGrade()

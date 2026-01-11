@@ -164,7 +164,6 @@
     {
         bool isModifiedByDean = CriterionSources?.TryGetValue(criterionId, out var source) == true && source == "Dean";
 
-        // ✅ Dean can edit their own modifications, HOD cannot
         return isModifiedByDean && !IsDeanUser;
     }
 

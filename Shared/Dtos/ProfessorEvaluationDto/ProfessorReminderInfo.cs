@@ -12,5 +12,7 @@ namespace Shared.Dtos.ProfessorEvaluationDto
         public string ProfessorName { get; set; }
         public string CourseCode { get; set; }
         public string CourseName { get; set; }
+        public int SemesterCode { get; set; }    
+        public string SemesterName { get; set; }
     }
 }
